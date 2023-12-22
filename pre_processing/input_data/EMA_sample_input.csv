@@ -1,0 +1,9 @@
+﻿;2019;2030_low;2030_high;2050_low;2050_high
+average_remote_working_days;1,6;1,0;0,5;1,5;0,2
+average_working_days;4,380;3,500;4,000;3,375;4,375
+percent_remote_worker;0,35;0,50;0,41;0,60;0,20
+fuel_price;56;138;67;162;80
+gdp;100;120;140;145;205
+share_service_sector_gdp;0,73;0,81;0,82;0,84;0,85
+total_vehicles;100;106;118;110;134
+world_trade_volume;100;250;282;445;673

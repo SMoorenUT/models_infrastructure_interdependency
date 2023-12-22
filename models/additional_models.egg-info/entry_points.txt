@@ -1,0 +1,5 @@
+[movici.plugins]
+attributes = additional_models.attributes:BridgeViaductAttributes
+intensity_capacity = additional_models.bridges_viaducts_IC:ICModel
+safety_model = additional_models.bridges_viaducts_safety:SafetyModel
+

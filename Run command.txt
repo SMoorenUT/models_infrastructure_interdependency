@@ -1,0 +1,3 @@
+run in the Terminal the following command:
+
+python3 scenario_generator.py output_file.json
