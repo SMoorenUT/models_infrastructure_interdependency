@@ -547,40 +547,63 @@ def create_lists_sampling_input(df_for_sampling_input: pd.DataFrame, year: int, 
 
     return getattr(df_for_sampling_input.iloc[:, cols], operator)(axis=1).tolist()
 
-class JobsProcessor:
-    def __init__(self, num_samples=10) -> None:
-        self.df = read_csv(
-            CURR_DIR / "input_data" / "banen_inputdata.csv", delimiter=";"
-        )
-        self.num_samples = num_samples
-        self.jobs_dict = self.create_jobs_dict()
+def read_jobs_data():
+    """
+    Read the jobs data from the CSV file and return the DataFrame
+    """
+    return pd.read_csv(CURR_DIR / "input_data" / "banen_inputdata.csv", delimiter=";")
 
-    def sample_jobs(self):
-        """
-        Sample jobs from the jobs DataFrame and store them in the jobs_dict
-        """
-        result_dict = {
-            "2019": create_lists_sampling_input(self, 2019),
-            "2030_min": create_lists_sampling_input(self, 2030, "min"),
-            "2030_max": create_lists_sampling_input(self, 2030, "max"),
-            "2050_min": create_lists_sampling_input(self, 2050, "min"),
-            "2050_max": create_lists_sampling_input(self, 2050, "max"),
-        }
-   
+def create_jobs_dict(num_samples, df_jobs):
+    """
+    Create a dictionary to store jobs data for each scenario, municipality, and year
+    """
+    jobs_dict = {}
+    for i in range(1, num_samples + 1):
+        scenario_key = f"scenario_{i:04d}"
+        jobs_dict[scenario_key] = {}
+        for municipality in df_jobs.iloc[:, 1].tolist():
+            jobs_dict[scenario_key][municipality] = {}
+            for year in range(2019, 2051):
+                jobs_dict[scenario_key][municipality][year] = None
+    return jobs_dict
 
-    def create_jobs_dict(self):
-        jobs_dict = {}
-        for i in range(1, self.num_samples + 1):
-            scenario_key = f"scenario_{i:04d}"
-            jobs_dict[scenario_key] = {}
-            for municipality in self.df.iloc[:, 1].tolist():
-                jobs_dict[scenario_key][municipality] = {}
-                for year in range(2019, 2051):
-                    jobs_dict[scenario_key][municipality][year] = None
-        return jobs_dict
-    
+def sample_jobs(df_jobs, year, operator="min"):
+    """
+    Sample jobs from the jobs DataFrame for a specific year and operator
+    """
+    year_cols = {2019: [0], 2030: [1, 2], 2050: [3, 4]}
 
-jobs = JobsProcessor(num_samples=3)
+    if year not in year_cols:
+        return None
+
+    cols = year_cols[year]
+
+    if operator not in {"min", "max"}:
+        raise ValueError("Invalid operator. Must be 'min' or 'max'")
+
+    return getattr(df_jobs.iloc[:, cols], operator)(axis=1).tolist()
+
+def create_jobs_dict_sample(df_jobs):
+    """
+    Create a dictionary with the sampled jobs for each municipality and year
+    """
+    jobs_dict_sample = {}
+    for municipality in df_jobs.iloc[:, 1].tolist():
+        jobs_dict_sample[municipality] = {}
+        for year in range(2019, 2051):
+            jobs_dict_sample[municipality][year] = sample_jobs(df_jobs, year)
+    return jobs_dict_sample
+
+def generate_jobs_data(num_samples):
+    df_jobs = read_jobs_data()
+    jobs_dict = create_jobs_dict(num_samples, df_jobs)
+    for scenario_key in jobs_dict:
+        jobs_dict[scenario_key] = create_jobs_dict_sample(df_jobs)
+    return jobs_dict
+
+if __name__ == "__main__":
+    num_samples = 10
+    jobs = generate_jobs_data(num_samples)
 
 
 def main():
