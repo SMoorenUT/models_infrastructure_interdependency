@@ -551,7 +551,9 @@ def read_jobs_data():
     """
     Read the jobs data from the CSV file and return the DataFrame
     """
-    return pd.read_csv(CURR_DIR / "input_data" / "banen_inputdata.csv", delimiter=";")
+    rv = pd.read_csv(CURR_DIR / "input_data" / "banen_inputdata.csv", delimiter=";", index_col=1, header=0, decimal=",")
+    rv = rv.drop(columns="aantal banen(x 1000)")
+    return rv
 
 def create_jobs_dict(num_samples, df_jobs):
     """
@@ -581,6 +583,12 @@ def sample_jobs(df_jobs, year, operator="min"):
     if operator not in {"min", "max"}:
         raise ValueError("Invalid operator. Must be 'min' or 'max'")
 
+
+    #def random_between_two_columns(row):
+    #   return np.random.uniform(row[0], row[1])
+    #
+    #df_jobs['random_value'] = df_jobs.iloc[:, cols].apply(random_between_two_columns, axis=1)
+
     return getattr(df_jobs.iloc[:, cols], operator)(axis=1).tolist()
 
 def create_jobs_dict_sample(df_jobs):
@@ -588,7 +596,7 @@ def create_jobs_dict_sample(df_jobs):
     Create a dictionary with the sampled jobs for each municipality and year
     """
     jobs_dict_sample = {}
-    for municipality in df_jobs.iloc[:, 1].tolist():
+    for municipality in df_jobs.index.values.tolist():
         jobs_dict_sample[municipality] = {}
         for year in range(2019, 2051):
             jobs_dict_sample[municipality][year] = sample_jobs(df_jobs, year)
