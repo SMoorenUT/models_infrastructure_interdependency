@@ -4,7 +4,7 @@ import pathlib
 from scipy.interpolate import CubicSpline
 from typing import Union, List
 from global_paramaters_sampling import latin_hypercube_sampling, cubic_spline_interpolation
-from pre_processing.tape_creator_functions import create_lists_sampling_input, latin_hypercube_sampling, cubic_spline_interpolation
+from tape_creator_functions import create_lists_sampling_input, latin_hypercube_sampling, cubic_spline_interpolation
 
 
 CURR_DIR = pathlib.Path(__file__).parent
@@ -562,66 +562,57 @@ def sample_jobs(df_jobs, num_samples=50):
     sampled_jobs_dict = latin_hypercube_sampling(jobs_sampling_dict , num_samples=num_samples)
     return sampled_jobs_dict
 
-def cubic_spline_interpolation(samples_dict):
-    # Create Data Points
-    x = [2019, 2030, 2050]
+# def cubic_spline_interpolation(samples_dict):
+#     # Create Data Points
+#     x = [2019, 2030, 2050]
 
-    ## Transform the dictionary to {
-    #   Scenario1:
-    #       {corop1: [2019value, 2030value, 2050value],
-    #       corop2: [2019value, 2030value, 2050value],
-    #       coropN:[..]
-    #       },
-    #   ScenarioN:
-    #       {coropN:...}
-    #   }
-    first_values_dict = {}
+#     first_values_dict = {}
 
-    for scen, years_dict in samples_dict.items():
-        for year, values_list in years_dict.items():
-            for position, key in enumerate(corop_areas_study_area, start=1):
-                if scen not in first_values_dict:
-                    first_values_dict[scen] = {}
+#     for scen, years_dict in samples_dict.items():
+#         for year, values_list in years_dict.items():
+#             for position, key in enumerate(corop_areas_study_area, start=1):
+#                 if scen not in first_values_dict:
+#                     first_values_dict[scen] = {}
 
-                if key not in first_values_dict[scen]:
-                    first_values_dict[scen][key] = []
+#                 if key not in first_values_dict[scen]:
+#                     first_values_dict[scen][key] = []
 
-                first_values_dict[scen][key].append(values_list[position - 1])
+#                 first_values_dict[scen][key].append(values_list[position - 1])
 
-    # Make list of scenario's to loop through (['Scenario_0001', 'Scenario_0002', ... , 'Scenario_XXXX'])
-    scenarios = list(first_values_dict.keys())
+#     # Make list of scenario's to loop through (['Scenario_0001', 'Scenario_0002', ... , 'Scenario_XXXX'])
+#     scenarios = list(first_values_dict.keys())
 
-    # List of column indices
-    column_indices = np.arange(len(corop_areas_study_area))
+#     # List of column indices
+#     column_indices = np.arange(len(corop_areas_study_area))
 
-    # Dictionary to store cubic spline objects
-    cs_dict = {}
+#     # Dictionary to store cubic spline objects
+#     cs_dict = {}
 
-    # Loop through scenarios
-    for scenario in scenarios:
-        # Create a nested dictionary for each scenario
-        scenario_dict = {}
+#     # Loop through scenarios
+#     for scenario in scenarios:
+#         # Create a nested dictionary for each scenario
+#         scenario_dict = {}
 
-        # Loop through corop areas
-        for column_index in column_indices:
-            y = first_values_dict[scenario][corop_areas_study_area[column_index]]
+#         # Loop through corop areas
+#         for column_index in column_indices:
+#             y = first_values_dict[scenario][corop_areas_study_area[column_index]]
 
-            # Perform Cubic Spline Interpolation
-            cs = CubicSpline(x, y)
+#             # Perform Cubic Spline Interpolation
+#             cs = CubicSpline(x, y)
 
-            # Evaluate Interpolation Function
-            x_interp = list(range(2019, 2051))
-            y_interp = cs(x_interp) # y_interp is a list of interpolated values as numpy.float64
+#             # Evaluate Interpolation Function
+#             x_interp = list(range(2019, 2051))
+#             y_interp = cs(x_interp) # y_interp is a list of interpolated values as numpy.float64
 
-            corop_name = corop_areas_study_area[
-                column_index
-            ]  # Create a name for the corop area (nested inside the scenario)
-            scenario_dict[corop_name] = y_interp
+#             corop_name = corop_areas_study_area[
+#                 column_index
+#             ]  # Create a name for the corop area (nested inside the scenario)
+#             scenario_dict[corop_name] = y_interp
 
-        # Assign the nested dictionary to the scenario key
-        cs_dict[scenario] = scenario_dict
+#         # Assign the nested dictionary to the scenario key
+#         cs_dict[scenario] = scenario_dict
 
-    return cs_dict
+#     return cs_dict
 
 def create_jobs_scenarions_dict(df_jobs, num_samples=50):
     """
@@ -630,14 +621,11 @@ def create_jobs_scenarions_dict(df_jobs, num_samples=50):
     The remaining years are interpolated using cubic spline interpolation.
     """
     jobs_dict_sample = sample_jobs(df_jobs, num_samples=num_samples)
-    jobs_interpolated_dictionary = cubic_spline_interpolation(jobs_dict_sample)
+    jobs_interpolated_dictionary = cubic_spline_interpolation(jobs_dict_sample, corop_areas_study_area)
     return jobs_interpolated_dictionary
 
 def generate_jobs_data(num_samples):
     df_jobs = read_jobs_data()
-    # jobs_dict = create_jobs_dict(num_samples, df_jobs)
-    # for scenario_key in jobs_dict:
-    #     jobs_dict[scenario_key] = create_jobs_scenarions_dict(df_jobs)
     jobs_interpolated_dictionary = create_jobs_scenarions_dict(df_jobs, num_samples)
     return jobs_interpolated_dictionary
 

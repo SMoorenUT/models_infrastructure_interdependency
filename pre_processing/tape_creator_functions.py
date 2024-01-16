@@ -67,16 +67,6 @@ def latin_hypercube_sampling(input_sample_dict: dict, num_samples: int = 100) ->
 def cubic_spline_interpolation(samples_dict, columns):
     # Create Data Points
     x = [2019, 2030, 2050]
-    columns = [
-        "average_remote_working_days",
-        "average_working_days",
-        "percent_remote_worker",
-        "fuel_price",
-        "gdp",
-        "share_service_sector_gdp",
-        "total_vehicles",
-        "world_trade_volume",
-    ]
 
     ## Transform the dictionary to {
     #   Scenario1:
@@ -86,6 +76,16 @@ def cubic_spline_interpolation(samples_dict, columns):
     #       },
     #   ScenarioN:
     #       {VariableN:...}
+    #   }
+
+    ##  Or transform the dictionary to {
+    #   Scenario1:
+    #       {corop1: [2019value, 2030value, 2050value],
+    #       corop2: [2019value, 2030value, 2050value],
+    #       coropN:[..]
+    #       },
+    #   ScenarioN:
+    #       {coropN:...}
     #   }
     first_values_dict = {}
 
