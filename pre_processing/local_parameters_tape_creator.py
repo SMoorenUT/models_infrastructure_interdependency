@@ -3,6 +3,9 @@ import pandas as pd
 import pathlib
 from scipy.interpolate import CubicSpline
 from typing import Union, List
+from global_paramaters_sampling import latin_hypercube_sampling, cubic_spline_interpolation
+from pre_processing.tape_creator_functions import create_lists_sampling_input, latin_hypercube_sampling, cubic_spline_interpolation
+
 
 CURR_DIR = pathlib.Path(__file__).parent
 POPULATION_CSV = CURR_DIR.joinpath(
@@ -532,21 +535,6 @@ def create_population_dict_sample(df_bevolking):
 
     return population_scenario_dict
 
-
-def create_lists_sampling_input(df_for_sampling_input: pd.DataFrame, year: int, operator: str = "min") -> List[Union[int, float]]:
-    # Create lists from sampling df
-    year_cols = {2019: [0], 2030: [1, 2], 2050: [3, 4]}
-
-    if year not in year_cols:
-        raise ValueError("Invalid year")
-
-    cols = year_cols[year]
-
-    if operator not in {"min", "max"}:
-        raise ValueError("Invalid operator. Must be 'min' or 'max'")
-
-    return getattr(df_for_sampling_input.iloc[:, cols], operator)(axis=1).tolist()
-
 def read_jobs_data():
     """
     Read the jobs data from the CSV file and return the DataFrame
@@ -555,75 +543,116 @@ def read_jobs_data():
     rv = rv.drop(columns="aantal banen(x 1000)")
     return rv
 
-def create_jobs_dict(num_samples, df_jobs):
+def create_dict_for_jobs_sampling(df_jobs, operator="min"):
     """
-    Create a dictionary to store jobs data for each scenario, municipality, and year
+    Create a dictionary to sample jobs from based on the df_jobs DataFrame
     """
-    jobs_dict = {}
-    for i in range(1, num_samples + 1):
-        scenario_key = f"scenario_{i:04d}"
-        jobs_dict[scenario_key] = {}
-        for municipality in df_jobs.iloc[:, 1].tolist():
-            jobs_dict[scenario_key][municipality] = {}
-            for year in range(2019, 2051):
-                jobs_dict[scenario_key][municipality][year] = None
-    return jobs_dict
+    # Creating the dictionary
+    result_dict = {
+        "2019": create_lists_sampling_input(df_jobs, 2019, "min"),
+        "2030_min": create_lists_sampling_input(df_jobs, 2030, "min"),
+        "2030_max": create_lists_sampling_input(df_jobs, 2030, "max"),
+        "2050_min": create_lists_sampling_input(df_jobs, 2050, "min"),
+        "2050_max": create_lists_sampling_input(df_jobs, 2050, "max"),
+    }
+    return result_dict
 
-def sample_jobs(df_jobs, year, operator="min"):
+def sample_jobs(df_jobs, num_samples=50):
+    jobs_sampling_dict = create_dict_for_jobs_sampling(df_jobs, operator="min")
+    sampled_jobs_dict = latin_hypercube_sampling(jobs_sampling_dict , num_samples=num_samples)
+    return sampled_jobs_dict
+
+def cubic_spline_interpolation(samples_dict):
+    # Create Data Points
+    x = [2019, 2030, 2050]
+
+    ## Transform the dictionary to {
+    #   Scenario1:
+    #       {corop1: [2019value, 2030value, 2050value],
+    #       corop2: [2019value, 2030value, 2050value],
+    #       coropN:[..]
+    #       },
+    #   ScenarioN:
+    #       {coropN:...}
+    #   }
+    first_values_dict = {}
+
+    for scen, years_dict in samples_dict.items():
+        for year, values_list in years_dict.items():
+            for position, key in enumerate(corop_areas_study_area, start=1):
+                if scen not in first_values_dict:
+                    first_values_dict[scen] = {}
+
+                if key not in first_values_dict[scen]:
+                    first_values_dict[scen][key] = []
+
+                first_values_dict[scen][key].append(values_list[position - 1])
+
+    # Make list of scenario's to loop through (['Scenario_0001', 'Scenario_0002', ... , 'Scenario_XXXX'])
+    scenarios = list(first_values_dict.keys())
+
+    # List of column indices
+    column_indices = np.arange(len(corop_areas_study_area))
+
+    # Dictionary to store cubic spline objects
+    cs_dict = {}
+
+    # Loop through scenarios
+    for scenario in scenarios:
+        # Create a nested dictionary for each scenario
+        scenario_dict = {}
+
+        # Loop through corop areas
+        for column_index in column_indices:
+            y = first_values_dict[scenario][corop_areas_study_area[column_index]]
+
+            # Perform Cubic Spline Interpolation
+            cs = CubicSpline(x, y)
+
+            # Evaluate Interpolation Function
+            x_interp = list(range(2019, 2051))
+            y_interp = cs(x_interp) # y_interp is a list of interpolated values as numpy.float64
+
+            corop_name = corop_areas_study_area[
+                column_index
+            ]  # Create a name for the corop area (nested inside the scenario)
+            scenario_dict[corop_name] = y_interp
+
+        # Assign the nested dictionary to the scenario key
+        cs_dict[scenario] = scenario_dict
+
+    return cs_dict
+
+def create_jobs_scenarions_dict(df_jobs, num_samples=50):
     """
-    Sample jobs from the jobs DataFrame for a specific year and operator
+    Create a dictionary with the sampled jobs for each municipality for the years 2019, 2030 and 2050. 
+    The years 2030 and 2050 are sampled from the minimum and maximum values of the jobs in the corop areas. 
+    The remaining years are interpolated using cubic spline interpolation.
     """
-    year_cols = {2019: [0], 2030: [1, 2], 2050: [3, 4]}
-
-    if year not in year_cols:
-        return None
-
-    cols = year_cols[year]
-
-    if operator not in {"min", "max"}:
-        raise ValueError("Invalid operator. Must be 'min' or 'max'")
-
-
-    #def random_between_two_columns(row):
-    #   return np.random.uniform(row[0], row[1])
-    #
-    #df_jobs['random_value'] = df_jobs.iloc[:, cols].apply(random_between_two_columns, axis=1)
-
-    return getattr(df_jobs.iloc[:, cols], operator)(axis=1).tolist()
-
-def create_jobs_dict_sample(df_jobs):
-    """
-    Create a dictionary with the sampled jobs for each municipality and year
-    """
-    jobs_dict_sample = {}
-    for municipality in df_jobs.index.values.tolist():
-        jobs_dict_sample[municipality] = {}
-        for year in range(2019, 2051):
-            jobs_dict_sample[municipality][year] = sample_jobs(df_jobs, year)
-    return jobs_dict_sample
+    jobs_dict_sample = sample_jobs(df_jobs, num_samples=num_samples)
+    jobs_interpolated_dictionary = cubic_spline_interpolation(jobs_dict_sample)
+    return jobs_interpolated_dictionary
 
 def generate_jobs_data(num_samples):
     df_jobs = read_jobs_data()
-    jobs_dict = create_jobs_dict(num_samples, df_jobs)
-    for scenario_key in jobs_dict:
-        jobs_dict[scenario_key] = create_jobs_dict_sample(df_jobs)
-    return jobs_dict
-
-if __name__ == "__main__":
-    num_samples = 10
-    jobs = generate_jobs_data(num_samples)
-
+    # jobs_dict = create_jobs_dict(num_samples, df_jobs)
+    # for scenario_key in jobs_dict:
+    #     jobs_dict[scenario_key] = create_jobs_scenarions_dict(df_jobs)
+    jobs_interpolated_dictionary = create_jobs_scenarions_dict(df_jobs, num_samples)
+    return jobs_interpolated_dictionary
 
 def main():
     num_samples = 10
-    population_dict = {
+    population = {
         f"Scenario_{i:04d}": create_population_dict_sample(df_bevolking_extended)
         for i in range(num_samples)
     }
-    return population_dict
+    jobs = generate_jobs_data(num_samples)
+    return population, jobs
 
 
 if __name__ == "__main__":
-    population = main()
+    num_samples = 10
+    population, jobs = main()
 
 pass
