@@ -3,7 +3,6 @@ import pandas as pd
 import pathlib
 from scipy.interpolate import CubicSpline
 from typing import Union, List
-from global_paramaters_sampling import latin_hypercube_sampling, cubic_spline_interpolation
 from tape_creator_functions import create_lists_sampling_input, latin_hypercube_sampling, cubic_spline_interpolation
 
 

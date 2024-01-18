@@ -5,7 +5,11 @@ from scipy.stats import uniform
 from scipy.interpolate import CubicSpline
 import matplotlib.pyplot as plt
 import pathlib
-from tape_creator_functions import create_lists_sampling_input, latin_hypercube_sampling, cubic_spline_interpolation
+from tape_creator_functions import (
+    create_lists_sampling_input,
+    latin_hypercube_sampling,
+    cubic_spline_interpolation,
+)
 
 variables_list_global_params = [
     "average_remote_working_days",
@@ -20,10 +24,12 @@ variables_list_global_params = [
 
 CURR_DIR = pathlib.Path(__file__).parent
 
+
 def clear_df(df):
     # Clear values except for the first two columns, headers, and the first row
     df.iloc[1:, 1:] = np.nan
     return df
+
 
 def read_csv_file(file_path, index_col=None, header=None, delimiter=",", decimal="."):
     # Check if the file exists
@@ -61,6 +67,8 @@ result_dict = {
     "2050_min": create_lists_sampling_input(df_for_sampling_input, 2050, "min"),
     "2050_max": create_lists_sampling_input(df_for_sampling_input, 2050, "max"),
 }
+
+
 def populate_dataframe():
     # Create a new DataFrame for each scenario
     dfs = []
@@ -103,9 +111,22 @@ def populate_dataframe_interpolated():
     return scenario_dfs
 
 
-lhs_samples_dict = latin_hypercube_sampling(result_dict)
-# populate_dataframe()
-interpolated_values = cubic_spline_interpolation(samples_dict=lhs_samples_dict, columns=variables_list_global_params)
+def save_global_parameters_scenarios_as_csv():
+    # Save the DataFrames to CSV files
+    for scenario, df in final_scenarios_dfs.items():
+        file_path = CURR_DIR.parent / "data" / "init_data_EMA" / f"{scenario.lower()}.csv"
+        df.to_csv(file_path, index=True, header=True, sep=",", decimal=".")
 
-final_scenarios_dfs = populate_dataframe_interpolated()
+
+if __name__ == "__main__":
+    num_samples = 10
+    lhs_samples_dict = latin_hypercube_sampling(result_dict, num_samples)
+    
+    interpolated_values = cubic_spline_interpolation(
+        samples_dict=lhs_samples_dict, columns=variables_list_global_params
+    )
+
+    final_scenarios_dfs = populate_dataframe_interpolated()
+    save_global_parameters_scenarios_as_csv()
+
 pass
