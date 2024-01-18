@@ -48,8 +48,12 @@ def main(args=None):
     if args is None:
         args = sys.argv[1:]
     
-    scenario_file = args[0]
-    output_dir = args[1]
+    # scenario_file = args[0]
+    # output_dir = args[1]
+    
+    scenario_file = "data/scenarios/test_ema.json"
+    output_dir = "data/scenarios/test_ema"
+
     run_simulation(scenario_file, output_dir)
 
 

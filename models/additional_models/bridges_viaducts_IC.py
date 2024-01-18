@@ -17,12 +17,12 @@ from movici_simulation_core.core.data_type import (
 from movici_simulation_core.core.schema import (
     AttributeSpec,
 )
-from movici_simulation_core.data_tracker.arrays import TrackedCSRArray
-from movici_simulation_core.data_tracker.csr_helpers import get_row, row_wise_max, row_wise_min
-from movici_simulation_core.data_tracker.entity_group import (
+from movici_simulation_core.core.arrays import TrackedCSRArray
+from movici_simulation_core.csr import get_row, row_wise_max, row_wise_min
+from movici_simulation_core.core.entity_group import (
     EntityGroup,
 )
-from movici_simulation_core.data_tracker.attribute import (
+from movici_simulation_core.core.attribute import (
     OPT,
     field,
     INIT,
@@ -32,17 +32,17 @@ from movici_simulation_core.data_tracker.attribute import (
 from movici_simulation_core.base_models.tracked_model import (
     TrackedModel,
 )
-from movici_simulation_core.data_tracker.state import (
+from movici_simulation_core.core.state import (
     TrackedState,
 )
-from movici_simulation_core.core.attributes import (
+from movici_simulation_core.attributes import (
     Reference,
 )
 from movici_simulation_core.models.common.attributes import (
     Transport_Capacity_Hours,
     Transport_VolumeToCapacityRatio,
 )
-from movici_simulation_core.utils.validate import validate_and_process
+from movici_simulation_core.validate import validate_and_process
 import numpy as np
 import numba
 
@@ -54,8 +54,12 @@ class BridgeEntities(EntityGroup, name="bridge_entities"):
     ic_ratio_upper = field(IC_ratio_upper, flags=PUB)
     ic_ratio_lower = field(IC_ratio_lower, flags=PUB)
 
-    automatic_incident_detection_upper = field(AutomaticIncidentDetectionUpper, flags=PUB)
-    automatic_incident_detection_lower = field(AutomaticIncidentDetectionLower, flags=PUB)
+    automatic_incident_detection_upper = field(
+        AutomaticIncidentDetectionUpper, flags=PUB
+    )
+    automatic_incident_detection_lower = field(
+        AutomaticIncidentDetectionLower, flags=PUB
+    )
     automatic_incident_detection = field(AutomaticIncidentDetection, flags=PUB)
 
     lighting_upper = field(LightingUpper, flags=PUB)
@@ -118,11 +122,14 @@ class ICModel(TrackedModel, name="intensity_capacity"):
         # [1,2,None, 2] [0, 2,3,4]
 
         # [1,2,2] [0,2,2,3]
-        self.reference_index = {ref: idx for idx, ref in enumerate(self.roads.reference.array)}
+        self.reference_index = {
+            ref: idx for idx, ref in enumerate(self.roads.reference.array)
+        }
         self.reference_index[UNDEFINED[str]] = -1  # Catch undefined
         upper_indices = np.array(
             [
-                self.reference_index[ref] for ref in self.bridges.upper_references.csr.data
+                self.reference_index[ref]
+                for ref in self.bridges.upper_references.csr.data
             ]  # [["1", "2"], None, []] -> [false, true, false] -> [1]
         )
         upper_undefineds = np.flatnonzero(self.bridges.upper_references.is_undefined())
@@ -130,12 +137,14 @@ class ICModel(TrackedModel, name="intensity_capacity"):
             upper_indices, self.bridges.upper_references.csr.row_ptr.copy()
         )
         self.upper_indices.update(
-            TrackedCSRArray([], np.zeros((len(upper_undefineds) + 1), dtype=int)), upper_undefineds
+            TrackedCSRArray([], np.zeros((len(upper_undefineds) + 1), dtype=int)),
+            upper_undefineds,
         )  # [[], [], []] -> data [], rowptr [0,0,0,0]
 
         lower_indices = np.array(
             [
-                self.reference_index[ref] for ref in self.bridges.lower_references.csr.data
+                self.reference_index[ref]
+                for ref in self.bridges.lower_references.csr.data
             ]  # [["1", "2"], None, []] -> [false, true, false] -> [1]
         )
         lower_undefineds = np.flatnonzero(self.bridges.lower_references.is_undefined())
@@ -143,7 +152,8 @@ class ICModel(TrackedModel, name="intensity_capacity"):
             lower_indices, self.bridges.lower_references.csr.row_ptr.copy()
         )
         self.lower_indices.update(
-            TrackedCSRArray([], np.zeros((len(lower_undefineds) + 1), dtype=int)), lower_undefineds
+            TrackedCSRArray([], np.zeros((len(lower_undefineds) + 1), dtype=int)),
+            lower_undefineds,
         )  # [[], [], []] -> data [], rowptr [0,0,0,0]
 
     def update(self, **_):
@@ -222,6 +232,7 @@ class ICModel(TrackedModel, name="intensity_capacity"):
 # [[1,2], [1], []] -> [2, 1, -1]
 # -> [1,1, -1]
 
+
 # copy from csr_helpers.py in case of custom reduce logic
 @numba.njit(cache=True)
 def ic_roads_to_bridge(data, capacities, row_ptr, threshold, special_value):
@@ -236,7 +247,9 @@ def ic_roads_to_bridge(data, capacities, row_ptr, threshold, special_value):
             data, row_ptr, i
         )  # [[1,2,], [3]] -> [1,2,3], [0,2,3] get_row([1,2,3], [0,2,3], 0) ->  -> [1,2]
         capacities_row = get_row(capacities, row_ptr, i)
-        rv[i] = max_without_exits(ic_ratio_row, capacities_row, threshold, special_value)
+        rv[i] = max_without_exits(
+            ic_ratio_row, capacities_row, threshold, special_value
+        )
     return rv
 
 
@@ -254,7 +267,7 @@ def max_without_exits(ic_ratios, capacities, threshold, special_value):
     below_threshold_count = np.sum(capacities < threshold)
     should_filter = 0 < below_threshold_count < len(capacities)
     rv = 0
-    for (icr, cap) in zip(ic_ratios, capacities):
+    for icr, cap in zip(ic_ratios, capacities):
         # if should filter: check threshold, else always use value for max calculation
         if cap >= threshold:
             rv = max(rv, icr)
