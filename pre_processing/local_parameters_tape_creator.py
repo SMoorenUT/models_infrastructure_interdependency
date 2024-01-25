@@ -3,7 +3,7 @@ import pandas as pd
 import pathlib
 from scipy.interpolate import CubicSpline
 from typing import Union, List
-from tape_creator_functions import create_lists_sampling_input, latin_hypercube_sampling, cubic_spline_interpolation
+from tape_creator_functions import create_lists_sampling_input, latin_hypercube_sampling, cubic_spline_interpolation, find_unique_values, normalize_df
 
 
 CURR_DIR = pathlib.Path(__file__).parent
@@ -221,14 +221,22 @@ corop_areas_study_area = [
     "Zuidoost-Zuid-Holland",
 ]
 
-# Read the tables from the webpage. The table we're interested in is the first one
-corop_table = pd.read_html("https://nl.wikipedia.org/wiki/COROP")[0]
+def get_corop_dictionary():
+    # Read the tables from the webpage. The table we're interested in is the first one
+    corop_table = pd.read_html("https://nl.wikipedia.org/wiki/COROP")[0]
 
-# Create a dictionary where each key is a COROP area and each value is a list of municipalities in that area
-corop_dict = corop_table.groupby("COROP-gebied")["Gemeenten"].apply(list).to_dict()
+    # Create a dictionary where each key is a COROP area and each value is a list of municipalities in that area
+    corop_dict = corop_table.groupby("COROP-gebied")["Gemeenten"].apply(list).to_dict()
 
-# Drop all keys that are not in the jobs.df.iloc[:, 0] list
-corop_dict = {key: value for key, value in corop_dict.items() if key in corop_areas_study_area}
+    # Drop all keys that are not in the jobs.df.iloc[:, 0] list
+    corop_dict = {key: value for key, value in corop_dict.items() if key in corop_areas_study_area}
+    
+    # Create a list of all municipalities in the column "Gemeenten" in corop_dict
+    corop_municipalities = []
+    for value in corop_dict.values():
+        corop_municipalities.extend(value)
+
+    return corop_dict, corop_municipalities
 
 # Function to read CSV files
 def read_csv(file_name, delimiter=";"):
@@ -265,19 +273,6 @@ def read_excel(file_name):
         raise Exception(
             f"Unable to decode file '{file_name}' with available encodings."
         )
-
-
-def find_unique_values(list1, list2):
-    unique_in_list1 = set(list1) - set(list2)
-    unique_in_list2 = set(list2) - set(list1)
-
-    result = {
-        "Unique in List1": list(unique_in_list1),
-        "Unique in List2": list(unique_in_list2),
-    }
-    print(result)
-    return result
-
 
 # Read each CSV file future population
 dfs_bevolking_prognose = [
@@ -546,13 +541,16 @@ def create_dict_for_jobs_sampling(df_jobs, operator="min"):
     """
     Create a dictionary to sample jobs from based on the df_jobs DataFrame
     """
+    # Normalize the jobs data
+    df_jobs_normalised = normalize_df(df_jobs)
+
     # Creating the dictionary
     result_dict = {
-        "2019": create_lists_sampling_input(df_jobs, 2019, "min"),
-        "2030_min": create_lists_sampling_input(df_jobs, 2030, "min"),
-        "2030_max": create_lists_sampling_input(df_jobs, 2030, "max"),
-        "2050_min": create_lists_sampling_input(df_jobs, 2050, "min"),
-        "2050_max": create_lists_sampling_input(df_jobs, 2050, "max"),
+        "2019": create_lists_sampling_input(df_jobs_normalised, 2019, "min"),
+        "2030_min": create_lists_sampling_input(df_jobs_normalised, 2030, "min"),
+        "2030_max": create_lists_sampling_input(df_jobs_normalised, 2030, "max"),
+        "2050_min": create_lists_sampling_input(df_jobs_normalised, 2050, "min"),
+        "2050_max": create_lists_sampling_input(df_jobs_normalised, 2050, "max"),
     }
     return result_dict
 
@@ -635,11 +633,10 @@ def main():
         for i in range(num_samples)
     }
     jobs = generate_jobs_data(num_samples)
+    corop_dict, corop_municipalities = get_corop_dictionary()
+    find_unique_values(municipalities_unique, corop_municipalities)
     return population, jobs
 
 
 if __name__ == "__main__":
-    num_samples = 10
     population, jobs = main()
-
-pass

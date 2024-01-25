@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 from scipy.stats import uniform
 from scipy.interpolate import CubicSpline
+from sklearn.preprocessing import MinMaxScaler
 
 def create_lists_sampling_input(df_for_sampling_input: pd.DataFrame, year: int, operator: str = "min") -> List[Union[int, float]]:
     # Create lists from sampling df
@@ -17,6 +18,13 @@ def create_lists_sampling_input(df_for_sampling_input: pd.DataFrame, year: int, 
         raise ValueError("Invalid operator. Must be 'min' or 'max'")
 
     return getattr(df_for_sampling_input.iloc[:, cols], operator)(axis=1).tolist()
+
+def normalize_df(df: pd.DataFrame) -> pd.DataFrame:
+    last_columns = df.columns[-4:]
+    first_column = df.columns[0]
+    df[last_columns] = df[last_columns].div(df[first_column], axis=0)
+    df[first_column] = 1
+    return df
 
 def latin_hypercube_sampling(input_sample_dict: dict, num_samples: int = 100) -> dict:
     # Set the random seed for reproducibility
@@ -134,3 +142,14 @@ def cubic_spline_interpolation(samples_dict, columns):
         cs_dict[scenario] = scenario_dict
 
     return cs_dict
+
+def find_unique_values(list1, list2):
+    unique_in_list1 = set(list1) - set(list2)
+    unique_in_list2 = set(list2) - set(list1)
+
+    result = {
+        "Unique in List1": list(unique_in_list1),
+        "Unique in List2": list(unique_in_list2),
+    }
+    print(result)
+    return result

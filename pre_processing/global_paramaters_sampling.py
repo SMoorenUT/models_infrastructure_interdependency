@@ -128,5 +128,3 @@ if __name__ == "__main__":
 
     final_scenarios_dfs = populate_dataframe_interpolated()
     save_global_parameters_scenarios_as_csv()
-
-pass
