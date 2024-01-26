@@ -3,7 +3,15 @@ import pandas as pd
 import pathlib
 from scipy.interpolate import CubicSpline
 from typing import Union, List
-from tape_creator_functions import create_lists_sampling_input, latin_hypercube_sampling, cubic_spline_interpolation, find_unique_values, normalize_df
+import cbsodata
+from tape_creator_functions import (
+    create_lists_sampling_input,
+    establish_length_num_samples,
+    latin_hypercube_sampling,
+    cubic_spline_interpolation,
+    find_unique_values,
+    normalize_df,
+)
 
 
 CURR_DIR = pathlib.Path(__file__).parent
@@ -221,22 +229,54 @@ corop_areas_study_area = [
     "Zuidoost-Zuid-Holland",
 ]
 
+
 def get_corop_dictionary():
     # Read the tables from the webpage. The table we're interested in is the first one
     corop_table = pd.read_html("https://nl.wikipedia.org/wiki/COROP")[0]
+    corop_table_cbs = pd.DataFrame(cbsodata.get_data("84378NED"))
 
     # Create a dictionary where each key is a COROP area and each value is a list of municipalities in that area
     corop_dict = corop_table.groupby("COROP-gebied")["Gemeenten"].apply(list).to_dict()
+    corop_dict_cbs = corop_table_cbs.groupby("Naam_9")["Naam_2"].apply(list).to_dict()
+
+    # Strip spaces from keys and values in corop_dict_cbs
+    corop_dict_cbs = {
+        key.strip(): [municipality.strip() for municipality in value]
+        for key, value in corop_dict_cbs.items()
+    }
 
     # Drop all keys that are not in the jobs.df.iloc[:, 0] list
-    corop_dict = {key: value for key, value in corop_dict.items() if key in corop_areas_study_area}
-    
+    corop_dict = {
+        key: value for key, value in corop_dict.items() if key in corop_areas_study_area
+    }
+    corop_dict_cbs = {
+        key: value
+        for key, value in corop_dict_cbs.items()
+        if key in corop_areas_study_area
+    }
+
     # Create a list of all municipalities in the column "Gemeenten" in corop_dict
     corop_municipalities = []
     for value in corop_dict.values():
-        corop_municipalities.extend(value)
+        for municipality in value:
+            corop_municipalities.extend(municipality.split(","))
 
-    return corop_dict, corop_municipalities
+    # Create a list of all municipalities in the column "Gemeenten" in corop_dict_cbs
+    corop_municipalities_cbs = []
+    for value in corop_dict_cbs.values():
+        for municipality in value:
+            corop_municipalities_cbs.extend(municipality.split(","))
+
+    # Delete leading spaces of strings in the lists
+    corop_municipalities = [
+        municipality.strip() for municipality in corop_municipalities
+    ]
+    corop_municipalities_cbs = [
+        municipality.strip() for municipality in corop_municipalities_cbs
+    ]
+
+    return corop_dict, corop_municipalities, corop_dict_cbs, corop_municipalities_cbs
+
 
 # Function to read CSV files
 def read_csv(file_name, delimiter=";"):
@@ -273,6 +313,7 @@ def read_excel(file_name):
         raise Exception(
             f"Unable to decode file '{file_name}' with available encodings."
         )
+
 
 # Read each CSV file future population
 dfs_bevolking_prognose = [
@@ -529,13 +570,21 @@ def create_population_dict_sample(df_bevolking):
 
     return population_scenario_dict
 
+
 def read_jobs_data():
     """
     Read the jobs data from the CSV file and return the DataFrame
     """
-    rv = pd.read_csv(CURR_DIR / "input_data" / "banen_inputdata.csv", delimiter=";", index_col=1, header=0, decimal=",")
+    rv = pd.read_csv(
+        CURR_DIR / "input_data" / "banen_inputdata.csv",
+        delimiter=";",
+        index_col=1,
+        header=0,
+        decimal=",",
+    )
     rv = rv.drop(columns="aantal banen(x 1000)")
     return rv
+
 
 def create_dict_for_jobs_sampling(df_jobs, operator="min"):
     """
@@ -554,10 +603,14 @@ def create_dict_for_jobs_sampling(df_jobs, operator="min"):
     }
     return result_dict
 
+
 def sample_jobs(df_jobs, num_samples=50):
     jobs_sampling_dict = create_dict_for_jobs_sampling(df_jobs, operator="min")
-    sampled_jobs_dict = latin_hypercube_sampling(jobs_sampling_dict , num_samples=num_samples)
+    sampled_jobs_dict = latin_hypercube_sampling(
+        jobs_sampling_dict, num_samples=num_samples
+    )
     return sampled_jobs_dict
+
 
 # def cubic_spline_interpolation(samples_dict):
 #     # Create Data Points
@@ -611,30 +664,104 @@ def sample_jobs(df_jobs, num_samples=50):
 
 #     return cs_dict
 
+
 def create_jobs_scenarions_dict(df_jobs, num_samples=50):
     """
-    Create a dictionary with the sampled jobs for each municipality for the years 2019, 2030 and 2050. 
-    The years 2030 and 2050 are sampled from the minimum and maximum values of the jobs in the corop areas. 
+    Create a dictionary with the sampled jobs for each municipality for the years 2019, 2030 and 2050.
+    The years 2030 and 2050 are sampled from the minimum and maximum values of the jobs in the corop areas.
     The remaining years are interpolated using cubic spline interpolation.
     """
     jobs_dict_sample = sample_jobs(df_jobs, num_samples=num_samples)
-    jobs_interpolated_dictionary = cubic_spline_interpolation(jobs_dict_sample, corop_areas_study_area)
+    jobs_interpolated_dictionary = cubic_spline_interpolation(
+        jobs_dict_sample, corop_areas_study_area
+    )
     return jobs_interpolated_dictionary
+
 
 def generate_jobs_data(num_samples):
     df_jobs = read_jobs_data()
     jobs_interpolated_dictionary = create_jobs_scenarions_dict(df_jobs, num_samples)
     return jobs_interpolated_dictionary
 
+
+def derive_jobs_municipality_level(jobs_interpolated_dictionary, corop_dict_cbs):
+    """
+    Derive the jobs per municipality by summing the jobs in the corop areas
+    """
+    # Create a dictionary to store the jobs per municipality
+    jobs_municipality_level = {}
+
+    # Loop through the scenarios
+    for scenario, scenario_dict in jobs_interpolated_dictionary.items():
+        # Create a dictionary for each scenario
+        jobs_municipality_level[scenario] = {}
+
+        # Loop through the corop areas
+        for corop_area, jobs_list in scenario_dict.items():
+            # Loop through the municipalities in the corop area
+            for municipality in corop_dict_cbs[corop_area]:
+                # If the municipality is not in the dictionary, add it
+                if municipality not in jobs_municipality_level[scenario]:
+                    jobs_municipality_level[scenario][municipality] = []
+
+                # Add the jobs in the corop area to the municipality
+                jobs_municipality_level[scenario][municipality].append(jobs_list)
+
+    # Sum the jobs in the corop areas for each municipality
+    for scenario, scenario_dict in jobs_municipality_level.items():
+        for municipality, jobs_list in scenario_dict.items():
+            jobs_municipality_level[scenario][municipality] = np.sum(jobs_list, axis=0)
+
+    return jobs_municipality_level
+
+
+def compare_dicts(dict1, dict2):
+    scenarios_same = list(dict1.keys()) == list(dict2.keys())
+
+    first_key = list(dict1.keys())[0]
+    population_keys = set(dict1[first_key].keys())
+    jobs_keys = set(dict2[first_key].keys())
+
+    common_keys = population_keys.intersection(jobs_keys)
+    unique_population_keys = population_keys - jobs_keys
+    unique_jobs_keys = jobs_keys - population_keys
+
+    if not unique_population_keys and not unique_jobs_keys:
+        municipalities_same = True
+    else:
+        municipalities_same = False
+        print("Common keys:", common_keys)
+        print("Unique keys in population:", unique_population_keys)
+        print("Unique keys in jobs:", unique_jobs_keys)
+    if scenarios_same and municipalities_same:
+        return True
+    else:
+        raise ValueError("Population and jobs dictionaries have different structures.")
+        
+        
+
+
 def main():
     num_samples = 10
+    length_num_samples = establish_length_num_samples(
+        num_samples
+    )  # To format het scenario names with leading zeros
     population = {
-        f"Scenario_{i:04d}": create_population_dict_sample(df_bevolking_extended)
+        f"Scenario_{i:0{length_num_samples}d}": create_population_dict_sample(
+            df_bevolking_extended
+        )
         for i in range(num_samples)
     }
-    jobs = generate_jobs_data(num_samples)
-    corop_dict, corop_municipalities = get_corop_dictionary()
-    find_unique_values(municipalities_unique, corop_municipalities)
+    jobs_corop_level = generate_jobs_data(num_samples)
+    (
+        corop_dict,
+        corop_municipalities,
+        corop_dict_cbs,
+        corop_municipalities_cbs,
+    ) = get_corop_dictionary()
+    find_unique_values(municipalities_unique, corop_municipalities_cbs)
+    jobs = derive_jobs_municipality_level(jobs_corop_level, corop_dict_cbs)
+    compare_dicts(population, jobs)
     return population, jobs
 
 

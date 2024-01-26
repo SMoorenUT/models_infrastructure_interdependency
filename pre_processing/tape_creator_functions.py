@@ -26,6 +26,12 @@ def normalize_df(df: pd.DataFrame) -> pd.DataFrame:
     df[first_column] = 1
     return df
 
+def establish_length_num_samples(num_samples: int):
+    if num_samples <= 0:
+        ValueError("num_samples must be greater than 0")
+    length_num_samples = len(str(num_samples)) if num_samples not in [10**i for i in range(10)] else len(str(num_samples)) - 1 # To format het scenario names with leading zeros
+    return length_num_samples
+
 def latin_hypercube_sampling(input_sample_dict: dict, num_samples: int = 100) -> dict:
     # Set the random seed for reproducibility
     np.random.seed(0)
@@ -46,10 +52,11 @@ def latin_hypercube_sampling(input_sample_dict: dict, num_samples: int = 100) ->
         == len(upper_bound_2050)
         else None
     )
+    length_num_samples = establish_length_num_samples(num_samples)
 
     # Generate Latin Hypercube Samples in dictionary using scipy.stats.uniform
     lhs_samples_dict = {
-        f"Scenario_{i:04d}": {
+        f"Scenario_{i:0{length_num_samples}d}": {
             "2019": input_sample_dict["2019"],
             "2030": [
                 uniform(
@@ -151,5 +158,8 @@ def find_unique_values(list1, list2):
         "Unique in List1": list(unique_in_list1),
         "Unique in List2": list(unique_in_list2),
     }
-    print(result)
+    
+    if unique_in_list1 or unique_in_list2:
+        print(result)
+    
     return result
