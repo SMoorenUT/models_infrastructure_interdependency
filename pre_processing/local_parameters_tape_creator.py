@@ -1,3 +1,4 @@
+import datetime as dt
 import numpy as np
 import pandas as pd
 import pathlib
@@ -841,11 +842,36 @@ def create_single_area_entities_dict(
     }
 
 
-def create_data_series(
-    municipalities_index_dict: dict,
-    population_dict_in_year_municipality_order: dict,
-    jobs_dict_in_year_municipality_order: dict,
+def create_json_file(
     scenario_name: str,
+    population: dict,
+    jobs: dict,
+    filepath: pathlib.Path,
+    data_series: list,
+):
+    config = {
+        "name": scenario_name.lower(),
+        "display_name": scenario_name.replace("_", " ").title(),
+        "type": "tabular",
+        "created_on": dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "description": "Local parameters for the municipalities in the Netherlands. The data is based on the population and jobs data from the CBS. The sample has been generated using latin hypercube sampling and cubic spline interpolation.",
+        "data": {
+            "tabular_data_name": "municipalities_area_set",
+            "time_series": TIME_SERIES,
+            "data_series": data_series,
+        },
+    }
+
+    pathlib.Path(CURR_DIR / f"{scenario_name}_local_paramameters_tape").with_suffix(
+        ".json"
+    ).write_text(json.dumps(config, indent=2))
+    return config
+
+def create_data_series(
+municipalities_index_dict: dict,
+population_dict_in_year_municipality_order: dict,
+jobs_dict_in_year_municipality_order: dict,
+scenario_name: str,
 ):
     """
     Create the data series, being a list of area_entities dictionaries for each year
@@ -861,34 +887,68 @@ def create_data_series(
                 scenario_name,
             )
         )
-    return data_series
+    return data_series    
 
 
-def create_json_file(
-    scenario_name: str,
-    population: dict,
-    jobs: dict,
-    filepath: pathlib.Path,
-    data_series: list,
+class LocalParametersConfig:
+    def __init__(self, scenario_name, population, jobs, filepath, data_series):
+        self.scenario_name = scenario_name
+        self.population = population
+        self.jobs = jobs
+        self.filepath = filepath
+        self.municipalities_index_dict = municipalities_index_dict
+        self.data_series = self.create_data_series(
+            self.municipalities_index_dict,
+            self.population_dict_in_year_municipality_order,
+            self.jobs_dict_in_year_municipality_order,
+            self.scenario_name,
+        )
+
+        self.config = {
+            "name": self.scenario_name.lower(),
+            "display_name": self.scenario_name.replace("_", " ").title(),
+            "type": "tabular",
+            "created_on": dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "description": "Local parameters for the municipalities in the Netherlands. The data is based on the population and jobs data from the CBS. The sample has been generated using latin hypercube sampling and cubic spline interpolation.",
+            "data": {
+                "tabular_data_name": "municipalities_area_set",
+                "time_series": TIME_SERIES,
+                "data_series": self.data_series,
+            },
+        }
+
+    def create_data_series(
+        municipalities_index_dict: dict,
+        population_dict_in_year_municipality_order: dict,
+        jobs_dict_in_year_municipality_order: dict,
+        scenario_name: str,
+    ):
+        """
+        Create the data series, being a list of area_entities dictionaries for each year
+        """
+        data_series = []
+        for year in range(2019, 2051):
+            data_series.append(
+                create_single_area_entities_dict(
+                    municipalities_index_dict,
+                    population_dict_in_year_municipality_order,
+                    jobs_dict_in_year_municipality_order,
+                    year,
+                    scenario_name,
+                )
+            )
+        return data_series    
+
+    def create_json_file(self):
+        pathlib.Path(self.filepath).with_suffix(".json").write_text(
+            json.dumps(config, indent=2)
+        )
+        return
+
+
+def generate_population_and_job_data(
+    num_samples: int = 10, length_num_samples: int = 4
 ):
-    config = {
-        "name": scenario_name,
-        "display_name": scenario_name.replace("_", " ").title(),
-        "type": "tabular",
-        "data": {
-            "tabular_data_name": "municipalities_area_set",
-            "time_series": TIME_SERIES,
-            "data_series": data_series,
-        },
-    }
-
-    # pathlib.Path(f"{scenario_name}_local_paramameters_tape").with_suffix(
-    #     ".json"
-    # ).write_text(json.dumps(config), indent=2)
-    return config
-
-
-def generate_population_and_job_data(num_samples: int = 10, length_num_samples: int = 4):
     population = {
         f"Scenario_{i:0{length_num_samples}d}": create_population_dict_sample(
             df_bevolking_extended
