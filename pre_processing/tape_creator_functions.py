@@ -22,8 +22,8 @@ def create_lists_sampling_input(df_for_sampling_input: pd.DataFrame, year: int, 
 def normalize_df(df: pd.DataFrame) -> pd.DataFrame:
     last_columns = df.columns[-4:]
     first_column = df.columns[0]
-    df[last_columns] = df[last_columns].div(df[first_column], axis=0)
-    df[first_column] = 1
+    df[last_columns] = df[last_columns].div(df[first_column], axis=0) * 100
+    df[first_column] = 100
     return df
 
 def establish_length_num_samples(num_samples: int):
@@ -163,3 +163,17 @@ def find_unique_values(list1, list2):
         print(result)
     
     return result
+
+def swap_dictionary_structure(dictionary: dict):
+    """
+    Swap the structure of a dictionary with the structure {A: {B: {C: [values]}}} to {A: {C: {B:[values]}}
+    """
+    new_dict = {}
+    for scenario, scenario_dict in dictionary.items():
+        new_dict[scenario] = {}
+        for municipality, municipality_dict in scenario_dict.items():
+            for year, values in municipality_dict.items():
+                if year not in new_dict[scenario]:
+                    new_dict[scenario][year] = {}
+                new_dict[scenario][year][municipality] = values
+    return new_dict

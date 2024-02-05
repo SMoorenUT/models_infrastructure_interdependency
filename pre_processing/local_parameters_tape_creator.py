@@ -4,6 +4,7 @@ import pathlib
 from scipy.interpolate import CubicSpline
 from typing import Union, List
 import cbsodata
+import json
 from tape_creator_functions import (
     create_lists_sampling_input,
     establish_length_num_samples,
@@ -11,6 +12,7 @@ from tape_creator_functions import (
     cubic_spline_interpolation,
     find_unique_values,
     normalize_df,
+    swap_dictionary_structure,
 )
 
 
@@ -18,6 +20,41 @@ CURR_DIR = pathlib.Path(__file__).parent
 POPULATION_CSV = CURR_DIR.joinpath(
     "input_data/03759ned_UntypedDataSet_04122023_152457.csv"
 )
+TIME_SERIES = [
+    0.0,
+    31536000.0,
+    63158400.0,
+    94694400.0,
+    126230400.0,
+    157766400.0,
+    189388800.0,
+    220924800.0,
+    252460800.0,
+    283996800.0,
+    315619200.0,
+    347155200.0,
+    378691200.0,
+    410227200.0,
+    441849600.0,
+    473385600.0,
+    504921600.0,
+    536457600.0,
+    568080000.0,
+    599616000.0,
+    631152000.0,
+    662688000.0,
+    694310400.0,
+    725846400.0,
+    757382400.0,
+    788918400.0,
+    820540800.0,
+    852076800.0,
+    883612800.0,
+    915148800.0,
+    946771200.0,
+    978307200.0,
+]
+
 # List of population file names
 population_file_names = [
     "Bevolking__intervallen__regio__2023_2050_07122023_164139_bovengrens.csv",
@@ -568,6 +605,14 @@ def create_population_dict_sample(df_bevolking):
         for year, population in zip(x_interp, y_interp):
             population_scenario_dict[municipality][year] = population
 
+    # Normalize the population values with the first value being 100
+    for municipality in municipalities_unique:
+        first_value = population_scenario_dict[municipality][2019]
+        for year, population in population_scenario_dict[municipality].items():
+            population_scenario_dict[municipality][year] = (
+                population / first_value * 100
+            )
+
     return population_scenario_dict
 
 
@@ -702,15 +747,12 @@ def derive_jobs_municipality_level(jobs_interpolated_dictionary, corop_dict_cbs)
             for municipality in corop_dict_cbs[corop_area]:
                 # If the municipality is not in the dictionary, add it
                 if municipality not in jobs_municipality_level[scenario]:
-                    jobs_municipality_level[scenario][municipality] = []
+                    jobs_municipality_level[scenario][municipality] = {}
 
                 # Add the jobs in the corop area to the municipality
-                jobs_municipality_level[scenario][municipality].append(jobs_list)
-
-    # Sum the jobs in the corop areas for each municipality
-    for scenario, scenario_dict in jobs_municipality_level.items():
-        for municipality, jobs_list in scenario_dict.items():
-            jobs_municipality_level[scenario][municipality] = np.sum(jobs_list, axis=0)
+                for i, jobs_value in enumerate(jobs_list):
+                    year = 2019 + i
+                    jobs_municipality_level[scenario][municipality][year] = jobs_value
 
     return jobs_municipality_level
 
@@ -737,15 +779,116 @@ def compare_dicts(dict1, dict2):
         return True
     else:
         raise ValueError("Population and jobs dictionaries have different structures.")
-        
-        
 
 
-def main():
-    num_samples = 10
-    length_num_samples = establish_length_num_samples(
-        num_samples
-    )  # To format het scenario names with leading zeros
+def municipalities_name_structure_match(scenario_dictionary: dict):
+    """
+    Create a new dictionary with all unique municipality names as keys and a list of their index in the variable municipalities as values.
+    """
+    municipalities_index_dict = {}
+    for municipality in scenario_dictionary.keys():
+        municipalities_index_dict[municipality] = []
+        for index, key in enumerate(municipalities):
+            if municipality in key:
+                municipalities_index_dict[municipality].append(index)
+    return municipalities_index_dict
+
+
+def create_list_for_area_entities(
+    municipalities_index_dict: dict, scenario_dictionary: dict, year: int
+):
+    """
+    Create a list with the population/jobs for the chosen year at the corresponding index/indices of the municipality according to municipalities_index_dict.
+    """
+    scenario_dictionary_sliced_over_year = scenario_dictionary[year]
+    list_for_area_entities = [None] * len(municipalities)
+    for municipality, indices in municipalities_index_dict.items():
+        for index in indices:
+            list_for_area_entities[index] = scenario_dictionary_sliced_over_year[
+                municipality
+            ]
+    return list_for_area_entities
+
+
+def create_single_area_entities_dict(
+    municipalities_index_dict: dict,
+    population_dict_in_year_municipality_order: dict,
+    jobs_dict_in_year_municipality_order: dict,
+    year: int,
+    scenario_name: str,
+):
+    jobs_count_index = create_list_for_area_entities(
+        municipalities_index_dict,
+        jobs_dict_in_year_municipality_order[scenario_name],
+        year,
+    )
+    people_count_index = (
+        create_list_for_area_entities(
+            municipalities_index_dict,
+            population_dict_in_year_municipality_order[scenario_name],
+            year,
+        ),
+    )  # for some reason the function returns a tuple with the list as the first element
+    jobs_per_capita = None
+
+    return {
+        "area_entities": {
+            "id": list(range(len(municipalities))),
+            "jobs.count.index": jobs_count_index,
+            "people.count.index": people_count_index,
+            "jobs.per.capita": jobs_per_capita,
+        }
+    }
+
+
+def create_data_series(
+    municipalities_index_dict: dict,
+    population_dict_in_year_municipality_order: dict,
+    jobs_dict_in_year_municipality_order: dict,
+    scenario_name: str,
+):
+    """
+    Create the data series, being a list of area_entities dictionaries for each year
+    """
+    data_series = []
+    for year in range(2019, 2051):
+        data_series.append(
+            create_single_area_entities_dict(
+                municipalities_index_dict,
+                population_dict_in_year_municipality_order,
+                jobs_dict_in_year_municipality_order,
+                year,
+                scenario_name,
+            )
+        )
+    return data_series
+
+
+def create_json_file(
+    scenario_name: str,
+    population: dict,
+    jobs: dict,
+    filepath: pathlib.Path,
+    data_series: list,
+):
+    config = {
+        "name": scenario_name,
+        "display_name": scenario_name.replace("_", " ").title(),
+        "type": "tabular",
+        "data": {
+            "tabular_data_name": "municipalities_area_set",
+            "time_series": TIME_SERIES,
+            "data_series": data_series,
+        },
+    }
+
+    # pathlib.Path(f"{scenario_name}_local_paramameters_tape").with_suffix(
+    #     ".json"
+    # ).write_text(json.dumps(config), indent=2)
+    return config
+
+
+def generate_population_and_job_data(num_samples: int = 10, length_num_samples: int = 4):
     population = {
         f"Scenario_{i:0{length_num_samples}d}": create_population_dict_sample(
             df_bevolking_extended
@@ -762,6 +905,29 @@ def main():
     find_unique_values(municipalities_unique, corop_municipalities_cbs)
     jobs = derive_jobs_municipality_level(jobs_corop_level, corop_dict_cbs)
     compare_dicts(population, jobs)
+
+    municipalities_index_dict = municipalities_name_structure_match(
+        population["Scenario_0"]
+    )
+    population_swapped = swap_dictionary_structure(population)
+    jobs_swapped = swap_dictionary_structure(jobs)
+    return population_swapped, jobs_swapped, municipalities_index_dict
+
+
+def main():
+    num_samples = 10
+    length_num_samples = establish_length_num_samples(
+        num_samples
+    )  # To format the scenario names with approriate number of leading zeros
+    population_swapped, jobs_swapped, municipalities_index_dict = (
+        generate_population_and_job_data(num_samples, length_num_samples)
+    )
+    data_series = create_data_series(
+        municipalities_index_dict, population_swapped, jobs_swapped, "Scenario_0"
+    )
+    create_json_file(
+        "Scenario_0", population_swapped, jobs_swapped, "test.json", data_series
+    )
     return population, jobs
 
 
