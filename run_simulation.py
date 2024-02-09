@@ -52,7 +52,7 @@ def main(args=None):
     # output_dir = args[1]
     
     scenario_file = "data/scenarios/test_ema.json"
-    output_dir = "data/scenarios/test_ema_29-01-2024"
+    output_dir = "data/scenarios/test_ema_09-02-2024"
 
     run_simulation(scenario_file, output_dir)
 

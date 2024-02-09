@@ -792,6 +792,7 @@ def municipalities_name_structure_match(scenario_dictionary: dict):
         for index, key in enumerate(municipalities):
             if municipality in key:
                 municipalities_index_dict[municipality].append(index)
+    LocalParametersConfig.municipalities_index_dict = municipalities_index_dict
     return municipalities_index_dict
 
 
@@ -823,12 +824,10 @@ def create_single_area_entities_dict(
         jobs_dict_in_year_municipality_order[scenario_name],
         year,
     )
-    people_count_index = (
-        create_list_for_area_entities(
-            municipalities_index_dict,
-            population_dict_in_year_municipality_order[scenario_name],
-            year,
-        ),
+    people_count_index = create_list_for_area_entities(
+        municipalities_index_dict,
+        population_dict_in_year_municipality_order[scenario_name],
+        year,
     )  # for some reason the function returns a tuple with the list as the first element
     jobs_per_capita = None
 
@@ -862,16 +861,17 @@ def create_json_file(
         },
     }
 
-    pathlib.Path(CURR_DIR / f"{scenario_name}_local_paramameters_tape").with_suffix(
-        ".json"
-    ).write_text(json.dumps(config, indent=2))
+    pathlib.Path(
+        f"data/init_data_EMA/{scenario_name}_local_paramameters_tape"
+    ).with_suffix(".json").write_text(json.dumps(config, indent=2))
     return config
 
+
 def create_data_series(
-municipalities_index_dict: dict,
-population_dict_in_year_municipality_order: dict,
-jobs_dict_in_year_municipality_order: dict,
-scenario_name: str,
+    municipalities_index_dict: dict,
+    population_dict_in_year_municipality_order: dict,
+    jobs_dict_in_year_municipality_order: dict,
+    scenario_name: str,
 ):
     """
     Create the data series, being a list of area_entities dictionaries for each year
@@ -887,20 +887,35 @@ scenario_name: str,
                 scenario_name,
             )
         )
-    return data_series    
+    return data_series
 
 
 class LocalParametersConfig:
-    def __init__(self, scenario_name, population, jobs, filepath, data_series):
+    municipalities_index_dict = None
+    population_dict_in_year_municipality_order = None
+    jobs_dict_in_year_municipality_order = None
+
+    def __init__(self, scenario_name, population, jobs, filepath):
+        if any(
+            var is None
+            for var in [
+                self.municipalities_index_dict,
+                self.population_dict_in_year_municipality_order,
+                self.jobs_dict_in_year_municipality_order,
+            ]
+        ):
+            raise ValueError(
+                "One or more class variables are None. Please provide values for all variables."
+            )
+
         self.scenario_name = scenario_name
         self.population = population
         self.jobs = jobs
         self.filepath = filepath
-        self.municipalities_index_dict = municipalities_index_dict
         self.data_series = self.create_data_series(
             self.municipalities_index_dict,
-            self.population_dict_in_year_municipality_order,
-            self.jobs_dict_in_year_municipality_order,
+            self.population,
+            self.jobs,
             self.scenario_name,
         )
 
@@ -937,11 +952,11 @@ class LocalParametersConfig:
                     scenario_name,
                 )
             )
-        return data_series    
+        return data_series
 
     def create_json_file(self):
         pathlib.Path(self.filepath).with_suffix(".json").write_text(
-            json.dumps(config, indent=2)
+            json.dumps(self.config, indent=2)
         )
         return
 
@@ -971,6 +986,10 @@ def generate_population_and_job_data(
     )
     population_swapped = swap_dictionary_structure(population)
     jobs_swapped = swap_dictionary_structure(jobs)
+    LocalParametersConfig.population_dict_in_year_municipality_order = (
+        population_swapped
+    )
+    LocalParametersConfig.jobs_dict_in_year_municipality_order = jobs_swapped
     return population_swapped, jobs_swapped, municipalities_index_dict
 
 

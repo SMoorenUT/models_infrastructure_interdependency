@@ -202,7 +202,7 @@
           "mapping_type": "nearest"
         }
       ],
-      "parameter_dataset": "scenario_0000",
+      "parameter_dataset": "scenario_0",
       "total_outward_demand_attribute": "transport.total_outward_passenger_demand_vehicles",
       "total_inward_demand_attribute": "transport.total_inward_passenger_demand_vehicles",
       "atol": 0.001,
@@ -236,7 +236,7 @@
         }
       ],
       "local_parameters": [],
-      "parameter_dataset": "scenario_0000",
+      "parameter_dataset": "scenario_0",
       "total_outward_demand_attribute": "transport.total_outward_domestic_cargo_demand_vehicles",
       "total_inward_demand_attribute": "transport.total_inward_domestic_cargo_demand_vehicles",
       "atol": 0.001,
@@ -270,7 +270,7 @@
         }
       ],
       "local_parameters": [],
-      "parameter_dataset": "scenario_0000",
+      "parameter_dataset": "scenario_0",
       "total_outward_demand_attribute": "transport.total_outward_international_cargo_demand_vehicles",
       "total_inward_demand_attribute": "transport.total_inward_international_cargo_demand_vehicles",
       "atol": 0.001,
@@ -570,7 +570,7 @@
   ],
   "datasets": [
     {
-      "name": "scenario_0000",
+      "name": "scenario_0",
       "type": "parameters"
     },
     {
