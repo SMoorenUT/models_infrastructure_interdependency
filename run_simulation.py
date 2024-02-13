@@ -51,8 +51,8 @@ def main(args=None):
     # scenario_file = args[0]
     # output_dir = args[1]
     
-    scenario_file = "data/scenarios/test_ema.json"
-    output_dir = "data/scenarios/test_ema_09-02-2024"
+    scenario_file = "data/scenarios/test_ema_20240212.json"
+    output_dir = "data/scenarios/test_ema_20240212"
 
     run_simulation(scenario_file, output_dir)
 

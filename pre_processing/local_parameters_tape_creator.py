@@ -828,15 +828,15 @@ def create_single_area_entities_dict(
         municipalities_index_dict,
         population_dict_in_year_municipality_order[scenario_name],
         year,
-    )  # for some reason the function returns a tuple with the list as the first element
-    jobs_per_capita = None
+    )
+    jobs_per_capita = []
 
     return {
         "area_entities": {
             "id": list(range(len(municipalities))),
             "jobs.count.index": jobs_count_index,
             "people.count.index": people_count_index,
-            "jobs.per.capita": jobs_per_capita,
+            # "jobs.per.capita": jobs_per_capita,
         }
     }
 
@@ -862,7 +862,7 @@ def create_json_file(
     }
 
     pathlib.Path(
-        f"data/init_data_EMA/{scenario_name}_local_paramameters_tape"
+        f"data/init_data_EMA/{scenario_name.lower()}_local_paramameters_tape"
     ).with_suffix(".json").write_text(json.dumps(config, indent=2))
     return config
 
@@ -895,7 +895,13 @@ class LocalParametersConfig:
     population_dict_in_year_municipality_order = None
     jobs_dict_in_year_municipality_order = None
 
-    def __init__(self, scenario_name, population, jobs, filepath):
+    def __init__(
+        self,
+        scenario_name: str,
+        population: pd.DataFrame,
+        jobs: pd.DataFrame,
+        filepath: pathlib.Path,
+    ):
         if any(
             var is None
             for var in [
@@ -955,7 +961,7 @@ class LocalParametersConfig:
         return data_series
 
     def create_json_file(self):
-        pathlib.Path(self.filepath).with_suffix(".json").write_text(
+        pathlib.Path(self.filepath / f"{self.name}_local_parameters_tape").with_suffix(".json").write_text(
             json.dumps(self.config, indent=2)
         )
         return
@@ -1007,8 +1013,26 @@ def main():
     create_json_file(
         "Scenario_0", population_swapped, jobs_swapped, "test.json", data_series
     )
-    return population, jobs
+    return
+
+
+def alt_main():
+    num_samples = 10
+    length_num_samples = establish_length_num_samples(
+        num_samples
+    )  # To format the scenario names with approriate number of leading zeros
+    population_swapped, jobs_swapped, municipalities_index_dict = (
+        generate_population_and_job_data(num_samples, length_num_samples)
+    )
+    data_series = create_data_series(
+        municipalities_index_dict, population_swapped, jobs_swapped, "Scenario_0"
+    )
+    scenario_0 = LocalParametersConfig(
+        "Scenario_0", population_swapped, jobs_swapped, "data/init_data_EMA"
+    )
+    scenario_0.create_json_file()
+    return scenario_0
 
 
 if __name__ == "__main__":
-    population, jobs = main()
+    main()

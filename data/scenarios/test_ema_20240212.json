@@ -1,6 +1,6 @@
 {
-  "name": "test_ema_09_02_2024",
-  "display_name": "Test exploratory modelling and analysis 09/02/2024",
+  "name": "test_ema_20240212",
+  "display_name": "Test exploratory modelling and analysis 12/02/2024",
   "version": 4,
   "epsg_code": 28992,
   "bounding_box": [
@@ -16,7 +16,7 @@
     "reference_time": 1546333200,
     "duration": 1009152000
   },
-  "created_on": "09/02/2024",
+  "created_on": "12/02/2024",
   "description": "Exploratory modelling test scenario. Work in Progress.",
   "models": [
     {
@@ -27,8 +27,8 @@
     },
     {
       "type": "tape_player",
-      "name": "infraconomy_local_parameters_tape_tape_player",
-      "tabular": "infraconomy_local_parameters_tape"
+      "name": "scenario_0_local_paramameters_tape",
+      "tabular": "scenario_0_local_paramameters_tape"
     },
     {
       "type": "area_aggregation",
@@ -202,7 +202,7 @@
           "mapping_type": "nearest"
         }
       ],
-      "parameter_dataset": "scenario_0_global_parameters",
+      "parameter_dataset": "scenario_0",
       "total_outward_demand_attribute": "transport.total_outward_passenger_demand_vehicles",
       "total_inward_demand_attribute": "transport.total_inward_passenger_demand_vehicles",
       "atol": 0.001,
@@ -236,7 +236,7 @@
         }
       ],
       "local_parameters": [],
-      "parameter_dataset": "scenario_0_global_parameters",
+      "parameter_dataset": "scenario_0",
       "total_outward_demand_attribute": "transport.total_outward_domestic_cargo_demand_vehicles",
       "total_inward_demand_attribute": "transport.total_inward_domestic_cargo_demand_vehicles",
       "atol": 0.001,
@@ -270,7 +270,7 @@
         }
       ],
       "local_parameters": [],
-      "parameter_dataset": "scenario_0_global_parameters",
+      "parameter_dataset": "scenario_0",
       "total_outward_demand_attribute": "transport.total_outward_international_cargo_demand_vehicles",
       "total_inward_demand_attribute": "transport.total_inward_international_cargo_demand_vehicles",
       "atol": 0.001,
@@ -570,7 +570,7 @@
   ],
   "datasets": [
     {
-      "name": "scenario_0_global_parameters",
+      "name": "scenario_0",
       "type": "parameters"
     },
     {
@@ -590,7 +590,7 @@
       "type": "area_set"
     },
     {
-      "name": "infraconomy_local_parameters_tape",
+      "name": "scenario_0_local_paramameters_tape",
       "type": "tabular"
     },
     {

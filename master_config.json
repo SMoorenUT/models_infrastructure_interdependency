@@ -339,7 +339,7 @@
         "transport.total_inward_passenger_demand_vehicles"
       ],
       "atol": 0.001,
-      "rtol": 1e-06,
+      "rtol": 0.000001,
       "max_iterations": 30,
       "global_parameters": [
         "consumer_energy_price",
@@ -435,7 +435,7 @@
         "transport.total_inward_domestic_cargo_demand_vehicles"
       ],
       "atol": 0.001,
-      "rtol": 1e-06,
+      "rtol": 0.000001,
       "max_iterations": 30,
       "global_parameters": [
         "consumer_energy_price",
@@ -508,7 +508,7 @@
         "transport.total_inward_international_cargo_demand_vehicles"
       ],
       "atol": 0.001,
-      "rtol": 1e-06,
+      "rtol": 0.000001,
       "max_iterations": 30,
       "global_parameters": [
         "consumer_energy_price",
@@ -539,8 +539,8 @@
           null,
           "transport.average_time.star"
         ]
-      ],     
-       "local_geometries": [
+      ],
+      "local_geometries": [
         "line",
         "line"
       ],
@@ -698,8 +698,6 @@
       "coefficients_csv": [
         "traffic_kpi_coefficients_petrol"
       ],
-
-
       "energy_consumption_property": [
         null,
         "transport.energy_consumption_petrol.hours"
@@ -742,7 +740,7 @@
       "nox_emission_property": [
         null,
         "transport.nox_emission_electricity.hours"
-              ],
+      ],
       "passenger_scenario_parameters": [
         "electricity_share_passenger_road"
       ]
@@ -778,7 +776,6 @@
         "h2_share_passenger_road"
       ]
     },
-   
     {
       "name": "road_total_traffic_kpi",
       "type": "udf",
@@ -921,7 +918,7 @@
             "transport.passenger_demand.peak_yearly"
           ]
         }
-        ]
+      ]
     },
     {
       "name": "road_yearly_peak_flow",
@@ -1309,14 +1306,14 @@
         "transport.total_inward_passenger_demand"
       ],
       "atol": 0.001,
-      "rtol": 1e-06,
+      "rtol": 0.000001,
       "max_iterations": 30
     },
     {
       "name": "railway_domestic_cargo_demand_estimation",
       "type": "traffic_demand_calculation",
       "atol": 0.001,
-      "rtol": 1e-06,
+      "rtol": 0.000001,
       "max_iterations": 30,
       "local_mapping_type": [
         "route",
@@ -1397,7 +1394,7 @@
       "name": "railway_international_cargo_demand_estimation",
       "type": "traffic_demand_calculation",
       "atol": 0.001,
-      "rtol": 1e-06,
+      "rtol": 0.000001,
       "max_iterations": 30,
       "local_mapping_type": [
         "route",
@@ -2064,7 +2061,6 @@
         "line"
       ],
       "source_properties": [
-
         [
           null,
           "transport.passenger_flow"
@@ -2073,7 +2069,6 @@
           null,
           "transport.cargo_flow"
         ],
-      
         [
           null,
           "transport.energy_consumption.hours"
@@ -2248,7 +2243,7 @@
       "name": "waterway_domestic_cargo_demand_estimation",
       "type": "traffic_demand_calculation",
       "atol": 0.001,
-      "rtol": 1e-06,
+      "rtol": 0.000001,
       "max_iterations": 30,
       "local_mapping_type": [
         "route",
@@ -2332,7 +2327,7 @@
       "name": "waterway_international_cargo_demand_estimation",
       "type": "traffic_demand_calculation",
       "atol": 0.001,
-      "rtol": 1e-06,
+      "rtol": 0.000001,
       "max_iterations": 30,
       "local_mapping_type": [
         "route",
