@@ -270,11 +270,9 @@ corop_areas_study_area = [
 
 def get_corop_dictionary():
     # Read the tables from the webpage. The table we're interested in is the first one
-    corop_table = pd.read_html("https://nl.wikipedia.org/wiki/COROP")[0]
     corop_table_cbs = pd.DataFrame(cbsodata.get_data("84378NED"))
 
     # Create a dictionary where each key is a COROP area and each value is a list of municipalities in that area
-    corop_dict = corop_table.groupby("COROP-gebied")["Gemeenten"].apply(list).to_dict()
     corop_dict_cbs = corop_table_cbs.groupby("Naam_9")["Naam_2"].apply(list).to_dict()
 
     # Strip spaces from keys and values in corop_dict_cbs
@@ -284,20 +282,11 @@ def get_corop_dictionary():
     }
 
     # Drop all keys that are not in the jobs.df.iloc[:, 0] list
-    corop_dict = {
-        key: value for key, value in corop_dict.items() if key in corop_areas_study_area
-    }
     corop_dict_cbs = {
         key: value
         for key, value in corop_dict_cbs.items()
         if key in corop_areas_study_area
     }
-
-    # Create a list of all municipalities in the column "Gemeenten" in corop_dict
-    corop_municipalities = []
-    for value in corop_dict.values():
-        for municipality in value:
-            corop_municipalities.extend(municipality.split(","))
 
     # Create a list of all municipalities in the column "Gemeenten" in corop_dict_cbs
     corop_municipalities_cbs = []
@@ -306,14 +295,11 @@ def get_corop_dictionary():
             corop_municipalities_cbs.extend(municipality.split(","))
 
     # Delete leading spaces of strings in the lists
-    corop_municipalities = [
-        municipality.strip() for municipality in corop_municipalities
-    ]
     corop_municipalities_cbs = [
         municipality.strip() for municipality in corop_municipalities_cbs
     ]
 
-    return corop_dict, corop_municipalities, corop_dict_cbs, corop_municipalities_cbs
+    return corop_dict_cbs, corop_municipalities_cbs
 
 
 # Function to read CSV files
@@ -898,8 +884,8 @@ class LocalParametersConfig:
     def __init__(
         self,
         scenario_name: str,
-        population: pd.DataFrame,
-        jobs: pd.DataFrame,
+        population: dict,
+        jobs: dict,
         filepath: pathlib.Path,
     ):
         if any(
@@ -927,7 +913,8 @@ class LocalParametersConfig:
 
         self.config = {
             "name": self.scenario_name.lower(),
-            "display_name": self.scenario_name.replace("_", " ").title(),
+            "display_name": self.scenario_name.replace("_", " ").title()
+            + " Local Parameters",
             "type": "tabular",
             "created_on": dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             "description": "Local parameters for the municipalities in the Netherlands. The data is based on the population and jobs data from the CBS. The sample has been generated using latin hypercube sampling and cubic spline interpolation.",
@@ -938,7 +925,11 @@ class LocalParametersConfig:
             },
         }
 
+    def __repr__(self) -> str:
+        return f"LocalParametersConfig({self.scenario_name})"
+
     def create_data_series(
+        self,
         municipalities_index_dict: dict,
         population_dict_in_year_municipality_order: dict,
         jobs_dict_in_year_municipality_order: dict,
@@ -961,15 +952,21 @@ class LocalParametersConfig:
         return data_series
 
     def create_json_file(self):
-        pathlib.Path(self.filepath / f"{self.name}_local_parameters_tape").with_suffix(".json").write_text(
-            json.dumps(self.config, indent=2)
-        )
+        filename = pathlib.Path(
+            f"{self.scenario_name.lower()}_local_paramameters_tape"
+        ).with_suffix(".json")
+        filepath = pathlib.Path(self.filepath).joinpath(filename)
+        filepath.write_text(json.dumps(self.config, indent=2))
         return
 
 
 def generate_population_and_job_data(
     num_samples: int = 10, length_num_samples: int = 4
 ):
+    """"
+    Generate population and job data for the given number of samples.
+    Both the job and population dictionaries, as well as the municipalities_index_dict are fed into the LocalParametersConfig as a class variable.
+    """
     population = {
         f"Scenario_{i:0{length_num_samples}d}": create_population_dict_sample(
             df_bevolking_extended
@@ -977,29 +974,22 @@ def generate_population_and_job_data(
         for i in range(num_samples)
     }
     jobs_corop_level = generate_jobs_data(num_samples)
-    (
-        corop_dict,
-        corop_municipalities,
-        corop_dict_cbs,
-        corop_municipalities_cbs,
-    ) = get_corop_dictionary()
+    corop_dict_cbs, corop_municipalities_cbs = get_corop_dictionary()
     find_unique_values(municipalities_unique, corop_municipalities_cbs)
     jobs = derive_jobs_municipality_level(jobs_corop_level, corop_dict_cbs)
     compare_dicts(population, jobs)
 
-    municipalities_index_dict = municipalities_name_structure_match(
-        population["Scenario_0"]
-    )
+    municipalities_name_structure_match(list(population.items())[0][1])
     population_swapped = swap_dictionary_structure(population)
     jobs_swapped = swap_dictionary_structure(jobs)
     LocalParametersConfig.population_dict_in_year_municipality_order = (
         population_swapped
     )
     LocalParametersConfig.jobs_dict_in_year_municipality_order = jobs_swapped
-    return population_swapped, jobs_swapped, municipalities_index_dict
+    return population_swapped, jobs_swapped
 
 
-def main():
+def old_main():
     num_samples = 10
     length_num_samples = establish_length_num_samples(
         num_samples
@@ -1016,22 +1006,33 @@ def main():
     return
 
 
-def alt_main():
-    num_samples = 10
+def main():
+    num_samples = 11
     length_num_samples = establish_length_num_samples(
         num_samples
     )  # To format the scenario names with approriate number of leading zeros
-    population_swapped, jobs_swapped, municipalities_index_dict = (
-        generate_population_and_job_data(num_samples, length_num_samples)
+    OUTPUT_DIR = pathlib.Path("data/init_data_EMA")
+    
+    population_swapped, jobs_swapped = generate_population_and_job_data(
+        num_samples, length_num_samples
     )
-    data_series = create_data_series(
-        municipalities_index_dict, population_swapped, jobs_swapped, "Scenario_0"
-    )
-    scenario_0 = LocalParametersConfig(
-        "Scenario_0", population_swapped, jobs_swapped, "data/init_data_EMA"
-    )
-    scenario_0.create_json_file()
-    return scenario_0
+    # scenario_0 = LocalParametersConfig(
+    #     "Scenario_0", population_swapped, jobs_swapped, OUTPUT_DIR
+    # )
+    # scenario_0.create_json_file()
+
+    scenario_objects = []
+    for i in range(0, num_samples):
+        scenario = LocalParametersConfig(
+            f"Scenario_{i:0{length_num_samples}d}",
+            population_swapped,
+            jobs_swapped,
+            OUTPUT_DIR,
+        )
+        scenario.create_json_file()
+        scenario_objects.append(scenario)
+
+    return scenario_objects
 
 
 if __name__ == "__main__":

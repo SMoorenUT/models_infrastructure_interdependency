@@ -1,6 +1,9 @@
 # Import the necessary modules
-from global_parameters_sampling import global_parameters_sampling
-from local_parameters_tape_creator import local_parameters_tape_creator
+import global_parameters_sampling
+import local_parameters_tape_creator
+
+# Set number of scenarios
+number_of_scenarios = 100
 
 # Run global_parameters_sampling
 global_parameters_sampling()
