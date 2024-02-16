@@ -11,13 +11,15 @@ from tape_creator_functions import (
     cubic_spline_interpolation,
 )
 
+num_samples = 10
 CURR_DIR = pathlib.Path(__file__).parent
+OUTPUT_DIR = CURR_DIR.parent / "data" / "init_data_EMA"
 NEW_GLOBAL_VARIABLES = {
-        "consumer_energy_price": [0.2, 0.1, 0.3, 0.1, 0.5],
-        "road_load_factor_index": [0.5, 0.4, 0.6, 0.35, 0.85],
-        "train_ticket_price": [100, 99, 102, 95, 106],
-        "commuting_jobs_share": [0.87, 0.75, 0.9, 0.5, 0.95]
-        }
+    "consumer_energy_price": [0.2, 0.1, 0.3, 0.1, 0.5],
+    "road_load_factor_index": [0.5, 0.4, 0.6, 0.35, 0.85],
+    "train_ticket_price": [100, 99, 102, 95, 106],
+    "commuting_jobs_share": [0.87, 0.75, 0.9, 0.5, 0.95],
+}
 
 variables_list_global_params = [
     "average_remote_working_days",
@@ -100,9 +102,14 @@ def add_global_variable(
 
     return sampling_dictionary
 
-def add_global_variables(dictionary_of_global_variables_to_add: dict, dictionary_to_add_to: dict):
+
+def add_global_variables(
+    dictionary_of_global_variables_to_add: dict, dictionary_to_add_to: dict
+):
     for variable_name, values in dictionary_of_global_variables_to_add.items():
-        return_dictionary = add_global_variable(variable_name, values, dictionary_to_add_to)
+        return_dictionary = add_global_variable(
+            variable_name, values, dictionary_to_add_to
+        )
     return return_dictionary
 
 
@@ -122,19 +129,35 @@ def populate_dataframe_interpolated(interpolated_values: dict) -> dict:
     return scenario_dfs
 
 
-def save_global_parameters_scenarios_as_csv(final_scenarios_dfs):
-    # Save the DataFrames to CSV files
+def save_global_parameters_scenarios_as_csv(
+    final_scenarios_dfs: dict,
+    output_path: pathlib.Path = OUTPUT_DIR,
+):
+    """ 
+    Save the DataFrames to CSV files
+    """
     for scenario, df in final_scenarios_dfs.items():
-        file_path = (
-            CURR_DIR.parent / "data" / "init_data_EMA" / f"{scenario.lower()}.csv"
-        )
+        file_path = pathlib.Path(
+            output_path / f"{scenario.lower()}_global_parameters"
+        ).with_suffix(".csv")
         df.to_csv(file_path, index=True, header=True, sep=",", decimal=".")
 
 
-def main():
-    num_samples = 10
+def create_global_parameters_scenarios(
+    num_samples: int = 10,
+    output_path: pathlib.Path = OUTPUT_DIR,
+):
+    """
+    The main function to create X number of global parameter scenarions based on the number of samples provided.
+    First create a dictionary to sample from, then add missing global variables to the dictionary.
+    Then perform latin hypercube sampling to sample the values for each variable for the years 2030 and 2050.
+    Interpolate the values between 2019 and 2030 and between 2030 and 2050 using cubic spline interpolation.
+    The dataframes are stored as csv files in the provided path folder.
+    """
     sampling_dictionary = create_sampling_dictionary(df_for_sampling_input)
-    sampling_dictionary = add_global_variables(NEW_GLOBAL_VARIABLES, sampling_dictionary)
+    sampling_dictionary = add_global_variables(
+        NEW_GLOBAL_VARIABLES, sampling_dictionary
+    )
 
     lhs_samples_dict = latin_hypercube_sampling(sampling_dictionary, num_samples)
     interpolated_values = cubic_spline_interpolation(
@@ -142,7 +165,11 @@ def main():
     )
 
     final_scenarios_dfs = populate_dataframe_interpolated(interpolated_values)
-    save_global_parameters_scenarios_as_csv(final_scenarios_dfs)
+    save_global_parameters_scenarios_as_csv(final_scenarios_dfs, output_path)
+
+
+def main():
+    create_global_parameters_scenarios(num_samples)
 
 
 if __name__ == "__main__":

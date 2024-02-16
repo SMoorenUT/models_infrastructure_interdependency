@@ -18,6 +18,7 @@ from tape_creator_functions import (
 
 
 CURR_DIR = pathlib.Path(__file__).parent
+OUTPUT_DIR = CURR_DIR.parent / "data" / "init_data_EMA"
 POPULATION_CSV = CURR_DIR.joinpath(
     "input_data/03759ned_UntypedDataSet_04122023_152457.csv"
 )
@@ -963,7 +964,7 @@ class LocalParametersConfig:
 def generate_population_and_job_data(
     num_samples: int = 10, length_num_samples: int = 4
 ):
-    """"
+    """ "
     Generate population and job data for the given number of samples.
     Both the job and population dictionaries, as well as the municipalities_index_dict are fed into the LocalParametersConfig as a class variable.
     """
@@ -989,37 +990,17 @@ def generate_population_and_job_data(
     return population_swapped, jobs_swapped
 
 
-def old_main():
-    num_samples = 10
+def create_local_parameters_scenarios(
+    num_samples: int = 10,
+    output_path: pathlib.Path = OUTPUT_DIR,
+):
     length_num_samples = establish_length_num_samples(
         num_samples
     )  # To format the scenario names with approriate number of leading zeros
-    population_swapped, jobs_swapped, municipalities_index_dict = (
-        generate_population_and_job_data(num_samples, length_num_samples)
-    )
-    data_series = create_data_series(
-        municipalities_index_dict, population_swapped, jobs_swapped, "Scenario_0"
-    )
-    create_json_file(
-        "Scenario_0", population_swapped, jobs_swapped, "test.json", data_series
-    )
-    return
 
-
-def main():
-    num_samples = 11
-    length_num_samples = establish_length_num_samples(
-        num_samples
-    )  # To format the scenario names with approriate number of leading zeros
-    OUTPUT_DIR = pathlib.Path("data/init_data_EMA")
-    
     population_swapped, jobs_swapped = generate_population_and_job_data(
         num_samples, length_num_samples
     )
-    # scenario_0 = LocalParametersConfig(
-    #     "Scenario_0", population_swapped, jobs_swapped, OUTPUT_DIR
-    # )
-    # scenario_0.create_json_file()
 
     scenario_objects = []
     for i in range(0, num_samples):
@@ -1027,13 +1008,16 @@ def main():
             f"Scenario_{i:0{length_num_samples}d}",
             population_swapped,
             jobs_swapped,
-            OUTPUT_DIR,
+            output_path,
         )
         scenario.create_json_file()
         scenario_objects.append(scenario)
 
     return scenario_objects
 
+
+def main():
+    create_local_parameters_scenarios()
 
 if __name__ == "__main__":
     main()
