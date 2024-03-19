@@ -11,6 +11,7 @@ from movici_simulation_core.models.common.attributes import CommonAttributes
 
 CURRENT_DIR = Path(__file__).parent
 input_dir = CURRENT_DIR.joinpath("data/init_data")
+
 # output_dir = CURRENT_DIR.joinpath("simulations")
 
 # SCENARIO_DIR = CURRENT_DIR.joinpath('data/scenarios')
@@ -51,8 +52,8 @@ def main(args=None):
     # scenario_file = args[0]
     # output_dir = args[1]
     
-    scenario_file = "data/scenarios/master_config.json"
-    output_dir = "data/scenarios/intermodal_simulation_output"
+    scenario_file = "data/scenarios_ema/ema_road_model_19_03_2024_scenario_0.json"
+    output_dir = "data/scenarios_ema/ema_road_model_19_03_2024_scenario_0"
 
     run_simulation(scenario_file, output_dir)
 

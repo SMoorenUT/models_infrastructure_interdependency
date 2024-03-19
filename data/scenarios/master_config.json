@@ -1,0 +1,2865 @@
+{
+  "name": "infraconomy",
+  "display_name": "Infraconomy",
+  "version": 4,
+  "epsg_code": 28992,
+  "bounding_box": [
+    1,
+    2,
+    3,
+    4
+  ],
+  "simulation_info": {
+    "mode": "time_oriented",
+    "start_time": 0,
+    "time_scale": 1,
+    "reference_time": 1546333200,
+    "duration": 1009152000
+  },
+  "description": "Ritri Infraconomy scenario. Calculations reference: Asgarpour, S., Konstantinos, K., Hartmann, A., and Neef, R. (2021). Modeling interdependent infrastructures under future scenarios. Work in Progress.",
+  "models": [
+    {
+      "type": "data_collector",
+      "name": "data_collector",
+      "aggregate_updates": false,
+      "gather_filter": "*"
+    },
+    {
+      "type": "tape_player",
+      "name": "local_parameters_player",
+      "tabular": [
+        "infraconomy_local_parameters_tape"
+      ]
+    },
+    {
+      "type": "area_aggregation",
+      "name": "road_municipalities_aggregation",
+      "target_entity_group": [
+        [
+          "municipalities_area_set",
+          "area_entities"
+        ]
+      ],
+      "source_entity_groups": [
+        [
+          "road_network",
+          "road_segment_entities"
+        ],
+        [
+          "road_network",
+          "road_segment_entities"
+        ],
+        [
+          "road_network",
+          "road_segment_entities"
+        ],
+        [
+          "road_network",
+          "road_segment_entities"
+        ],
+        [
+          "road_network",
+          "road_segment_entities"
+        ],
+        [
+          "road_network",
+          "road_segment_entities"
+        ],
+        [
+          "road_network",
+          "road_segment_entities"
+        ],
+        [
+          "road_network",
+          "road_segment_entities"
+        ],
+        [
+          "road_network",
+          "road_segment_entities"
+        ],
+        [
+          "road_network",
+          "road_segment_entities"
+        ],
+        [
+          "road_network",
+          "road_segment_entities"
+        ],
+        [
+          "road_network",
+          "road_segment_entities"
+        ],
+        [
+          "road_network",
+          "road_segment_entities"
+        ],
+        [
+          "road_network",
+          "road_segment_entities"
+        ],
+        [
+          "road_network",
+          "road_segment_entities"
+        ],
+        [
+          "road_network",
+          "road_segment_entities"
+        ],
+        [
+          "road_network",
+          "road_segment_entities"
+        ],
+        [
+          "road_network",
+          "road_segment_entities"
+        ]
+      ],
+      "source_geometry_types": [
+        "line",
+        "line",
+        "line",
+        "line",
+        "line",
+        "line",
+        "line",
+        "line",
+        "line",
+        "line",
+        "line",
+        "line",
+        "line",
+        "line",
+        "line",
+        "line",
+        "line",
+        "line"
+      ],
+      "source_properties": [
+        [
+          null,
+          "transport.passenger_flow"
+        ],
+        [
+          null,
+          "transport.cargo_flow"
+        ],
+        [
+          null,
+          "transport.energy_consumption.hours"
+        ],
+        [
+          null,
+          "transport.co2_emission.hours"
+        ],
+        [
+          null,
+          "transport.nox_emission.hours"
+        ],
+        [
+          null,
+          "transport.energy_consumption.hours"
+        ],
+        [
+          null,
+          "transport.co2_emission.hours"
+        ],
+        [
+          null,
+          "transport.nox_emission.hours"
+        ],
+        [
+          null,
+          "transport.passenger_flow"
+        ],
+        [
+          null,
+          "transport.cargo_flow"
+        ],
+        [
+          null,
+          "transport.passenger_vehicle_flow"
+        ],
+        [
+          null,
+          "transport.cargo_vehicle_flow"
+        ],
+        [
+          null,
+          "transport.volume_to_capacity_ratio"
+        ],
+        [
+          null,
+          "transport.delay_factor"
+        ],
+        [
+          null,
+          "transport.passenger_vehicle_flow"
+        ],
+        [
+          null,
+          "transport.cargo_vehicle_flow"
+        ],
+        [
+          null,
+          "transport.volume_to_capacity_ratio"
+        ],
+        [
+          null,
+          "transport.delay_factor"
+        ]
+      ],
+      "aggregation_functions": [
+        "max",
+        "max",
+        "integral_hours",
+        "integral_hours",
+        "integral_hours",
+        "sum",
+        "sum",
+        "sum",
+        "sum",
+        "sum",
+        "max",
+        "max",
+        "max",
+        "max",
+        "sum",
+        "sum",
+        "average",
+        "average"
+      ],
+      "target_properties": [
+        [
+          null,
+          "transport.passenger_flow.roads"
+        ],
+        [
+          null,
+          "transport.cargo_flow.roads"
+        ],
+        [
+          null,
+          "transport.energy_consumption.roads"
+        ],
+        [
+          null,
+          "transport.co2_emission.roads"
+        ],
+        [
+          null,
+          "transport.nox_emission.roads"
+        ],
+        [
+          null,
+          "transport.energy_consumption.hours.roads"
+        ],
+        [
+          null,
+          "transport.co2_emission.hours.roads"
+        ],
+        [
+          null,
+          "transport.nox_emission.hours.roads"
+        ],
+        [
+          null,
+          "transport.passenger_flow.roads.total"
+        ],
+        [
+          null,
+          "transport.cargo_flow.roads.total"
+        ],
+        [
+          null,
+          "transport.passenger_vehicle_flow.roads"
+        ],
+        [
+          null,
+          "transport.cargo_vehicle_flow.roads"
+        ],
+        [
+          null,
+          "transport.volume_to_capacity_ratio.roads.max"
+        ],
+        [
+          null,
+          "transport.delay_factor.roads.max"
+        ],
+        [
+          null,
+          "transport.passenger_vehicle_flow.roads.total"
+        ],
+        [
+          null,
+          "transport.cargo_vehicle_flow.roads.total"
+        ],
+        [
+          null,
+          "transport.volume_to_capacity_ratio.roads.average"
+        ],
+        [
+          null,
+          "transport.delay_factor.roads.average"
+        ]
+      ],
+      "output_interval": 2628000
+    },
+    {
+      "type": "traffic_assignment_calculation",
+      "name": "road_traffic_assignment",
+      "roads": [
+        "road_network"
+      ],
+      "vdf_alpha": 0.64,
+      "vdf_beta": 4,
+      "cargo_pcu": 2
+    },
+    {
+      "type": "traffic_demand_calculation",
+      "name": "road_passenger_demand_estimation",
+      "scenario_parameters": [
+        "infraconomy_interpolated"
+      ],
+      "demand_entity": [
+        [
+          "road_network",
+          "virtual_node_entities"
+        ]
+      ],
+      "demand_property": [
+        null,
+        "transport.passenger_demand"
+      ],
+      "total_outward_demand_property": [
+        null,
+        "transport.total_outward_passenger_demand_vehicles"
+      ],
+      "total_inward_demand_property": [
+        null,
+        "transport.total_inward_passenger_demand_vehicles"
+      ],
+      "atol": 0.001,
+      "rtol": 0.000001,
+      "max_iterations": 30,
+      "global_parameters": [
+        "consumer_energy_price",
+        "gdp",
+        "train_ticket_price",
+        "total_vehicles",
+        "commuting_jobs_share"
+      ],
+      "global_elasticities": [
+        -0.17,
+        0.38,
+        0.02,
+        0.6,
+        0.64
+      ],
+      "local_entity_groups": [
+        [
+          "municipalities_area_set",
+          "area_entities"
+        ],
+        [
+          "municipalities_area_set",
+          "area_entities"
+        ],
+        [
+          "road_network",
+          "road_segment_entities"
+        ],
+        [
+          "railway_network",
+          "virtual_node_entities"
+        ]
+      ],
+      "local_properties": [
+        [
+          null,
+          "jobs.count.index"
+        ],
+        [
+          null,
+          "people.count.index"
+        ],
+        [
+          null,
+          "transport.average_time.star"
+        ],
+        [
+          null,
+          "transport.generalized_journey_time"
+        ]
+      ],
+      "local_geometries": [
+        "polygon",
+        "polygon",
+        "line",
+        "point"
+      ],
+      "local_mapping_type": [
+        "nearest",
+        "nearest",
+        "route",
+        "nearest"
+      ],
+      "local_elasticities": [
+        0.64,
+        0.33,
+        -1.1,
+        0.14
+      ]
+    },
+    {
+      "type": "traffic_demand_calculation",
+      "name": "road_domestic_cargo_demand_estimation",
+      "scenario_parameters": [
+        "infraconomy_interpolated"
+      ],
+      "demand_entity": [
+        [
+          "road_network",
+          "virtual_node_entities"
+        ]
+      ],
+      "demand_property": [
+        null,
+        "transport.domestic_cargo_demand"
+      ],
+      "total_outward_demand_property": [
+        null,
+        "transport.total_outward_domestic_cargo_demand_vehicles"
+      ],
+      "total_inward_demand_property": [
+        null,
+        "transport.total_inward_domestic_cargo_demand_vehicles"
+      ],
+      "atol": 0.001,
+      "rtol": 0.000001,
+      "max_iterations": 30,
+      "global_parameters": [
+        "consumer_energy_price",
+        "gdp",
+        "share_service_sector_gdp"
+      ],
+      "global_elasticities": [
+        -0.07,
+        0.57,
+        -0.8
+      ],
+      "local_entity_groups": [
+        [
+          "road_network",
+          "road_segment_entities"
+        ],
+        [
+          "waterway_network",
+          "waterway_segment_entities"
+        ]
+      ],
+      "local_properties": [
+        [
+          null,
+          "transport.average_time.star"
+        ],
+        [
+          null,
+          "transport.average_time.star"
+        ]
+      ],
+      "local_geometries": [
+        "line",
+        "line"
+      ],
+      "local_mapping_type": [
+        "route",
+        "route"
+      ],
+      "local_elasticities": [
+        -0.1,
+        0.086
+      ],
+      "scenario_multipliers": [
+        "road_load_factor_multiplier"
+      ]
+    },
+    {
+      "type": "traffic_demand_calculation",
+      "name": "road_international_cargo_demand_estimation",
+      "scenario_parameters": [
+        "infraconomy_interpolated"
+      ],
+      "demand_entity": [
+        [
+          "road_network",
+          "virtual_node_entities"
+        ]
+      ],
+      "demand_property": [
+        null,
+        "transport.international_cargo_demand"
+      ],
+      "total_outward_demand_property": [
+        null,
+        "transport.total_outward_international_cargo_demand_vehicles"
+      ],
+      "total_inward_demand_property": [
+        null,
+        "transport.total_inward_international_cargo_demand_vehicles"
+      ],
+      "atol": 0.001,
+      "rtol": 0.000001,
+      "max_iterations": 30,
+      "global_parameters": [
+        "consumer_energy_price",
+        "world_trade_volume",
+        "share_service_sector_gdp"
+      ],
+      "global_elasticities": [
+        -0.07,
+        0.41,
+        -0.8
+      ],
+      "local_entity_groups": [
+        [
+          "road_network",
+          "road_segment_entities"
+        ],
+        [
+          "waterway_network",
+          "waterway_segment_entities"
+        ]
+      ],
+      "local_properties": [
+        [
+          null,
+          "transport.average_time.star"
+        ],
+        [
+          null,
+          "transport.average_time.star"
+        ]
+      ],
+      "local_geometries": [
+        "line",
+        "line"
+      ],
+      "local_mapping_type": [
+        "route",
+        "route"
+      ],
+      "local_elasticities": [
+        -0.1,
+        0.086
+      ],
+      "scenario_multipliers": [
+        "road_load_factor_multiplier"
+      ]
+    },
+    {
+      "name": "road_relaxation",
+      "type": "udf",
+      "entity_group": [
+        [
+          "road_network",
+          "road_segment_entities"
+        ]
+      ],
+      "inputs": {
+        "outgoing": [
+          null,
+          "transport.average_time.star"
+        ],
+        "incoming": [
+          null,
+          "transport.average_time"
+        ]
+      },
+      "functions": [
+        {
+          "expression": "0.4*default(outgoing, incoming)+0.6*incoming",
+          "output": [
+            null,
+            "transport.average_time.star"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "road_combined_cargo_demand",
+      "type": "udf",
+      "entity_group": [
+        [
+          "road_network",
+          "virtual_node_entities"
+        ]
+      ],
+      "inputs": {
+        "domestic": [
+          null,
+          "transport.domestic_cargo_demand"
+        ],
+        "intl": [
+          null,
+          "transport.international_cargo_demand"
+        ]
+      },
+      "functions": [
+        {
+          "expression": "domestic+intl",
+          "output": [
+            null,
+            "transport.cargo_demand"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "road_total_cargo_demand",
+      "type": "udf",
+      "entity_group": [
+        [
+          "road_network",
+          "virtual_node_entities"
+        ]
+      ],
+      "inputs": {
+        "total_inward_domestic": [
+          null,
+          "transport.total_inward_domestic_cargo_demand_vehicles"
+        ],
+        "total_inward_intl": [
+          null,
+          "transport.total_inward_international_cargo_demand_vehicles"
+        ],
+        "total_outward_domestic": [
+          null,
+          "transport.total_outward_domestic_cargo_demand_vehicles"
+        ],
+        "total_outward_intl": [
+          null,
+          "transport.total_outward_international_cargo_demand_vehicles"
+        ]
+      },
+      "functions": [
+        {
+          "expression": "total_inward_domestic+total_inward_intl",
+          "output": [
+            null,
+            "transport.total_inward_cargo_demand_vehicles"
+          ]
+        },
+        {
+          "expression": "total_outward_domestic+total_outward_intl",
+          "output": [
+            null,
+            "transport.total_outward_cargo_demand_vehicles"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "traffic_kpi",
+      "name": "road_kpi_diesel",
+      "roads": [
+        "road_network"
+      ],
+      "scenario_parameters": [
+        "infraconomy_interpolated"
+      ],
+      "coefficients_csv": [
+        "traffic_kpi_coefficients_diesel"
+      ],
+      "cargo_scenario_parameters": [
+        "diesel_share_freight_road"
+      ],
+      "energy_consumption_property": [
+        null,
+        "transport.energy_consumption_diesel.hours"
+      ],
+      "co2_emission_property": [
+        null,
+        "transport.co2_emission_diesel.hours"
+      ],
+      "nox_emission_property": [
+        null,
+        "transport.nox_emission_diesel.hours"
+      ]
+    },
+    {
+      "type": "traffic_kpi",
+      "name": "road_kpi_petrol",
+      "roads": [
+        "road_network"
+      ],
+      "scenario_parameters": [
+        "infraconomy_interpolated"
+      ],
+      "coefficients_csv": [
+        "traffic_kpi_coefficients_petrol"
+      ],
+      "energy_consumption_property": [
+        null,
+        "transport.energy_consumption_petrol.hours"
+      ],
+      "co2_emission_property": [
+        null,
+        "transport.co2_emission_petrol.hours"
+      ],
+      "nox_emission_property": [
+        null,
+        "transport.nox_emission_petrol.hours"
+      ],
+      "passenger_scenario_parameters": [
+        "petrol_share_passenger_road"
+      ]
+    },
+    {
+      "type": "traffic_kpi",
+      "name": "road_kpi_electricity",
+      "roads": [
+        "road_network"
+      ],
+      "scenario_parameters": [
+        "infraconomy_interpolated"
+      ],
+      "coefficients_csv": [
+        "traffic_kpi_coefficients_electricity"
+      ],
+      "cargo_scenario_parameters": [
+        "electricity_share_freight_road"
+      ],
+      "energy_consumption_property": [
+        null,
+        "transport.energy_consumption_electricity.hours"
+      ],
+      "co2_emission_property": [
+        null,
+        "transport.co2_emission_electricity.hours"
+      ],
+      "nox_emission_property": [
+        null,
+        "transport.nox_emission_electricity.hours"
+      ],
+      "passenger_scenario_parameters": [
+        "electricity_share_passenger_road"
+      ]
+    },
+    {
+      "type": "traffic_kpi",
+      "name": "road_kpi_h2",
+      "roads": [
+        "road_network"
+      ],
+      "scenario_parameters": [
+        "infraconomy_interpolated"
+      ],
+      "coefficients_csv": [
+        "traffic_kpi_coefficients_h2"
+      ],
+      "cargo_scenario_parameters": [
+        "h2_share_freight_road"
+      ],
+      "energy_consumption_property": [
+        null,
+        "transport.energy_consumption_h2.hours"
+      ],
+      "co2_emission_property": [
+        null,
+        "transport.co2_emission_h2.hours"
+      ],
+      "nox_emission_property": [
+        null,
+        "transport.nox_emission_h2.hours"
+      ],
+      "passenger_scenario_parameters": [
+        "h2_share_passenger_road"
+      ]
+    },
+    {
+      "name": "road_total_traffic_kpi",
+      "type": "udf",
+      "entity_group": [
+        [
+          "road_network",
+          "road_segment_entities"
+        ]
+      ],
+      "inputs": {
+        "coo_diesel": [
+          null,
+          "transport.co2_emission_diesel.hours"
+        ],
+        "coo_petrol": [
+          null,
+          "transport.co2_emission_petrol.hours"
+        ],
+        "coo_electricity": [
+          null,
+          "transport.co2_emission_electricity.hours"
+        ],
+        "coo_hh": [
+          null,
+          "transport.co2_emission_h2.hours"
+        ],
+        "nox_diesel": [
+          null,
+          "transport.nox_emission_diesel.hours"
+        ],
+        "nox_petrol": [
+          null,
+          "transport.nox_emission_petrol.hours"
+        ],
+        "nox_electricity": [
+          null,
+          "transport.nox_emission_electricity.hours"
+        ],
+        "nox_hh": [
+          null,
+          "transport.nox_emission_h2.hours"
+        ],
+        "energy_diesel": [
+          null,
+          "transport.energy_consumption_diesel.hours"
+        ],
+        "energy_petrol": [
+          null,
+          "transport.energy_consumption_petrol.hours"
+        ],
+        "energy_electricity": [
+          null,
+          "transport.energy_consumption_electricity.hours"
+        ],
+        "energy_hh": [
+          null,
+          "transport.energy_consumption_h2.hours"
+        ]
+      },
+      "functions": [
+        {
+          "expression": "coo_diesel+coo_petrol+coo_electricity+coo_hh",
+          "output": [
+            null,
+            "transport.co2_emission.hours"
+          ]
+        },
+        {
+          "expression": "nox_diesel+nox_petrol+nox_electricity+nox_hh",
+          "output": [
+            null,
+            "transport.nox_emission.hours"
+          ]
+        },
+        {
+          "expression": "energy_diesel+energy_petrol+energy_electricity+energy_hh",
+          "output": [
+            null,
+            "transport.energy_consumption.hours"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "unit_conversions",
+      "name": "road_unit_conversion",
+      "flow_entities": [
+        [
+          "road_network",
+          "road_segment_entities"
+        ]
+      ],
+      "parameters": [
+        "traffic_kpi_coefficients_diesel"
+      ],
+      "od_entities": [
+        [
+          "road_network",
+          "virtual_node_entities"
+        ]
+      ],
+      "od_types": [
+        "roads"
+      ],
+      "flow_types": [
+        "roads"
+      ]
+    },
+    {
+      "name": "road_yearly_peak_demand",
+      "type": "udf",
+      "entity_group": [
+        [
+          "road_network",
+          "virtual_node_entities"
+        ]
+      ],
+      "inputs": {
+        "passenger_demand": [
+          null,
+          "transport.passenger_demand"
+        ],
+        "cargo_demand": [
+          null,
+          "transport.cargo_demand"
+        ]
+      },
+      "functions": [
+        {
+          "expression": "sum(cargo_demand*365*4)",
+          "output": [
+            null,
+            "transport.cargo_demand.peak_yearly"
+          ]
+        },
+        {
+          "expression": "sum(passenger_demand*365*4)",
+          "output": [
+            null,
+            "transport.passenger_demand.peak_yearly"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "road_yearly_peak_flow",
+      "type": "udf",
+      "entity_group": [
+        [
+          "road_network",
+          "road_segment_entities"
+        ]
+      ],
+      "inputs": {
+        "cargo_flow": [
+          null,
+          "transport.cargo_vehicle_flow"
+        ],
+        "length": [
+          null,
+          "shape.length"
+        ],
+        "passenger_flow": [
+          null,
+          "transport.passenger_vehicle_flow"
+        ]
+      },
+      "functions": [
+        {
+          "expression": "cargo_flow*length*0.001*365*4",
+          "output": [
+            null,
+            "transport.cargo_vkm.peak_yearly"
+          ]
+        },
+        {
+          "expression": "passenger_flow*length*0.001*365*4",
+          "output": [
+            null,
+            "transport.passenger_vkm.peak_yearly"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "area_aggregation",
+      "name": "road_total_aggregation",
+      "source_entity_groups": [
+        [
+          "road_network",
+          "road_segment_entities"
+        ],
+        [
+          "road_network",
+          "virtual_node_entities"
+        ],
+        [
+          "road_network",
+          "road_segment_entities"
+        ],
+        [
+          "road_network",
+          "virtual_node_entities"
+        ]
+      ],
+      "source_geometry_types": [
+        "line",
+        "point",
+        "line",
+        "point"
+      ],
+      "source_properties": [
+        [
+          null,
+          "transport.cargo_vkm.peak_yearly"
+        ],
+        [
+          null,
+          "transport.cargo_demand.peak_yearly"
+        ],
+        [
+          null,
+          "transport.passenger_vkm.peak_yearly"
+        ],
+        [
+          null,
+          "transport.passenger_demand.peak_yearly"
+        ]
+      ],
+      "target_entity_group": [
+        [
+          "total_area",
+          "area_entities"
+        ]
+      ],
+      "aggregation_functions": [
+        "sum",
+        "sum",
+        "sum",
+        "sum"
+      ],
+      "target_properties": [
+        [
+          null,
+          "transport.cargo_vkm.peak_yearly.roads"
+        ],
+        [
+          null,
+          "transport.cargo_demand.peak_yearly.roads"
+        ],
+        [
+          null,
+          "transport.passenger_vkm.peak_yearly.roads"
+        ],
+        [
+          null,
+          "transport.passenger_demand.peak_yearly.roads"
+        ]
+      ]
+    },
+    {
+      "name": "railway_municipalities_aggregation",
+      "type": "area_aggregation",
+      "output_interval": 2628000,
+      "target_entity_group": [
+        [
+          "municipalities_area_set",
+          "area_entities"
+        ]
+      ],
+      "source_entity_groups": [
+        [
+          "railway_network",
+          "track_segment_entities"
+        ],
+        [
+          "railway_network",
+          "track_segment_entities"
+        ],
+        [
+          "railway_network",
+          "track_segment_entities"
+        ],
+        [
+          "railway_network",
+          "track_segment_entities"
+        ],
+        [
+          "railway_network",
+          "track_segment_entities"
+        ],
+        [
+          "railway_network",
+          "track_segment_entities"
+        ],
+        [
+          "railway_network",
+          "track_segment_entities"
+        ],
+        [
+          "railway_network",
+          "track_segment_entities"
+        ],
+        [
+          "railway_network",
+          "track_segment_entities"
+        ],
+        [
+          "railway_network",
+          "track_segment_entities"
+        ]
+      ],
+      "source_geometry_types": [
+        "line",
+        "line",
+        "line",
+        "line",
+        "line",
+        "line",
+        "line",
+        "line",
+        "line",
+        "line"
+      ],
+      "source_properties": [
+        [
+          null,
+          "transport.passenger_flow"
+        ],
+        [
+          null,
+          "transport.cargo_flow"
+        ],
+        [
+          null,
+          "transport.energy_consumption.hours"
+        ],
+        [
+          null,
+          "transport.co2_emission.hours"
+        ],
+        [
+          null,
+          "transport.nox_emission.hours"
+        ],
+        [
+          null,
+          "transport.energy_consumption.hours"
+        ],
+        [
+          null,
+          "transport.co2_emission.hours"
+        ],
+        [
+          null,
+          "transport.nox_emission.hours"
+        ],
+        [
+          null,
+          "transport.passenger_flow"
+        ],
+        [
+          null,
+          "transport.cargo_flow"
+        ]
+      ],
+      "aggregation_functions": [
+        "max",
+        "max",
+        "integral_hours",
+        "integral_hours",
+        "integral_hours",
+        "sum",
+        "sum",
+        "sum",
+        "sum",
+        "sum"
+      ],
+      "target_properties": [
+        [
+          null,
+          "transport.passenger_flow.railways"
+        ],
+        [
+          null,
+          "transport.cargo_flow.railways"
+        ],
+        [
+          null,
+          "transport.energy_consumption.railways"
+        ],
+        [
+          null,
+          "transport.co2_emission.railways"
+        ],
+        [
+          null,
+          "transport.nox_emission.railways"
+        ],
+        [
+          null,
+          "transport.energy_consumption.hours.railways"
+        ],
+        [
+          null,
+          "transport.co2_emission.hours.railways"
+        ],
+        [
+          null,
+          "transport.nox_emission.hours.railways"
+        ],
+        [
+          null,
+          "transport.passenger_flow.railways.total"
+        ],
+        [
+          null,
+          "transport.cargo_flow.railways.total"
+        ]
+      ]
+    },
+    {
+      "type": "traffic_assignment_calculation",
+      "name": "railway_cargo_traffic_assignment",
+      "cargo_tracks": [
+        "railway_network"
+      ]
+    },
+    {
+      "type": "traffic_assignment_calculation",
+      "name": "railway_passenger_traffic_assignment",
+      "passenger_tracks": [
+        "railway_network"
+      ]
+    },
+    {
+      "type": "traffic_demand_calculation",
+      "name": "railway_passenger_demand_estimation",
+      "scenario_parameters": [
+        "infraconomy_interpolated"
+      ],
+      "local_mapping_type": [
+        "nearest",
+        "nearest",
+        "nearest",
+        "route"
+      ],
+      "local_elasticities": [
+        0.64,
+        0.33,
+        -1.51,
+        0.24
+      ],
+      "local_entity_groups": [
+        [
+          "municipalities_area_set",
+          "area_entities"
+        ],
+        [
+          "municipalities_area_set",
+          "area_entities"
+        ],
+        [
+          "railway_network",
+          "virtual_node_entities"
+        ],
+        [
+          "road_network",
+          "road_segment_entities"
+        ]
+      ],
+      "local_properties": [
+        [
+          null,
+          "jobs.count.index"
+        ],
+        [
+          null,
+          "people.count.index"
+        ],
+        [
+          null,
+          "transport.generalized_journey_time"
+        ],
+        [
+          null,
+          "transport.average_time.star"
+        ]
+      ],
+      "local_geometries": [
+        "polygon",
+        "polygon",
+        "point",
+        "line"
+      ],
+      "global_parameters": [
+        "consumer_energy_price",
+        "income",
+        "train_ticket_price",
+        "train_punctuality",
+        "total_vehicles",
+        "commuting_jobs_share"
+      ],
+      "global_elasticities": [
+        -0.11,
+        0.65,
+        -0.63,
+        1.1,
+        -0.02,
+        0.29
+      ],
+      "demand_entity": [
+        [
+          "railway_network",
+          "virtual_node_entities"
+        ]
+      ],
+      "demand_property": [
+        null,
+        "transport.passenger_demand"
+      ],
+      "total_outward_demand_property": [
+        null,
+        "transport.total_outward_passenger_demand"
+      ],
+      "total_inward_demand_property": [
+        null,
+        "transport.total_inward_passenger_demand"
+      ],
+      "atol": 0.001,
+      "rtol": 0.000001,
+      "max_iterations": 30
+    },
+    {
+      "name": "railway_domestic_cargo_demand_estimation",
+      "type": "traffic_demand_calculation",
+      "atol": 0.001,
+      "rtol": 0.000001,
+      "max_iterations": 30,
+      "local_mapping_type": [
+        "route",
+        "route",
+        "route"
+      ],
+      "local_geometries": [
+        "line",
+        "line",
+        "line"
+      ],
+      "local_elasticities": [
+        -0.211,
+        0.223,
+        0.6
+      ],
+      "local_entity_groups": [
+        [
+          "railway_network",
+          "track_segment_entities"
+        ],
+        [
+          "road_network",
+          "road_segment_entities"
+        ],
+        [
+          "waterway_network",
+          "waterway_segment_entities"
+        ]
+      ],
+      "local_properties": [
+        [
+          null,
+          "transport.average_time.star"
+        ],
+        [
+          null,
+          "transport.average_time.star"
+        ],
+        [
+          null,
+          "transport.average_time.star"
+        ]
+      ],
+      "demand_entity": [
+        [
+          "railway_network",
+          "virtual_node_entities"
+        ]
+      ],
+      "total_inward_demand_property": [
+        null,
+        "transport.total_inward_domestic_cargo_demand"
+      ],
+      "scenario_parameters": [
+        "infraconomy_interpolated"
+      ],
+      "demand_property": [
+        null,
+        "transport.domestic_cargo_demand"
+      ],
+      "global_elasticities": [
+        0.22,
+        0.57,
+        -0.8
+      ],
+      "total_outward_demand_property": [
+        null,
+        "transport.total_outward_domestic_cargo_demand"
+      ],
+      "global_parameters": [
+        "consumer_energy_price",
+        "gdp",
+        "share_service_sector_gdp"
+      ]
+    },
+    {
+      "name": "railway_international_cargo_demand_estimation",
+      "type": "traffic_demand_calculation",
+      "atol": 0.001,
+      "rtol": 0.000001,
+      "max_iterations": 30,
+      "local_mapping_type": [
+        "route",
+        "route",
+        "route"
+      ],
+      "local_geometries": [
+        "line",
+        "line",
+        "line"
+      ],
+      "local_elasticities": [
+        -0.211,
+        0.223,
+        0.6
+      ],
+      "local_entity_groups": [
+        [
+          "railway_network",
+          "track_segment_entities"
+        ],
+        [
+          "road_network",
+          "road_segment_entities"
+        ],
+        [
+          "waterway_network",
+          "waterway_segment_entities"
+        ]
+      ],
+      "local_properties": [
+        [
+          null,
+          "transport.average_time.star"
+        ],
+        [
+          null,
+          "transport.average_time.star"
+        ],
+        [
+          null,
+          "transport.average_time.star"
+        ]
+      ],
+      "demand_entity": [
+        [
+          "railway_network",
+          "virtual_node_entities"
+        ]
+      ],
+      "total_inward_demand_property": [
+        null,
+        "transport.total_inward_international_cargo_demand"
+      ],
+      "scenario_parameters": [
+        "infraconomy_interpolated"
+      ],
+      "demand_property": [
+        null,
+        "transport.international_cargo_demand"
+      ],
+      "global_elasticities": [
+        0.22,
+        0.41,
+        -0.8
+      ],
+      "total_outward_demand_property": [
+        null,
+        "transport.total_outward_international_cargo_demand"
+      ],
+      "global_parameters": [
+        "consumer_energy_price",
+        "world_trade_volume",
+        "share_service_sector_gdp"
+      ]
+    },
+    {
+      "name": "railway_relaxation",
+      "type": "udf",
+      "entity_group": [
+        [
+          "railway_network",
+          "track_segment_entities"
+        ]
+      ],
+      "inputs": {
+        "outgoing": [
+          null,
+          "transport.average_time.star"
+        ],
+        "incoming": [
+          null,
+          "transport.average_time"
+        ]
+      },
+      "functions": [
+        {
+          "expression": "0.4*default(outgoing, incoming)+0.6*incoming",
+          "output": [
+            null,
+            "transport.average_time.star"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "railway_combined_cargo_demand",
+      "type": "udf",
+      "entity_group": [
+        [
+          "railway_network",
+          "virtual_node_entities"
+        ]
+      ],
+      "inputs": {
+        "domestic": [
+          null,
+          "transport.domestic_cargo_demand"
+        ],
+        "intl": [
+          null,
+          "transport.international_cargo_demand"
+        ]
+      },
+      "functions": [
+        {
+          "expression": "domestic+intl",
+          "output": [
+            null,
+            "transport.cargo_demand"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "railway_total_cargo_demand",
+      "type": "udf",
+      "entity_group": [
+        [
+          "railway_network",
+          "virtual_node_entities"
+        ]
+      ],
+      "inputs": {
+        "total_inward_domestic": [
+          null,
+          "transport.total_inward_domestic_cargo_demand"
+        ],
+        "total_inward_intl": [
+          null,
+          "transport.total_inward_international_cargo_demand"
+        ],
+        "total_outward_domestic": [
+          null,
+          "transport.total_outward_domestic_cargo_demand"
+        ],
+        "total_outward_intl": [
+          null,
+          "transport.total_outward_international_cargo_demand"
+        ]
+      },
+      "functions": [
+        {
+          "expression": "total_inward_domestic+total_inward_intl",
+          "output": [
+            null,
+            "transport.total_inward_cargo_demand"
+          ]
+        },
+        {
+          "expression": "total_outward_domestic+total_outward_intl",
+          "output": [
+            null,
+            "transport.total_outward_cargo_demand"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "railway_kpi_diesel",
+      "type": "traffic_kpi",
+      "tracks": [
+        "railway_network"
+      ],
+      "coefficients_csv": [
+        "railway_kpi_coefficients_diesel"
+      ],
+      "scenario_parameters": [
+        "infraconomy_interpolated"
+      ],
+      "cargo_scenario_parameters": [
+        "diesel_share_freight_rail"
+      ],
+      "energy_consumption_property": [
+        null,
+        "transport.energy_consumption_diesel.hours"
+      ],
+      "co2_emission_property": [
+        null,
+        "transport.co2_emission_diesel.hours"
+      ],
+      "nox_emission_property": [
+        null,
+        "transport.nox_emission_diesel.hours"
+      ]
+    },
+    {
+      "name": "railway_kpi_electricity",
+      "type": "traffic_kpi",
+      "tracks": [
+        "railway_network"
+      ],
+      "coefficients_csv": [
+        "railway_kpi_coefficients_electricity"
+      ],
+      "scenario_parameters": [
+        "infraconomy_interpolated"
+      ],
+      "cargo_scenario_parameters": [
+        "electricity_share_freight_rail"
+      ],
+      "passenger_scenario_parameters": [
+        "electricity_share_passenger_rail"
+      ],
+      "energy_consumption_property": [
+        null,
+        "transport.energy_consumption_electricity.hours"
+      ],
+      "co2_emission_property": [
+        null,
+        "transport.co2_emission_electricity.hours"
+      ],
+      "nox_emission_property": [
+        null,
+        "transport.nox_emission_electricity.hours"
+      ]
+    },
+    {
+      "name": "railway_kpi_h2",
+      "type": "traffic_kpi",
+      "tracks": [
+        "railway_network"
+      ],
+      "coefficients_csv": [
+        "railway_kpi_coefficients_h2"
+      ],
+      "scenario_parameters": [
+        "infraconomy_interpolated"
+      ],
+      "cargo_scenario_parameters": [
+        "h2_share_freight_rail"
+      ],
+      "passenger_scenario_parameters": [
+        "h2_share_passenger_rail"
+      ],
+      "energy_consumption_property": [
+        null,
+        "transport.energy_consumption_h2.hours"
+      ],
+      "co2_emission_property": [
+        null,
+        "transport.co2_emission_h2.hours"
+      ],
+      "nox_emission_property": [
+        null,
+        "transport.nox_emission_h2.hours"
+      ]
+    },
+    {
+      "name": "railway_total_traffic_kpi",
+      "type": "udf",
+      "entity_group": [
+        [
+          "railway_network",
+          "track_segment_entities"
+        ]
+      ],
+      "inputs": {
+        "coo_diesel": [
+          null,
+          "transport.co2_emission_diesel.hours"
+        ],
+        "coo_electricity": [
+          null,
+          "transport.co2_emission_electricity.hours"
+        ],
+        "coo_hh": [
+          null,
+          "transport.co2_emission_h2.hours"
+        ],
+        "nox_diesel": [
+          null,
+          "transport.nox_emission_diesel.hours"
+        ],
+        "nox_electricity": [
+          null,
+          "transport.nox_emission_electricity.hours"
+        ],
+        "nox_hh": [
+          null,
+          "transport.nox_emission_h2.hours"
+        ],
+        "energy_diesel": [
+          null,
+          "transport.energy_consumption_diesel.hours"
+        ],
+        "energy_electricity": [
+          null,
+          "transport.energy_consumption_electricity.hours"
+        ],
+        "energy_hh": [
+          null,
+          "transport.energy_consumption_h2.hours"
+        ]
+      },
+      "functions": [
+        {
+          "expression": "coo_diesel+coo_electricity+coo_hh",
+          "output": [
+            null,
+            "transport.co2_emission.hours"
+          ]
+        },
+        {
+          "expression": "nox_diesel+nox_electricity+nox_hh",
+          "output": [
+            null,
+            "transport.nox_emission.hours"
+          ]
+        },
+        {
+          "expression": "energy_diesel+energy_electricity+energy_hh",
+          "output": [
+            null,
+            "transport.energy_consumption.hours"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "railway_yearly_peak_demand",
+      "type": "udf",
+      "entity_group": [
+        [
+          "railway_network",
+          "virtual_node_entities"
+        ]
+      ],
+      "inputs": {
+        "cargo_demand": [
+          null,
+          "transport.cargo_demand"
+        ],
+        "passenger_demand": [
+          null,
+          "transport.passenger_demand"
+        ]
+      },
+      "functions": [
+        {
+          "expression": "sum(cargo_demand*365*4)",
+          "output": [
+            null,
+            "transport.cargo_demand.peak_yearly"
+          ]
+        },
+        {
+          "expression": "sum(passenger_demand*365*4)",
+          "output": [
+            null,
+            "transport.passenger_demand.peak_yearly"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "railway_yearly_peak_flow",
+      "type": "udf",
+      "entity_group": [
+        [
+          "railway_network",
+          "track_segment_entities"
+        ]
+      ],
+      "inputs": {
+        "cargo_flow": [
+          null,
+          "transport.cargo_flow"
+        ],
+        "length": [
+          null,
+          "shape.length"
+        ],
+        "passenger_flow": [
+          null,
+          "transport.passenger_flow"
+        ]
+      },
+      "functions": [
+        {
+          "expression": "cargo_flow*length*0.001*365*4",
+          "output": [
+            null,
+            "transport.cargo_tkm.peak_yearly"
+          ]
+        },
+        {
+          "expression": "passenger_flow*length*0.001*365*4",
+          "output": [
+            null,
+            "transport.passenger_km.peak_yearly"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "area_aggregation",
+      "name": "railway_total_aggregation",
+      "source_entity_groups": [
+        [
+          "railway_network",
+          "track_segment_entities"
+        ],
+        [
+          "railway_network",
+          "virtual_node_entities"
+        ],
+        [
+          "railway_network",
+          "track_segment_entities"
+        ],
+        [
+          "railway_network",
+          "virtual_node_entities"
+        ]
+      ],
+      "source_geometry_types": [
+        "line",
+        "point",
+        "line",
+        "point"
+      ],
+      "source_properties": [
+        [
+          null,
+          "transport.cargo_tkm.peak_yearly"
+        ],
+        [
+          null,
+          "transport.cargo_demand.peak_yearly"
+        ],
+        [
+          null,
+          "transport.passenger_km.peak_yearly"
+        ],
+        [
+          null,
+          "transport.passenger_demand.peak_yearly"
+        ]
+      ],
+      "target_entity_group": [
+        [
+          "total_area",
+          "area_entities"
+        ]
+      ],
+      "aggregation_functions": [
+        "sum",
+        "sum",
+        "sum",
+        "sum"
+      ],
+      "target_properties": [
+        [
+          null,
+          "transport.cargo_tkm.peak_yearly.railways"
+        ],
+        [
+          null,
+          "transport.cargo_demand.peak_yearly.railways"
+        ],
+        [
+          null,
+          "transport.passenger_km.peak_yearly.railways"
+        ],
+        [
+          null,
+          "transport.passenger_demand.peak_yearly.railways"
+        ]
+      ]
+    },
+    {
+      "name": "railway_gjt",
+      "type": "generalized_journey_time",
+      "travel_time": [
+        null,
+        "transport.passenger_average_time"
+      ],
+      "transport_segments": [
+        [
+          "railway_network",
+          "track_segment_entities"
+        ]
+      ]
+    },
+    {
+      "name": "railway_gjt_parameters",
+      "type": "csv_player",
+      "entity_group": [
+        [
+          "railway_network",
+          "virtual_node_entities"
+        ]
+      ],
+      "csv_tape": [
+        "infraconomy_interpolated"
+      ],
+      "csv_parameters": [
+        "passenger_train_frequency_change",
+        "passenger_train_capacity"
+      ],
+      "target_attributes": [
+        [
+          null,
+          "transport.passenger_vehicle_frequency_index"
+        ],
+        [
+          null,
+          "transport.passenger_vehicle_capacity"
+        ]
+      ]
+    },
+    {
+      "name": "railway_frequency",
+      "type": "udf",
+      "entity_group": [
+        [
+          "railway_network",
+          "virtual_node_entities"
+        ]
+      ],
+      "inputs": {
+        "base_frequency": [
+          null,
+          "transport.passenger_vehicle_base_frequency"
+        ],
+        "frequency_index": [
+          null,
+          "transport.passenger_vehicle_frequency_index"
+        ]
+      },
+      "functions": [
+        {
+          "expression": "min(base_frequency * frequency_index / 100, 15)",
+          "output": [
+            null,
+            "transport.passenger_vehicle_frequency"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "area_aggregation",
+      "name": "waterway_municipalities_aggregation",
+      "output_interval": 2628000,
+      "target_entity_group": [
+        [
+          "municipalities_area_set",
+          "area_entities"
+        ]
+      ],
+      "source_entity_groups": [
+        [
+          "waterway_network",
+          "waterway_segment_entities"
+        ],
+        [
+          "waterway_network",
+          "waterway_segment_entities"
+        ],
+        [
+          "waterway_network",
+          "waterway_segment_entities"
+        ],
+        [
+          "waterway_network",
+          "waterway_segment_entities"
+        ],
+        [
+          "waterway_network",
+          "waterway_segment_entities"
+        ],
+        [
+          "waterway_network",
+          "waterway_segment_entities"
+        ],
+        [
+          "waterway_network",
+          "waterway_segment_entities"
+        ],
+        [
+          "waterway_network",
+          "waterway_segment_entities"
+        ],
+        [
+          "waterway_network",
+          "waterway_segment_entities"
+        ],
+        [
+          "waterway_network",
+          "waterway_segment_entities"
+        ],
+        [
+          "waterway_network",
+          "waterway_segment_entities"
+        ],
+        [
+          "waterway_network",
+          "waterway_segment_entities"
+        ],
+        [
+          "waterway_network",
+          "waterway_segment_entities"
+        ],
+        [
+          "waterway_network",
+          "waterway_segment_entities"
+        ],
+        [
+          "waterway_network",
+          "waterway_segment_entities"
+        ],
+        [
+          "waterway_network",
+          "waterway_segment_entities"
+        ],
+        [
+          "waterway_network",
+          "waterway_segment_entities"
+        ],
+        [
+          "waterway_network",
+          "waterway_segment_entities"
+        ]
+      ],
+      "source_geometry_types": [
+        "line",
+        "line",
+        "line",
+        "line",
+        "line",
+        "line",
+        "line",
+        "line",
+        "line",
+        "line",
+        "line",
+        "line",
+        "line",
+        "line",
+        "line",
+        "line",
+        "line",
+        "line"
+      ],
+      "source_properties": [
+        [
+          null,
+          "transport.passenger_flow"
+        ],
+        [
+          null,
+          "transport.cargo_flow"
+        ],
+        [
+          null,
+          "transport.energy_consumption.hours"
+        ],
+        [
+          null,
+          "transport.co2_emission.hours"
+        ],
+        [
+          null,
+          "transport.nox_emission.hours"
+        ],
+        [
+          null,
+          "transport.energy_consumption.hours"
+        ],
+        [
+          null,
+          "transport.co2_emission.hours"
+        ],
+        [
+          null,
+          "transport.nox_emission.hours"
+        ],
+        [
+          null,
+          "transport.passenger_flow"
+        ],
+        [
+          null,
+          "transport.cargo_flow"
+        ],
+        [
+          null,
+          "transport.passenger_vehicle_flow"
+        ],
+        [
+          null,
+          "transport.cargo_vehicle_flow"
+        ],
+        [
+          null,
+          "transport.volume_to_capacity_ratio"
+        ],
+        [
+          null,
+          "transport.delay_factor"
+        ],
+        [
+          null,
+          "transport.passenger_vehicle_flow"
+        ],
+        [
+          null,
+          "transport.cargo_vehicle_flow"
+        ],
+        [
+          null,
+          "transport.volume_to_capacity_ratio"
+        ],
+        [
+          null,
+          "transport.delay_factor"
+        ]
+      ],
+      "aggregation_functions": [
+        "max",
+        "max",
+        "integral_hours",
+        "integral_hours",
+        "integral_hours",
+        "sum",
+        "sum",
+        "sum",
+        "sum",
+        "sum",
+        "max",
+        "max",
+        "max",
+        "max",
+        "sum",
+        "sum",
+        "average",
+        "average"
+      ],
+      "target_properties": [
+        [
+          null,
+          "transport.passenger_flow.waterways"
+        ],
+        [
+          null,
+          "transport.cargo_flow.waterways"
+        ],
+        [
+          null,
+          "transport.energy_consumption.waterways"
+        ],
+        [
+          null,
+          "transport.co2_emission.waterways"
+        ],
+        [
+          null,
+          "transport.nox_emission.waterways"
+        ],
+        [
+          null,
+          "transport.energy_consumption.hours.waterways"
+        ],
+        [
+          null,
+          "transport.co2_emission.hours.waterways"
+        ],
+        [
+          null,
+          "transport.nox_emission.hours.waterways"
+        ],
+        [
+          null,
+          "transport.passenger_flow.waterways.total"
+        ],
+        [
+          null,
+          "transport.cargo_flow.waterways.total"
+        ],
+        [
+          null,
+          "transport.passenger_vehicle_flow.waterways"
+        ],
+        [
+          null,
+          "transport.cargo_vehicle_flow.waterways"
+        ],
+        [
+          null,
+          "transport.volume_to_capacity_ratio.waterways.max"
+        ],
+        [
+          null,
+          "transport.delay_factor.waterways.max"
+        ],
+        [
+          null,
+          "transport.passenger_vehicle_flow.waterways.total"
+        ],
+        [
+          null,
+          "transport.cargo_vehicle_flow.waterways.total"
+        ],
+        [
+          null,
+          "transport.volume_to_capacity_ratio.waterways.average"
+        ],
+        [
+          null,
+          "transport.delay_factor.waterways.average"
+        ]
+      ]
+    },
+    {
+      "name": "waterway_traffic_assignment",
+      "type": "traffic_assignment_calculation",
+      "waterways": [
+        "waterway_network"
+      ],
+      "vdf_alpha": 0.64,
+      "vdf_beta": 4,
+      "cargo_pcu": 1
+    },
+    {
+      "name": "waterway_domestic_cargo_demand_estimation",
+      "type": "traffic_demand_calculation",
+      "atol": 0.001,
+      "rtol": 0.000001,
+      "max_iterations": 30,
+      "local_mapping_type": [
+        "route",
+        "route",
+        "route"
+      ],
+      "local_geometries": [
+        "line",
+        "line",
+        "line"
+      ],
+      "local_elasticities": [
+        0.016,
+        0.231,
+        -0.284
+      ],
+      "local_entity_groups": [
+        [
+          "railway_network",
+          "track_segment_entities"
+        ],
+        [
+          "road_network",
+          "road_segment_entities"
+        ],
+        [
+          "waterway_network",
+          "waterway_segment_entities"
+        ]
+      ],
+      "local_properties": [
+        [
+          null,
+          "transport.average_time.star"
+        ],
+        [
+          null,
+          "transport.average_time.star"
+        ],
+        [
+          null,
+          "transport.average_time.star"
+        ]
+      ],
+      "demand_entity": [
+        [
+          "waterway_network",
+          "virtual_node_entities"
+        ]
+      ],
+      "total_inward_demand_property": [
+        null,
+        "transport.total_inward_domestic_cargo_demand_vehicles"
+      ],
+      "scenario_parameters": [
+        "infraconomy_interpolated"
+      ],
+      "demand_property": [
+        null,
+        "transport.domestic_cargo_demand"
+      ],
+      "global_elasticities": [
+        0.06,
+        0.57,
+        -0.8
+      ],
+      "total_outward_demand_property": [
+        null,
+        "transport.total_outward_domestic_cargo_demand_vehicles"
+      ],
+      "global_parameters": [
+        "consumer_energy_price",
+        "gdp",
+        "share_service_sector_gdp"
+      ],
+      "scenario_multipliers": [
+        "waterway_load_factor_multiplier"
+      ]
+    },
+    {
+      "name": "waterway_international_cargo_demand_estimation",
+      "type": "traffic_demand_calculation",
+      "atol": 0.001,
+      "rtol": 0.000001,
+      "max_iterations": 30,
+      "local_mapping_type": [
+        "route",
+        "route",
+        "route"
+      ],
+      "local_geometries": [
+        "line",
+        "line",
+        "line"
+      ],
+      "local_elasticities": [
+        0.016,
+        0.231,
+        -0.284
+      ],
+      "local_entity_groups": [
+        [
+          "railway_network",
+          "track_segment_entities"
+        ],
+        [
+          "road_network",
+          "road_segment_entities"
+        ],
+        [
+          "waterway_network",
+          "waterway_segment_entities"
+        ]
+      ],
+      "local_properties": [
+        [
+          null,
+          "transport.average_time.star"
+        ],
+        [
+          null,
+          "transport.average_time.star"
+        ],
+        [
+          null,
+          "transport.average_time.star"
+        ]
+      ],
+      "demand_entity": [
+        [
+          "waterway_network",
+          "virtual_node_entities"
+        ]
+      ],
+      "total_inward_demand_property": [
+        null,
+        "transport.total_inward_international_cargo_demand_vehicles"
+      ],
+      "scenario_parameters": [
+        "infraconomy_interpolated"
+      ],
+      "demand_property": [
+        null,
+        "transport.international_cargo_demand"
+      ],
+      "global_elasticities": [
+        0.06,
+        0.41,
+        -0.8
+      ],
+      "total_outward_demand_property": [
+        null,
+        "transport.total_outward_international_cargo_demand_vehicles"
+      ],
+      "global_parameters": [
+        "consumer_energy_price",
+        "world_trade_volume",
+        "share_service_sector_gdp"
+      ],
+      "scenario_multipliers": [
+        "waterway_load_factor_multiplier"
+      ]
+    },
+    {
+      "name": "waterway_relaxation",
+      "type": "udf",
+      "entity_group": [
+        [
+          "waterway_network",
+          "waterway_segment_entities"
+        ]
+      ],
+      "inputs": {
+        "outgoing": [
+          null,
+          "transport.average_time.star"
+        ],
+        "incoming": [
+          null,
+          "transport.average_time"
+        ]
+      },
+      "functions": [
+        {
+          "expression": "0.4*default(outgoing, incoming)+0.6*incoming",
+          "output": [
+            null,
+            "transport.average_time.star"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "waterway_combined_cargo_demand",
+      "type": "udf",
+      "entity_group": [
+        [
+          "waterway_network",
+          "virtual_node_entities"
+        ]
+      ],
+      "inputs": {
+        "domestic": [
+          null,
+          "transport.domestic_cargo_demand"
+        ],
+        "intl": [
+          null,
+          "transport.international_cargo_demand"
+        ]
+      },
+      "functions": [
+        {
+          "expression": "domestic+intl",
+          "output": [
+            null,
+            "transport.cargo_demand"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "waterway_total_cargo_demand",
+      "type": "udf",
+      "entity_group": [
+        [
+          "waterway_network",
+          "virtual_node_entities"
+        ]
+      ],
+      "inputs": {
+        "total_inward_domestic": [
+          null,
+          "transport.total_inward_domestic_cargo_demand_vehicles"
+        ],
+        "total_inward_intl": [
+          null,
+          "transport.total_inward_international_cargo_demand_vehicles"
+        ],
+        "total_outward_domestic": [
+          null,
+          "transport.total_outward_domestic_cargo_demand_vehicles"
+        ],
+        "total_outward_intl": [
+          null,
+          "transport.total_outward_international_cargo_demand_vehicles"
+        ]
+      },
+      "functions": [
+        {
+          "expression": "total_inward_domestic+total_inward_intl",
+          "output": [
+            null,
+            "transport.total_inward_cargo_demand_vehicles"
+          ]
+        },
+        {
+          "expression": "total_outward_domestic+total_outward_intl",
+          "output": [
+            null,
+            "transport.total_outward_cargo_demand_vehicles"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "waterway_kpi_diesel",
+      "type": "traffic_kpi",
+      "waterways": [
+        "waterway_network"
+      ],
+      "coefficients_csv": [
+        "waterway_kpi_coefficients_diesel"
+      ],
+      "scenario_parameters": [
+        "infraconomy_interpolated"
+      ],
+      "cargo_scenario_parameters": [
+        "diesel_share_freight_waterway"
+      ],
+      "energy_consumption_property": [
+        null,
+        "transport.energy_consumption_diesel.hours"
+      ],
+      "co2_emission_property": [
+        null,
+        "transport.co2_emission_diesel.hours"
+      ],
+      "nox_emission_property": [
+        null,
+        "transport.nox_emission_diesel.hours"
+      ]
+    },
+    {
+      "name": "waterway_kpi_electricity",
+      "type": "traffic_kpi",
+      "waterways": [
+        "waterway_network"
+      ],
+      "coefficients_csv": [
+        "waterway_kpi_coefficients_electricity"
+      ],
+      "scenario_parameters": [
+        "infraconomy_interpolated"
+      ],
+      "cargo_scenario_parameters": [
+        "electricity_share_freight_waterway"
+      ],
+      "energy_consumption_property": [
+        null,
+        "transport.energy_consumption_electricity.hours"
+      ],
+      "co2_emission_property": [
+        null,
+        "transport.co2_emission_electricity.hours"
+      ],
+      "nox_emission_property": [
+        null,
+        "transport.nox_emission_electricity.hours"
+      ]
+    },
+    {
+      "name": "waterway_kpi_h2",
+      "type": "traffic_kpi",
+      "waterways": [
+        "waterway_network"
+      ],
+      "coefficients_csv": [
+        "waterway_kpi_coefficients_h2"
+      ],
+      "scenario_parameters": [
+        "infraconomy_interpolated"
+      ],
+      "cargo_scenario_parameters": [
+        "h2_share_freight_waterway"
+      ],
+      "energy_consumption_property": [
+        null,
+        "transport.energy_consumption_h2.hours"
+      ],
+      "co2_emission_property": [
+        null,
+        "transport.co2_emission_h2.hours"
+      ],
+      "nox_emission_property": [
+        null,
+        "transport.nox_emission_h2.hours"
+      ]
+    },
+    {
+      "name": "waterway_total_traffic_kpi",
+      "type": "udf",
+      "entity_group": [
+        [
+          "waterway_network",
+          "waterway_segment_entities"
+        ]
+      ],
+      "inputs": {
+        "coo_diesel": [
+          null,
+          "transport.co2_emission_diesel.hours"
+        ],
+        "coo_electricity": [
+          null,
+          "transport.co2_emission_electricity.hours"
+        ],
+        "coo_hh": [
+          null,
+          "transport.co2_emission_h2.hours"
+        ],
+        "nox_diesel": [
+          null,
+          "transport.nox_emission_diesel.hours"
+        ],
+        "nox_electricity": [
+          null,
+          "transport.nox_emission_electricity.hours"
+        ],
+        "nox_hh": [
+          null,
+          "transport.nox_emission_h2.hours"
+        ],
+        "energy_diesel": [
+          null,
+          "transport.energy_consumption_diesel.hours"
+        ],
+        "energy_electricity": [
+          null,
+          "transport.energy_consumption_electricity.hours"
+        ],
+        "energy_hh": [
+          null,
+          "transport.energy_consumption_h2.hours"
+        ]
+      },
+      "functions": [
+        {
+          "expression": "coo_diesel+coo_electricity+coo_hh",
+          "output": [
+            null,
+            "transport.co2_emission.hours"
+          ]
+        },
+        {
+          "expression": "nox_diesel+nox_electricity+nox_hh",
+          "output": [
+            null,
+            "transport.nox_emission.hours"
+          ]
+        },
+        {
+          "expression": "energy_diesel+energy_electricity+energy_hh",
+          "output": [
+            null,
+            "transport.energy_consumption.hours"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "waterway_unit_conversion",
+      "type": "unit_conversions",
+      "flow_entities": [
+        [
+          "waterway_network",
+          "waterway_segment_entities"
+        ]
+      ],
+      "parameters": [
+        "waterway_kpi_coefficients_diesel"
+      ],
+      "od_entities": [
+        [
+          "waterway_network",
+          "virtual_node_entities"
+        ]
+      ],
+      "od_types": [
+        "waterway"
+      ],
+      "flow_types": [
+        "waterway"
+      ]
+    },
+    {
+      "name": "waterway_yearly_peak_demand",
+      "type": "udf",
+      "entity_group": [
+        [
+          "waterway_network",
+          "virtual_node_entities"
+        ]
+      ],
+      "inputs": {
+        "cargo_demand": [
+          null,
+          "transport.cargo_demand"
+        ]
+      },
+      "functions": [
+        {
+          "expression": "sum(cargo_demand*365*4)",
+          "output": [
+            null,
+            "transport.cargo_demand.peak_yearly"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "waterway_yearly_peak_flow",
+      "type": "udf",
+      "entity_group": [
+        [
+          "waterway_network",
+          "waterway_segment_entities"
+        ]
+      ],
+      "inputs": {
+        "cargo_flow": [
+          null,
+          "transport.cargo_vehicle_flow"
+        ],
+        "length": [
+          null,
+          "shape.length"
+        ]
+      },
+      "functions": [
+        {
+          "expression": "cargo_flow*length*0.001*365*4",
+          "output": [
+            null,
+            "transport.cargo_vkm.peak_yearly"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "area_aggregation",
+      "name": "waterway_total_aggregation",
+      "source_entity_groups": [
+        [
+          "waterway_network",
+          "waterway_segment_entities"
+        ],
+        [
+          "waterway_network",
+          "virtual_node_entities"
+        ]
+      ],
+      "source_geometry_types": [
+        "line",
+        "point"
+      ],
+      "source_properties": [
+        [
+          null,
+          "transport.cargo_vkm.peak_yearly"
+        ],
+        [
+          null,
+          "transport.cargo_demand.peak_yearly"
+        ]
+      ],
+      "target_entity_group": [
+        [
+          "total_area",
+          "area_entities"
+        ]
+      ],
+      "aggregation_functions": [
+        "sum",
+        "sum"
+      ],
+      "target_properties": [
+        [
+          null,
+          "transport.cargo_vkm.peak_yearly.waterways"
+        ],
+        [
+          null,
+          "transport.cargo_demand.peak_yearly.waterways"
+        ]
+      ]
+    }
+  ],
+  "datasets": [
+    {
+      "name": "infraconomy_interpolated",
+      "type": "parameters"
+    },
+    {
+      "name": "road_network",
+      "type": "transport_network"
+    },
+    {
+      "type": "transport_network",
+      "name": "railway_network"
+    },
+    {
+      "type": "transport_network",
+      "name": "waterway_network"
+    },
+    {
+      "type": "area_set",
+      "name": "municipalities_area_set"
+    },
+    {
+      "type": "area_set",
+      "name": "total_area"
+    },
+    {
+      "type": "tabular",
+      "name": "infraconomy_local_parameters_tape"
+    },
+    {
+      "type": "parameters",
+      "name": "traffic_kpi_coefficients_diesel"
+    },
+    {
+      "type": "parameters",
+      "name": "traffic_kpi_coefficients_petrol"
+    },
+    {
+      "type": "parameters",
+      "name": "traffic_kpi_coefficients_electricity"
+    },
+    {
+      "type": "parameters",
+      "name": "traffic_kpi_coefficients_h2"
+    },
+    {
+      "type": "parameters",
+      "name": "railway_kpi_coefficients_diesel"
+    },
+    {
+      "type": "parameters",
+      "name": "railway_kpi_coefficients_electricity"
+    },
+    {
+      "type": "parameters",
+      "name": "railway_kpi_coefficients_h2"
+    },
+    {
+      "type": "parameters",
+      "name": "waterway_kpi_coefficients_diesel"
+    },
+    {
+      "type": "parameters",
+      "name": "waterway_kpi_coefficients_electricity"
+    },
+    {
+      "name": "waterway_kpi_coefficients_h2",
+      "type": "parameters"
+    }
+  ]
+}
