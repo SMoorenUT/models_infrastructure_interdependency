@@ -15,6 +15,7 @@ from tape_creator_functions import (
     normalize_df,
     swap_dictionary_structure,
 )
+from tqdm import tqdm
 
 
 CURR_DIR = pathlib.Path(__file__).parent
@@ -637,10 +638,10 @@ def create_dict_for_jobs_sampling(df_jobs, operator="min"):
     return result_dict
 
 
-def sample_jobs(df_jobs, num_samples=50):
+def sample_jobs(df_jobs, num_samples=50, seed=0):
     jobs_sampling_dict = create_dict_for_jobs_sampling(df_jobs, operator="min")
     sampled_jobs_dict = latin_hypercube_sampling(
-        jobs_sampling_dict, num_samples=num_samples
+        jobs_sampling_dict, num_samples=num_samples, seed=seed
     )
     return sampled_jobs_dict
 
@@ -698,22 +699,22 @@ def sample_jobs(df_jobs, num_samples=50):
 #     return cs_dict
 
 
-def create_jobs_scenarions_dict(df_jobs, num_samples=50):
+def create_jobs_scenarions_dict(df_jobs, num_samples=50, seed = 0):
     """
     Create a dictionary with the sampled jobs for each municipality for the years 2019, 2030 and 2050.
     The years 2030 and 2050 are sampled from the minimum and maximum values of the jobs in the corop areas.
     The remaining years are interpolated using cubic spline interpolation.
     """
-    jobs_dict_sample = sample_jobs(df_jobs, num_samples=num_samples)
+    jobs_dict_sample = sample_jobs(df_jobs, num_samples=num_samples, seed=seed)
     jobs_interpolated_dictionary = cubic_spline_interpolation(
         jobs_dict_sample, corop_areas_study_area
     )
     return jobs_interpolated_dictionary
 
 
-def generate_jobs_data(num_samples):
+def generate_jobs_data(num_samples, seed=0):
     df_jobs = read_jobs_data()
-    jobs_interpolated_dictionary = create_jobs_scenarions_dict(df_jobs, num_samples)
+    jobs_interpolated_dictionary = create_jobs_scenarions_dict(df_jobs, num_samples, seed)
     return jobs_interpolated_dictionary
 
 
@@ -849,7 +850,7 @@ def create_json_file(
     }
 
     pathlib.Path(
-        f"data/init_data_EMA/{scenario_name.lower()}_local_paramameters_tape"
+        f"data/init_data_EMA/{scenario_name.lower()}_local_parameters_tape"
     ).with_suffix(".json").write_text(json.dumps(config, indent=2))
     return config
 
@@ -888,6 +889,7 @@ class LocalParametersConfig:
         population: dict,
         jobs: dict,
         filepath: pathlib.Path,
+        seed: int,
     ):
         if any(
             var is None
@@ -905,6 +907,7 @@ class LocalParametersConfig:
         self.population = population
         self.jobs = jobs
         self.filepath = filepath
+        self.seed = seed
         self.data_series = self.create_data_series(
             self.municipalities_index_dict,
             self.population,
@@ -918,6 +921,7 @@ class LocalParametersConfig:
             + " Local Parameters",
             "type": "tabular",
             "created_on": dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "random_seed": self.seed,
             "description": "Local parameters for the municipalities in the Netherlands. The data is based on the population and jobs data from the CBS. The sample has been generated using latin hypercube sampling and cubic spline interpolation.",
             "data": {
                 "tabular_data_name": "municipalities_area_set",
@@ -954,7 +958,7 @@ class LocalParametersConfig:
 
     def create_json_file(self):
         filename = pathlib.Path(
-            f"{self.scenario_name.lower()}_local_paramameters_tape"
+            f"{self.scenario_name.lower()}_local_parameters_tape"
         ).with_suffix(".json")
         filepath = pathlib.Path(self.filepath).joinpath(filename)
         filepath.write_text(json.dumps(self.config, indent=2))
@@ -962,9 +966,9 @@ class LocalParametersConfig:
 
 
 def generate_population_and_job_data(
-    num_samples: int = 10, length_num_samples: int = 4
+    num_samples: int = 10, length_num_samples: int = 4, seed: int = 0
 ):
-    """ "
+    """
     Generate population and job data for the given number of samples.
     Both the job and population dictionaries, as well as the municipalities_index_dict are fed into the LocalParametersConfig as a class variable.
     """
@@ -972,9 +976,9 @@ def generate_population_and_job_data(
         f"Scenario_{i:0{length_num_samples}d}": create_population_dict_sample(
             df_bevolking_extended
         )
-        for i in range(num_samples)
+        for i in tqdm(range(num_samples), desc="Creating population dictionaries")
     }
-    jobs_corop_level = generate_jobs_data(num_samples)
+    jobs_corop_level = generate_jobs_data(num_samples, seed)
     corop_dict_cbs, corop_municipalities_cbs = get_corop_dictionary()
     find_unique_values(municipalities_unique, corop_municipalities_cbs)
     jobs = derive_jobs_municipality_level(jobs_corop_level, corop_dict_cbs)
@@ -993,22 +997,24 @@ def generate_population_and_job_data(
 def create_local_parameters_scenarios(
     num_samples: int = 10,
     output_path: pathlib.Path = OUTPUT_DIR,
+    seed: int = 0,
 ):
     length_num_samples = establish_length_num_samples(
         num_samples
     )  # To format the scenario names with approriate number of leading zeros
 
     population_swapped, jobs_swapped = generate_population_and_job_data(
-        num_samples, length_num_samples
+        num_samples, length_num_samples, seed
     )
 
     scenario_objects = []
-    for i in range(0, num_samples):
+    for i in tqdm(range(0, num_samples), desc="Writing local parameters files"):
         scenario = LocalParametersConfig(
             f"Scenario_{i:0{length_num_samples}d}",
             population_swapped,
             jobs_swapped,
             output_path,
+            seed
         )
         scenario.create_json_file()
         scenario_objects.append(scenario)
@@ -1018,6 +1024,7 @@ def create_local_parameters_scenarios(
 
 def main():
     create_local_parameters_scenarios()
+
 
 if __name__ == "__main__":
     main()

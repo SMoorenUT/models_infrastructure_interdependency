@@ -32,9 +32,9 @@ def establish_length_num_samples(num_samples: int):
     length_num_samples = len(str(num_samples)) if num_samples not in [10**i for i in range(10)] else len(str(num_samples)) - 1 # To format het scenario names with leading zeros
     return length_num_samples
 
-def latin_hypercube_sampling(input_sample_dict: dict, num_samples: int = 100) -> dict:
+def latin_hypercube_sampling(input_sample_dict: dict, num_samples: int = 100, seed = 0) -> dict:
     # Set the random seed for reproducibility
-    np.random.seed(0)
+    np.random.seed(seed)
 
     # Define lower and upper bounds
     lower_bound_2030 = input_sample_dict["2030_min"]  # Lower bound for each dimension in 2030
@@ -43,7 +43,6 @@ def latin_hypercube_sampling(input_sample_dict: dict, num_samples: int = 100) ->
     upper_bound_2050 = input_sample_dict["2050_max"]  # Upper bound for each dimension in 2050
 
     # Define the number of samples and dimensions
-    num_samples = num_samples
     num_dimensions = (
         len(lower_bound_2030)
         if len(lower_bound_2030)
