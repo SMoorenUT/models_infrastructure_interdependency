@@ -2,6 +2,10 @@ import run_simulation
 import multiprocessing
 import time
 
+SCENARIO_STEM = "data/scenarios_ema/ema_road_model_27_05_2024_scenario_"
+NUM_SIMULATIONS = 100
+LEN_SIM = 2
+NUMBER_OF_SIMULATIONS_PARALLEL = 5
 SCENARIO_STEM = "data/scenarios_ema/ema_road_model_08_05_2024_scenario_"
 NUM_SIMULATIONS = 1000
 LEN_SIM = 3 # Number of digits in the simulation number
@@ -37,14 +41,19 @@ def run_fibonacci_parallel_test(i):
     print(f"Fibonacci({i}) = {result}")
 
 def main():
-    if NUM_SIMULATIONS % 5 != 0:
-        raise ValueError("NUM_SIMULATIONS must be divisible by 5")
+    if NUM_SIMULATIONS % NUMBER_OF_SIMULATIONS_PARALLEL != 0:
+        raise ValueError("NUM_SIMULATIONS must be divisible by {NUMBER_OF_SIMULATIONS_PARALLEL}")
 
-    num_processes_iterations = NUM_SIMULATIONS // 5
-    multiples_of_5 = [5 * i for i in range(num_processes_iterations)]
+    num_processes_iterations = NUM_SIMULATIONS // NUMBER_OF_SIMULATIONS_PARALLEL
+    multiples_number_of_sims_parallel = [NUMBER_OF_SIMULATIONS_PARALLEL * i for i in range(num_processes_iterations)]
 
+    fibonacci_ns = [35, 10, 25, 40, 16, 9, 11, 31, 24, 7]
+
+    for processes_iter, processes_value in enumerate(fibonacci_ns):
     for processes_iter, processes_value in enumerate(multiples_of_5):
         processes = []
+        for i in range(processes_value, processes_value + 5):
+            process = multiprocessing.Process(target=run_fibonacci_parallel_test, args=(i,))
         for i in range(processes_value, processes_value+5):
             process = multiprocessing.Process(target=run_simulation_parallel, args=(i,))
             processes.append(process)
