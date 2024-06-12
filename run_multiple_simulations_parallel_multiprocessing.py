@@ -2,9 +2,9 @@ import run_simulation
 import multiprocessing
 import time
 
-SCENARIO_STEM = "data/scenarios_ema/ema_road_model_27_05_2024_scenario_"
-NUM_SIMULATIONS = 100
-LEN_SIM = 2
+SCENARIO_STEM = "data/scenarios_ema/ema_road_model_08_05_2024_scenario_"
+NUM_SIMULATIONS = 1000
+LEN_SIM = 3 # Number of digits in the simulation number
 
 
 def fibonacci(n):
@@ -43,13 +43,10 @@ def main():
     num_processes_iterations = NUM_SIMULATIONS // 5
     multiples_of_5 = [5 * i for i in range(num_processes_iterations)]
 
-    fibonacci_ns = [[5, 10, 25, 8, 6], 
-                    [9, 11, 3, 4, 7]]
-
-    for processes_iter, processes_value in enumerate(fibonacci_ns):
+    for processes_iter, processes_value in enumerate(multiples_of_5):
         processes = []
-        for i in processes_value:
-            process = multiprocessing.Process(target=run_fibonacci_parallel_test, args=(i,))
+        for i in range(processes_value, processes_value+5):
+            process = multiprocessing.Process(target=run_simulation_parallel, args=(i,))
             processes.append(process)
             process.start()
 
