@@ -11,8 +11,13 @@ import datetime as dt
 import numpy as np
 import pandas as pd
 
-scenarios = ["infraconomy", "safety_revolution", "missed_boat", "green"]
+scenarios = []
+for i in range(10):
+    scenario = f"ema_road_model_27_05_2024_scenario_{str(i).zfill(2)}"
+    scenarios.append(scenario)
 attribute = "transport.volume_to_capacity_ratio"
+
+# scenarios = ["infraconomy", "safety_revolution", "missed_boat", "green"]
 # attribute = "noise.level"
 # attribute = "transport.automatic_incident_detection"
 # attribute = "transport.lighting"
@@ -21,7 +26,7 @@ attribute = "transport.volume_to_capacity_ratio"
 
 BASE_DIR = Path(__file__).parent
 INIT_DATA_DIR = BASE_DIR / "data/init_data/"
-UPDATES_DIR = BASE_DIR / "data/scenarios/"
+UPDATES_DIR = BASE_DIR / "data/scenarios_ema/"
 
 ATTRIBUTES = [
     AttributeSpec("jobs.count.index", DataType(float)),
@@ -75,7 +80,7 @@ if __name__ == "__main__":
 
         bridges = dict(zip(slice["timestamps"], slice["data"])) 
         ic_bridges_df = pd.DataFrame.from_dict(bridges)
-        ic_bridges_df.to_csv(f"bridges_lighting_{scenario}.csv", index=True)
+        ic_bridges_df.to_csv(f"bridges_ICratio_{scenario}.csv", index=True)
 
         # print(
         #     "Slicing a dataset over a specific attribute",
