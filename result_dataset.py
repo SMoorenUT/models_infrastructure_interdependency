@@ -1,11 +1,11 @@
 from pathlib import Path
 from movici_simulation_core.core.schema import AttributeSchema
 
-from movici_simulation_core.utils.moment import TimelineInfo, string_to_datetime
+from movici_simulation_core.core.moment import TimelineInfo, string_to_datetime
 from movici_simulation_core.postprocessing.results import SimulationResults
 from movici_simulation_core.core import AttributeSpec, DataType
 from movici_simulation_core.core.utils import configure_global_plugins
-from movici_simulation_core.core.attributes import GlobalAttributes
+from movici_simulation_core.attributes import GlobalAttributes
 from movici_simulation_core.models.common.attributes import CommonAttributes
 import datetime as dt
 import numpy as np
