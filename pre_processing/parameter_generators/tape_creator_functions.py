@@ -5,7 +5,10 @@ from scipy.stats import uniform
 from scipy.interpolate import CubicSpline
 from sklearn.preprocessing import MinMaxScaler
 
-def create_lists_sampling_input(df_for_sampling_input: pd.DataFrame, year: int, operator: str = "min") -> List[Union[int, float]]:
+
+def create_lists_sampling_input(
+    df_for_sampling_input: pd.DataFrame, year: int, operator: str = "min"
+) -> List[Union[int, float]]:
     # Create lists from sampling df
     year_cols = {2019: [0], 2030: [1, 2], 2050: [3, 4]}
 
@@ -19,6 +22,7 @@ def create_lists_sampling_input(df_for_sampling_input: pd.DataFrame, year: int, 
 
     return getattr(df_for_sampling_input.iloc[:, cols], operator)(axis=1).tolist()
 
+
 def normalize_df(df: pd.DataFrame) -> pd.DataFrame:
     last_columns = df.columns[-4:]
     first_column = df.columns[0]
@@ -26,21 +30,37 @@ def normalize_df(df: pd.DataFrame) -> pd.DataFrame:
     df[first_column] = 100
     return df
 
+
 def establish_length_num_samples(num_samples: int):
     if num_samples <= 0:
         ValueError("num_samples must be greater than 0")
-    length_num_samples = len(str(num_samples)) if num_samples not in [10**i for i in range(10)] else len(str(num_samples)) - 1 # To format het scenario names with leading zeros
+    length_num_samples = (
+        len(str(num_samples))
+        if num_samples not in [10**i for i in range(10)]
+        else len(str(num_samples)) - 1
+    )  # To format het scenario names with leading zeros
     return length_num_samples
 
-def latin_hypercube_sampling(input_sample_dict: dict, num_samples: int = 100, seed = 0) -> dict:
+
+def latin_hypercube_sampling(
+    input_sample_dict: dict, num_samples: int = 100, seed=0
+) -> dict:
     # Set the random seed for reproducibility
     np.random.seed(seed)
 
     # Define lower and upper bounds
-    lower_bound_2030 = input_sample_dict["2030_min"]  # Lower bound for each dimension in 2030
-    upper_bound_2030 = input_sample_dict["2030_max"]  # Upper bound for each dimension in 2030
-    lower_bound_2050 = input_sample_dict["2050_min"]  # Lower bound for each dimension in 2050
-    upper_bound_2050 = input_sample_dict["2050_max"]  # Upper bound for each dimension in 2050
+    lower_bound_2030 = input_sample_dict[
+        "2030_min"
+    ]  # Lower bound for each dimension in 2030
+    upper_bound_2030 = input_sample_dict[
+        "2030_max"
+    ]  # Upper bound for each dimension in 2030
+    lower_bound_2050 = input_sample_dict[
+        "2050_min"
+    ]  # Lower bound for each dimension in 2050
+    upper_bound_2050 = input_sample_dict[
+        "2050_max"
+    ]  # Upper bound for each dimension in 2050
 
     # Define the number of samples and dimensions
     num_dimensions = (
@@ -149,6 +169,7 @@ def cubic_spline_interpolation(samples_dict, columns):
 
     return cs_dict
 
+
 def find_unique_values(list1, list2):
     unique_in_list1 = set(list1) - set(list2)
     unique_in_list2 = set(list2) - set(list1)
@@ -157,11 +178,12 @@ def find_unique_values(list1, list2):
         "Unique in List1": list(unique_in_list1),
         "Unique in List2": list(unique_in_list2),
     }
-    
+
     if unique_in_list1 or unique_in_list2:
         print(result)
-    
+
     return result
+
 
 def swap_dictionary_structure(dictionary: dict):
     """
