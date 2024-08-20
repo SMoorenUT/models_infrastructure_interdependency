@@ -2,6 +2,7 @@
 import numpy as np
 import pandas as pd
 import ema_workbench
+import ema_workbench.analysis.scenario_discovery_util as sdutil
 
 def calculate_basic_statistics(data: np.ndarray or list) -> dict: # type: ignore
     if not isinstance(data, (np.ndarray, list)):
@@ -98,9 +99,9 @@ def cart(simulation_input: pd.DataFrame, simulation_output: np.array):
         raise TypeError("simulation_output must be a numpy array")
 
     result = ema_workbench.analysis.cart.CART(
-        simulation_input, simulation_output, mass_min=0.05, mode="regression"
+        simulation_input, simulation_output, mass_min=0.05, mode=sdutil.RuleInductionType.REGRESSION
     )
-    return result.stats
+    return result
 
 
 def logistic_regression(
