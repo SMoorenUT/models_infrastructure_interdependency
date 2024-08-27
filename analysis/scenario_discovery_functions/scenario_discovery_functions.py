@@ -44,7 +44,7 @@ def convert_continuous_to_categorical(
         raise TypeError("criterion must be a string")
     if criterion not in criterion_values:
         raise ValueError(
-            f"criterion must be one of the following: {', '.join(criterion_values)}, but criterion is {criterion}"
+            f"criterion must be one of the following: {', '.join(criterion_values)}, but criterion is '{criterion}'"
         )
 
     # Convert the numerical array to a binary array based on input threshold and criterion
