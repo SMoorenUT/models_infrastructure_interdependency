@@ -1,5 +1,4 @@
 from pathlib import Path
-import ema_workbench
 import pandas as pd
 import numpy as np
 from typing import Any

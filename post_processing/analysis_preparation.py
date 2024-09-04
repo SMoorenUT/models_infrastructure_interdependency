@@ -95,6 +95,7 @@ def reshape_local_data(
         local_data_dict[scenario_name] = local_data_dict[scenario_name]["area_entities"]
 
     # Fill a new dataframe in the right format
+    # TODO: Implement zero filling for "jobs_XX" and "population_XX" columns
     local_data_dict_formatted = {}
     # First, loop over jobs
     # TODO: Refactor first slice to be dynamic to varying scenario lengths

@@ -1,8 +1,11 @@
 import numpy as np
 import pandas as pd
+import matplotlib
 import matplotlib.pyplot as plt
 import seaborn as sns
 from pathlib import Path
+
+matplotlib.use('TkAgg')
 
 TRAFFIC_TYPE = "combined"  # "cargo", "passenger" or "combined"
 # Load the data
@@ -119,28 +122,43 @@ def plot_results_road_network(df_results: pd.DataFrame, save_fig: bool = False) 
         raise TypeError("save_fig must be a boolean")
 
     # Plot the results
-    fig, ax = plt.subplots()
-    ax = plt.subplot(1, 1, 1)
+    fig, (ax1, ax2) = plt.subplots(
+        1, 2, gridspec_kw={"width_ratios": [9, 1]}, sharey=True
+    )
+
+    # Draw the first subplot
+    ax1 = plt.subplot(1, 2, 1)
     for scenario in df_results.columns:
-        ax.plot(df_results.index, df_results[scenario], label=scenario)
-    ax.set_ylim(0, df_results.max().max())
-    # ax.set_xticks(np.arange(1, 32, 5))
-    ax.minorticks_on()
-    ax.grid(which="minor", linestyle=":", linewidth="0.5", color="gray")
-    ax.set_xlim(df_results.index.min(), df_results.index.max())
-    ax.set_xlabel("Year")
-    ax.set_ylabel(f"{TRAFFIC_TYPE.capitalize()} vehicle kilometers (vkm)")
-    ax.set_title(
+        ax1.plot(df_results.index, df_results[scenario], label=scenario)
+    ax1.set_ylim(0, df_results.max().max())
+    ax1.minorticks_on()
+    ax1.grid(which="minor", linestyle=":", linewidth="0.5", color="gray")
+    ax1.set_xlim(df_results.index.min(), df_results.index.max())
+    ax1.set_xlabel("Year")
+    ax1.set_ylabel(f"{TRAFFIC_TYPE.capitalize()} vehicle kilometers (vkm)")
+    ax1.set_title(
         f"Road Network: Scenario Ensemble for {TRAFFIC_TYPE} vehicle kilometers (vkm)"
     )
-    ax.grid(True)
-    ax.axvline(
+    ax1.grid(True)
+    ax1.axvline(
         x=df_results.index[0], color="gray", linestyle="--", alpha=0.5
     )  # Add vertical gridline at the first value
+
+    # Add a second subplot for KDE
+    ax2 = plt.subplot(1, 2, 2)
+    values_2030 = df_results.iloc[11]
+    values_2050 = df_results.iloc[-1]
+    sns.kdeplot(y=values_2030, fill=True)
+    sns.kdeplot(y=values_2050, fill=True)
+    ax2.legend(["2030", "2050"])
+    ax2.set_xlabel("Frequency")
+    ax2.set_title("Kernel density estimation")
+    ax2.grid(True)
 
     if save_fig:
         plt.savefig(PLOT_DIR / f"{TRAFFIC_TYPE}_VKM.png")
     plt.tight_layout()
+    plt.subplots_adjust(wspace=0.1)  # Adjust the spacing between subplots
     plt.show()
 
 
@@ -155,8 +173,10 @@ def process_road_network_results(filename, save_fig=False):
     df_results = load_results_single_df(filename)
     plot_results_road_network(df_results, save_fig=save_fig)
 
-
-if __name__ == "__main__":
+def main():
     filename = f"{TRAFFIC_TYPE}_vkm.csv"
     # process_bridge_results()
     process_road_network_results(filename, save_fig=False)
+
+if __name__ == "__main__":
+    main()
