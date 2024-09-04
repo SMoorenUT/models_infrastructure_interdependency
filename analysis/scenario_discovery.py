@@ -3,10 +3,23 @@ import ema_workbench
 import pandas as pd
 import numpy as np
 from typing import Any
-
+import seaborn as sns
 
 CURR_DIR = Path(__file__).parent
 output_median = 5749882233.360854  # Median of combined_vkm.csv_year
+
+
+def get_array_stats(array) -> dict[str, Any]:
+    stats = {
+        "mean": np.mean(array),
+        "median": np.median(array),
+        "std_dev": np.std(array),
+        "min": np.min(array),
+        "max": np.max(array),
+        "lower_quartile": np.percentile(array, 25),
+        "upper_quartile": np.percentile(array, 75),
+    }
+    return stats
 
 
 def load_data():
@@ -43,36 +56,34 @@ def convert_continuous_to_categorical(
 
     # Convert the numerical array to a binary array based on input threshold and criterion
     if criterion == "greater":
-        numerical_array[numerical_array > threshold] = 1
-        numerical_array[numerical_array <= threshold] = 0
+        numerical_array = np.where(numerical_array > threshold, 1, 0)
     elif criterion == "less":
-        numerical_array[numerical_array < threshold] = 1
-        numerical_array[numerical_array >= threshold] = 0
+        numerical_array = np.where(numerical_array < threshold, 1, 0)
     elif criterion == "greater_or_equal":
-        numerical_array[numerical_array >= threshold] = 1
-        numerical_array[numerical_array < threshold] = 0
+        numerical_array = np.where(numerical_array >= threshold, 1, 0)
     elif criterion == "less_or_equal":
-        numerical_array[numerical_array <= threshold] = 1
-        numerical_array[numerical_array > threshold] = 0
+        numerical_array = np.where(numerical_array <= threshold, 1, 0)
     elif criterion == "equal":
-        numerical_array[numerical_array == threshold] = 1
-        numerical_array[numerical_array != threshold] = 0
+        numerical_array = np.where(numerical_array == threshold, 1, 0)
     else:
-        numerical_array[numerical_array < threshold] = 1
-        numerical_array[numerical_array >= threshold] = 0
+        numerical_array = np.where(numerical_array < threshold, 1, 0)
 
     return numerical_array
 
 
 def prim(independent_var_df: pd.DataFrame, dependent_var_array: np.array):
     if not isinstance(independent_var_df, pd.DataFrame):
-        raise TypeError("simulation_input must be a pandas DataFrame")
+        raise TypeError(
+            f"independent_var_df must be a pandas DataFrame, but is {type(independent_var_df)}"
+        )
     if not isinstance(dependent_var_array, np.ndarray):
-        raise TypeError("dependent_var_array must be a numpy array")
+        raise TypeError(
+            f"dependent_var_array must be a numpy array, but is {type(dependent_var_array)}"
+        )
 
     dependent_var_array = convert_continuous_to_categorical(
-        dependent_var_array, output_median, "less"
-    )
+        dependent_var_array, ..., "less"
+    )  # find new value for threshold
 
     prim_obj = ema_workbench.analysis.prim.Prim(
         independent_var_df,
@@ -108,25 +119,39 @@ def cart(simulation_input: pd.DataFrame, simulation_output: np.array):
 
 def logistic_regression(simulation_input: pd.DataFrame, simulation_output: np.array):
     if not isinstance(simulation_input, pd.DataFrame):
-        raise TypeError("simulation_input must be a pandas DataFrame")
+        raise TypeError(
+            f"simulation_input must be a pandas DataFrame, but is {type(simulation_input)}"
+        )
     if not isinstance(simulation_output, np.ndarray):
-        raise TypeError("simulation_output must be a numpy array")
+        raise TypeError(
+            f"simulation_output must be a numpy array, but is {type(simulation_output)}"
+        )
     if not np.all(np.isin(simulation_output, [0, 1])):
-        convert_continuous_to_categorical(simulation_output, output_median, "less")
+        simulation_output_stats = get_array_stats(simulation_output)
+        lower_quartile = simulation_output_stats["lower_quartile"]
 
-    result = ema_workbench.analysis.logistic_regression.Logit(
-        simulation_input, simulation_output, threshold=0.5
+        simulation_output_binary = convert_continuous_to_categorical(
+            simulation_output, lower_quartile, "less"
+        )
+
+    lr_object = ema_workbench.analysis.logistic_regression.Logit(
+        simulation_input, simulation_output_binary
     )
-    result.show_tradeoff()
-
+    lr_object.run()
+    lr_object.inspect(1)
+    sns.set_style("white")
+    lr_object.plot_pairwise_scatter(1)
+    # lr_object.show_tradeoff()
+    # lr_object.inspect(0)
     pass
+    # lr_object.inspect(5)
 
 
 def main():
     simulation_input, simulation_output = load_data()
-    # logistic_regression(simulation_input, simulation_output["combined_vkm.csv_year"])
+    logistic_regression(simulation_input, simulation_output["combined_vkm.csv_year"])
     # cart(simulation_input, simulation_output["combined_vkm.csv_year"])
-    prim(simulation_input, simulation_output["combined_vkm.csv_year"])
+    # prim(simulation_input, simulation_output["combined_vkm.csv_year"])
 
 
 if __name__ == "__main__":

@@ -13,15 +13,17 @@ import pandas as pd
 import os
 
 scenarios = []
-enitity_number = 0
+enitity_number = 0  # for analysing a certain bridge for example
 DATA_TO_ANALYSE = "road_network: passenger_demand_vkm"
 BASE_DIR = Path(__file__).parents[1]
 INIT_DATA_DIR = BASE_DIR / "data/init_data/"
-UPDATES_DIR = BASE_DIR / "data/scenarios_ema/"
+UPDATES_DIR = BASE_DIR / "data/scenarios_ema_1000/"
 
-for i in range(100):
-    scenario = f"ema_road_model_27_05_2024_scenario_{str(i).zfill(2)}"
+for i in range(585):
+    scenario = f"ema_road_model_08_05_2024_scenario_{str(i).zfill(3)}"
     scenarios.append(scenario)
+
+scenarios = scenarios[-500:]
 
 if DATA_TO_ANALYSE == "bridges":
     dataset_name = "bridges"
@@ -50,7 +52,7 @@ elif DATA_TO_ANALYSE == "road_network: cargo_demand_vkm":
 else:
     print("Dataset not found")
 
-OUTPUT_DIR = BASE_DIR / f"output_simulations/ema_road_model_27_05_2024/{output_subdir}"
+OUTPUT_DIR = BASE_DIR / f"output_simulations/ema_road_model_08_05_2024/{output_subdir}"
 
 if not OUTPUT_DIR.exists():
     os.makedirs(OUTPUT_DIR)

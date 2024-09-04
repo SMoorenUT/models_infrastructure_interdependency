@@ -7,7 +7,7 @@ import json
 # Initialize the data directories
 CURR_DIR = Path(__file__).parent
 BASE_DIR = Path(__file__).parents[1]
-SIM_NAME = "ema_road_model_27_05_2024"
+SIM_NAME = "ema_road_model_08_05_2024"
 SIM_INPUT_DIR = (
     BASE_DIR / "data/init_data"
 )  # Directory with the input data for the simulation
@@ -15,10 +15,13 @@ SIM_OUTPUT_DIR = (
     BASE_DIR / f"output_simulations/{SIM_NAME}"
 )  # Directory with the results of the simulations
 OUTPUT_DIR = BASE_DIR / "analysis"  # Directory to save the analysis data
-NUMBER_OF_SCENARIOS = 100
+NUMBER_OF_SCENARIOS = 500
 SIMULATION_YEARS = list(range(2019, 2051))
 
 data_files = ["cargo_vkm.csv", "passenger_vkm.csv", "combined_vkm.csv"]
+data_files = [
+    "passenger_vkm.csv"
+]  # Overwrite because this case only has passenger_vkm.csv
 year = 2050
 
 
@@ -94,13 +97,14 @@ def reshape_local_data(
     # Fill a new dataframe in the right format
     local_data_dict_formatted = {}
     # First, loop over jobs
-    for idx in range(len((local_data_dict["scenario_00"]["id"]))):
+    # TODO: Refactor first slice to be dynamic to varying scenario lengths
+    for idx in range(len((local_data_dict["scenario_000"]["id"]))):
         local_data_dict_formatted[f"jobs_{idx}"] = [
             local_data_dict[scenario_name]["jobs.count.index"][idx]
             for scenario_name in scenario_name_list
         ]
     # Then loop over population
-    for idx in range(len((local_data_dict["scenario_00"]["id"]))):
+    for idx in range(len((local_data_dict["scenario_000"]["id"]))):
         local_data_dict_formatted[f"population_{idx}"] = [
             local_data_dict[scenario_name]["people.count.index"][idx]
             for scenario_name in scenario_name_list
