@@ -7,12 +7,13 @@ from pathlib import Path
 
 matplotlib.use('TkAgg')
 
-TRAFFIC_TYPE = "combined"  # "cargo", "passenger" or "combined"
+SIM_NAME = "ema_road_model_08_05_2024"
+TRAFFIC_TYPE = "passenger"  # "cargo", "passenger" or "combined"
 # Load the data
 BASE_DIR = Path(__file__).parent
 PLOT_DIR = BASE_DIR / "plots"
 DATA_DIR = (
-    BASE_DIR.parent / "output_simulations/ema_road_model_27_05_2024/"
+    BASE_DIR.parent / "output_simulations" / SIM_NAME
 )  # Folder with the results of the simulations as CSV files
 DATA_SUBDIR_BRIDGES = (
     "bridges_ICratio"  # Subdirectory of the data directory where the results are stored
@@ -137,7 +138,7 @@ def plot_results_road_network(df_results: pd.DataFrame, save_fig: bool = False) 
     ax1.set_xlabel("Year")
     ax1.set_ylabel(f"{TRAFFIC_TYPE.capitalize()} vehicle kilometers (vkm)")
     ax1.set_title(
-        f"Road Network: Scenario Ensemble for {TRAFFIC_TYPE} vehicle kilometers (vkm)"
+        f"Scenario Ensemble for {TRAFFIC_TYPE} vehicle kilometers (vkm). Simulation: {SIM_NAME}"
     )
     ax1.grid(True)
     ax1.axvline(
