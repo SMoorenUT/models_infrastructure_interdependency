@@ -23,7 +23,7 @@ for i in range(585):
     scenario = f"ema_road_model_08_05_2024_scenario_{str(i).zfill(3)}"
     scenarios.append(scenario)
 
-scenarios = scenarios[-500:]
+scenarios = scenarios[-500:]  # slice because scenarios 005 to 010 are not complete
 
 if DATA_TO_ANALYSE == "bridges":
     dataset_name = "bridges"
