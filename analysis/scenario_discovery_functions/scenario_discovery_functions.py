@@ -29,12 +29,12 @@ def calculate_basic_statistics(data: np.ndarray or list) -> dict: # type: ignore
 def convert_continuous_to_categorical(
     numerical_array: np.array, threshold: float, criterion: str
 ):
-
-    # Convert the numerical array to a binary array based on the threshold and criterion
-
+    """
+    Convert the numerical array to a binary array based on the threshold and criterion
+    """
     # Check the input types
     criterion = criterion.lower()
-    criterion_values = ["greater", "less", "greater_or_equal", "less_or_equal", "equal"]
+    criterion_values = [">", "<", ">=", "<=", "=="]
     # TODO: Implement the 'between' criterion
     if not isinstance(numerical_array, np.ndarray):
         raise TypeError("simulation_output must be a numpy array")
@@ -48,15 +48,15 @@ def convert_continuous_to_categorical(
         )
 
     # Convert the numerical array to a binary array based on input threshold and criterion
-    if criterion == "greater":
+    if criterion == ">":
         numerical_array = np.where(numerical_array > threshold, 1, 0)
-    elif criterion == "less":
+    elif criterion == "<":
         numerical_array = np.where(numerical_array < threshold, 1, 0)
-    elif criterion == "greater_or_equal":
+    elif criterion == ">=":
         numerical_array = np.where(numerical_array >= threshold, 1, 0)
-    elif criterion == "less_or_equal":
+    elif criterion == "<=":
         numerical_array = np.where(numerical_array <= threshold, 1, 0)
-    elif criterion == "equal":
+    elif criterion == "==":
         numerical_array = np.where(numerical_array == threshold, 1, 0)
     else:
         Warning("numerical_array is not converted to a binary array")
@@ -72,7 +72,7 @@ def prim(independent_var_df: pd.DataFrame, dependent_var_array: np.array) -> tup
 
     lower_quartile = calculate_basic_statistics(dependent_var_array)["lower_quartile"]
     dependent_var_array = convert_continuous_to_categorical(
-        dependent_var_array, lower_quartile, "less"
+        dependent_var_array, lower_quartile, "<"
     )
 
     prim_obj = ema_workbench.analysis.prim.Prim(
@@ -125,7 +125,7 @@ def logistic_regression(
 
 
     lr_object = ema_workbench.analysis.logistic_regression.Logit(
-        simulation_input, simulation_output, threshold=0.5
+        simulation_input, simulation_output, threshold=0.95
     )
-    lr_object.run()
+    lr_object.run(maxiter=50)
     return lr_object
