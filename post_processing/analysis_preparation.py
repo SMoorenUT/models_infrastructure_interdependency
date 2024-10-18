@@ -15,7 +15,7 @@ SIM_OUTPUT_DIR = (
     BASE_DIR / f"output_simulations/{SIM_NAME}"
 )  # Directory with the results of the simulations
 OUTPUT_DIR = BASE_DIR / "analysis"  # Directory to save the analysis data
-NUMBER_OF_SCENARIOS = 500
+NUMBER_OF_SCENARIOS = 1000
 SIMULATION_YEARS = list(range(2019, 2051))
 
 data_files = ["cargo_vkm.csv", "passenger_vkm.csv", "combined_vkm.csv"]

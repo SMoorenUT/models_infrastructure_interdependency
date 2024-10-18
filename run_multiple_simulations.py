@@ -7,13 +7,14 @@ import time
 scenario_stem = "data/scenarios_ema_1000/ema_road_model_08_05_2024_scenario_"
 NUM_SIMULATIONS = 1000
 LEN_SIM = 3
-STARTING_NUMBER = 926
+STARTING_NUMBER = 992
 CURRENT_DATE = time.strftime("%Y-%m-%d")
 
-# Extract the part of the string before '_scenario_'
-scenario_name = scenario_stem.split("_scenario_", 1)[0]
+# Extract the last part of the string before '_scenario_'
+simulation_name = scenario_stem.split("_scenario_", 1)[0]
 
 
+# Printed output will be written to a .txt file
 class DualOutput:
     def __init__(self, filename):
         self.terminal = sys.stdout
@@ -37,7 +38,7 @@ def cleanup():
 # Register the cleanup function to be called at exit
 atexit.register(cleanup)
 
-sys.stdout = DualOutput(f"{scenario_name}_started_at_{CURRENT_DATE}.txt")
+sys.stdout = DualOutput(f"{simulation_name}_started_at_{CURRENT_DATE}.txt")
 
 for i in range(NUM_SIMULATIONS):
     i = i + STARTING_NUMBER
