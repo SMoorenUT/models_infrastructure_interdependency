@@ -14,16 +14,18 @@ import os
 
 scenarios = []
 enitity_number = 0  # for analysing a certain bridge for example
-DATA_TO_ANALYSE = "road_network: passenger_demand_vkm"
+DATA_TO_ANALYSE = "road_network: cargo_demand_vkm"
 BASE_DIR = Path(__file__).parents[1]
 INIT_DATA_DIR = BASE_DIR / "data/init_data/"
-UPDATES_DIR = BASE_DIR / "data/scenarios_ema_1000/"
+UPDATES_DIR = Path(
+    "/media/p-drive/ET/CME/Current/Sander Mooren/scenarios_ema_1000/Output/"
+)
 
-for i in range(585):
+for i in range(1000):
     scenario = f"ema_road_model_08_05_2024_scenario_{str(i).zfill(3)}"
     scenarios.append(scenario)
 
-scenarios = scenarios[-500:]  # slice because scenarios 005 to 010 are not complete
+# scenarios = scenarios[-500:]  # slice
 
 if DATA_TO_ANALYSE == "bridges":
     dataset_name = "bridges"
