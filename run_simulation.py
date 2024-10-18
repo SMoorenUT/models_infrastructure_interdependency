@@ -19,6 +19,7 @@ input_dir = CURRENT_DIR.joinpath("data/init_data")
 # SCENARIO_FILE = SCENARIO_DIR.joinpath(SCENARIO_NAME).with_suffix(".json")
 # SCENARIO_FILE = CURRENT_DIR.joinpath('scenario.json')
 
+
 def run_simulation(scenario_file, output_dir):
     """
     Run the simulation with the given scenario file and output directory.
@@ -69,11 +70,12 @@ def main(args=None):
     # output_dir = args[1]
 
     scenario_file = (
-        "data/scenarios_ema_1000/ema_road_model_08_05_2024_scenario_009.json"
+        "data/scenarios_ema_1000/ema_road_model_08_05_2024_scenario_740.json"
     )
-    output_dir = "data/scenarios_ema_1000/ema_road_model_08_05_2024_scenario_009"
+    output_dir = "data/scenarios_ema_1000/ema_road_model_08_05_2024_scenario_740"
 
     run_simulation(scenario_file, output_dir)
+
 
 if __name__ == "__main__":
     main()
