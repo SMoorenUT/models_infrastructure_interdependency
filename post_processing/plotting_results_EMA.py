@@ -176,8 +176,8 @@ def process_road_network_results(filename, save_fig=False):
 
 def main():
     filename = f"{TRAFFIC_TYPE}_vkm.csv"
-    # process_bridge_results()
-    process_road_network_results(filename, save_fig=False)
+    process_bridge_results()
+    # process_road_network_results(filename, save_fig=False)
 
 if __name__ == "__main__":
     main()
