@@ -58,7 +58,7 @@ def main():
 
     pass
 
-    # # perform experiments in parallel when sequential works
+    # perform experiments in parallel when sequential works
     # with MultiprocessingEvaluator(model) as evaluator:
     #     results = perform_experiments(model, NUMBER_OF_EXPERIMENTS, evaluator=evaluator)
 

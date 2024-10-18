@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 from typing import Any
 import seaborn as sns
+import ema_workbench
 
 CURR_DIR = Path(__file__).parent
 output_median = 5749882233.360854  # Median of combined_vkm.csv_year
