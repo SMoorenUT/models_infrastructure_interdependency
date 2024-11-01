@@ -5,7 +5,7 @@ WEIGHT_FACTOR_CARGO = 2
 
 # Initialize the data directories
 BASE_DIR = Path(__file__).parents[1]
-DATA_DIR = BASE_DIR / "output_simulations/ema_road_model_27_05_2024/road_network"
+DATA_DIR = BASE_DIR / "output_simulations/ema_road_model_08_05_2024/road_network"
 
 
 def load_dataframes():

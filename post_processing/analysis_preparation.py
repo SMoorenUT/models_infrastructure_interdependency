@@ -19,9 +19,9 @@ NUMBER_OF_SCENARIOS = 1000
 SIMULATION_YEARS = list(range(2019, 2051))
 
 data_files = ["cargo_vkm.csv", "passenger_vkm.csv", "combined_vkm.csv"]
-data_files = [
-    "passenger_vkm.csv"
-]  # Overwrite because this case only has passenger_vkm.csv
+# data_files = [
+#     "passenger_vkm.csv"
+# ]  # Overwrite because this case only has passenger_vkm.csv
 year = 2050
 
 
