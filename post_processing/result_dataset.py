@@ -13,8 +13,8 @@ import pandas as pd
 import os
 
 scenarios = []
-enitity_number = 0  # for analysing a certain bridge for example
-DATA_TO_ANALYSE = "road_network: cargo_demand_vkm"
+enitity_number = 829  # for analysing a certain bridge for example
+DATA_TO_ANALYSE = "bridges"
 BASE_DIR = Path(__file__).parents[1]
 INIT_DATA_DIR = BASE_DIR / "data/init_data/"
 UPDATES_DIR = Path(
@@ -32,7 +32,7 @@ if DATA_TO_ANALYSE == "bridges":
     attribute = "transport.volume_to_capacity_ratio"
     entity_group = "bridge_entities"
     output_subdir = "bridges"
-    output_filename = "ICratio.csv"
+    output_filename = "ICratio_{enitity_number}.csv"
 elif DATA_TO_ANALYSE == "road_network: passenger_demand_vkm":
     dataset_name = "road_network"
     attribute = "transport.passenger_demand_vkm"
@@ -79,6 +79,34 @@ ATTRIBUTES = [
     ),
     AttributeSpec("transport.shortest_path_length", DataType(float, csr=True)),
     AttributeSpec("transport.shortest_path_lane_length", DataType(float, csr=True)),
+    AttributeSpec(
+        "connection.upper_references",
+        DataType(str, csr=True),
+    ),
+    AttributeSpec(
+        "connection.lower_references",
+        DataType(str, csr=True),
+    ),
+    AttributeSpec("transport.capacity_utilization", DataType(float)),
+    AttributeSpec("transport.capacity_utilization_upper", DataType(float)),
+    AttributeSpec("transport.capacity_utilization_lower", DataType(float)),
+    AttributeSpec(
+        "transport.automatic_incident_detection_upper",
+        DataType(int),
+        enum_name="kpi_status",
+    ),
+    AttributeSpec(
+        "transport.automatic_incident_detection_lower",
+        DataType(int),
+        enum_name="kpi_status",
+    ),
+    AttributeSpec("transport.lighting_upper", DataType(int), enum_name="kpi_status"),
+    AttributeSpec("transport.lighting_lower", DataType(int), enum_name="kpi_status"),
+    AttributeSpec("transport.automatic_incident_detection_presence", DataType(bool)),
+    AttributeSpec("transport.automatic_incident_detection", DataType(int)),
+    AttributeSpec("transport.light_presence", DataType(bool)),
+    AttributeSpec("transport.lighting", DataType(int)),
+    AttributeSpec("noise.level", DataType(float)),
 ]
 
 timeline_info = TimelineInfo(
@@ -144,6 +172,9 @@ def results_by_attribute(attribute, entity_group, dataset_name, save_csvs=False)
 
     elif DATA_TO_ANALYSE == "bridges":
         for scenario in scenarios:
+            dataset = load_results(scenario, dataset_name)
+            slice = jan1_conversion(dataset, entity_group, attribute)
+
             bridges_dict = dict(zip(slice["timestamps"], slice["data"]))
             ic_bridges_df = pd.DataFrame.from_dict(bridges_dict)
             (
@@ -168,7 +199,7 @@ def results_by_entity(enitity_number):
 
         dataset = results.get_dataset("bridges")
 
-        slice = dataset.slice("bridge_entities", entity_selector=0)
+        slice = dataset.slice("bridge_entities", entity_selector=enitity_number)
         dates = [timeline_info.timestamp_to_datetime(t) for t in slice["timestamps"]]
 
         dates_jan1_check = []

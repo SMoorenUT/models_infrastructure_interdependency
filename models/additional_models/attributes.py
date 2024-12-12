@@ -1,5 +1,3 @@
-
-
 from movici_simulation_core.core.attribute_spec import AttributeSpec
 from movici_simulation_core.core.data_type import DataType
 from movici_simulation_core.core.schema import attribute_plugin_from_dict
@@ -17,13 +15,21 @@ LowerReferences = AttributeSpec(
 IC_ratio_upper = AttributeSpec("transport.capacity_utilization_upper", data_type=float)
 IC_ratio_lower = AttributeSpec("transport.capacity_utilization_lower", data_type=float)
 AutomaticIncidentDetectionUpper = AttributeSpec(
-    "transport.automatic_incident_detection_upper", data_type=int, enum_name="kpi_status"
+    "transport.automatic_incident_detection_upper",
+    data_type=int,
+    enum_name="kpi_status",
 )
 AutomaticIncidentDetectionLower = AttributeSpec(
-    "transport.automatic_incident_detection_lower", data_type=int, enum_name="kpi_status"
+    "transport.automatic_incident_detection_lower",
+    data_type=int,
+    enum_name="kpi_status",
 )
-LightingUpper = AttributeSpec("transport.lighting_upper", data_type=int, enum_name="kpi_status")
-LightingLower = AttributeSpec("transport.lighting_lower", data_type=int, enum_name="kpi_status")
+LightingUpper = AttributeSpec(
+    "transport.lighting_upper", data_type=int, enum_name="kpi_status"
+)
+LightingLower = AttributeSpec(
+    "transport.lighting_lower", data_type=int, enum_name="kpi_status"
+)
 AutomaticIncidentDetectionPresence = AttributeSpec(
     "transport.automatic_incident_detection_presence", data_type=bool
 )
