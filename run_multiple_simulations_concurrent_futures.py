@@ -1,5 +1,4 @@
-#!/usr/bin/env python3
-
+import run_simulation
 import json
 import sys
 from pathlib import Path
@@ -8,26 +7,27 @@ from movici_simulation_core import Simulation
 from movici_simulation_core.core import AttributeSpec
 from movici_simulation_core.core.data_type import DataType
 from movici_simulation_core.models.common.attributes import CommonAttributes
+import concurrent.futures
+import math
+import tempfile
+import os
 
-CURRENT_DIR = Path(__file__).parent
-input_dir = CURRENT_DIR.joinpath("data/init_data")
+NUMBER_OF_SIMULATIONS_PARALLEL = 5
+SCENARIO_STEM = "data/scenarios_ema_1000/ema_road_model_08_05_2024_scenario_"
+NUM_SIMULATIONS = 1000
+LEN_SIM = 3 # Number of digits in the simulation number
+STARTING_NUMBER = 0
 
-# output_dir = CURRENT_DIR.joinpath("simulations")
+# retrieve list of all json files with os.path...
+TASKS = ["./data/experiments/experiment_001.json",
+         "./data/experiments/experiment_002.json"]
 
-# SCENARIO_DIR = CURRENT_DIR.joinpath('data/scenarios')
-# SCENARIO_NAME = "green"
-# SCENARIO_FILE = SCENARIO_DIR.joinpath(SCENARIO_NAME).with_suffix(".json")
-# SCENARIO_FILE = CURRENT_DIR.joinpath('scenario.json')
+input_dir = Path("data/init_data")
+output_dir = Path("simulations")
+ 
 
-
-def run_simulation(scenario_file, output_dir):
-    """
-    Run the simulation with the given scenario file and output directory.
-    The scenario file is a JSON file that contains the configuration of the simulation.
-    The output directory is the directory where the simulation results will be stored.
-    The scenario file and output directory need to be the identical, apart from the json suffix.
-    """
-    scenario = json.loads(Path(scenario_file).read_text())
+def run_simulation(experiment_file):
+    scenario = json.loads(Path(experiment_file).read_text())
     sim = Simulation(data_dir=input_dir, storage_dir=output_dir)
     sim.use(CommonAttributes)
     sim.register_attributes(
@@ -61,20 +61,14 @@ def run_simulation(scenario_file, output_dir):
     sim.configure(scenario)
     sim.run()
 
+   
 
-def main(args=None):
-    if args is None:
-        args = sys.argv[1:]
+ 
 
-    # scenario_file = args[0]
-    # output_dir = args[1]
-
-    scenario_file = (
-        "data/scenarios/green_ars.json"
-    )
-    output_dir = "data/scenarios/green_ars"
-
-    run_simulation(scenario_file, output_dir)
+def main():
+    with concurrent.futures.ProcessPoolExecutor(max_workers=2) as executor:
+        for number, prime in zip(TASKS, executor.map(run_simulation, TASKS)):
+            print('%d is prime: %s' % (number, prime))
 
 
 if __name__ == "__main__":

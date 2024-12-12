@@ -11,8 +11,10 @@ matplotlib.use("TkAgg")
 entity_number = 829
 SIM_NAME = "ema_road_model_08_05_2024"
 TRAFFIC_TYPE = "combined"  # "cargo", "passenger" or "combined"
+YEARS_KDE = [2030, 2040, 2050] # Years for which to plot the kernel density estimation. TODO: Implement None
 SAVE_FIG = False  # Boolean to determine whether to save the figure or not
-colors = sns.color_palette("ocean", 5)
+colors1 = sns.color_palette("Spectral", 100)
+colors2 = sns.color_palette("Dark2", len(YEARS_KDE))
 # Load the data
 BASE_DIR = Path(__file__).parent
 PLOT_DIR = BASE_DIR / "plots"
@@ -139,10 +141,12 @@ def plot_results_bridge(
     plt.show()
 
 
-def plot_results_road_network(df_results: pd.DataFrame, save_fig: bool = False) -> None:
+def plot_results_road_network(df_results: pd.DataFrame, years_kde: list[int], save_fig: bool = False) -> None:
     # Check input types
     if not isinstance(df_results, pd.DataFrame):
         raise TypeError("df_results must be a pandas DataFrame")
+    if not isinstance(years_kde, list) or not all(isinstance(year, int) for year in years_kde):
+        raise TypeError("years_kde must be a list of integers")
     if not isinstance(save_fig, bool):
         raise TypeError("save_fig must be a boolean")
 
@@ -153,7 +157,15 @@ def plot_results_road_network(df_results: pd.DataFrame, save_fig: bool = False) 
 
     # Draw the first subplot
     ax1 = plt.subplot(1, 2, 1)
-    color_cycle = itertools.cycle(colors)
+    # Cycle through colors for the scenarios
+    color_cycle = itertools.cycle(colors1)
+    
+    # Add vertical lines for each year in YEARS_KDE
+    for idx, year in enumerate(YEARS_KDE):
+        year_position = df_results.index.get_loc(year)
+        ax1.axvline(x=year, color=colors2[idx], linestyle="--", alpha=0.8)
+    
+    # Plot each scenario with a different color
     for scenario in df_results.columns:
         color = next(color_cycle)
         ax1.plot(
@@ -163,27 +175,49 @@ def plot_results_road_network(df_results: pd.DataFrame, save_fig: bool = False) 
             linewidth=0.5,
             color=color,
         )
+    
+    # Set the y-axis limit
     ax1.set_ylim(0, df_results.max().max())
+    
+    # Enable minor ticks on the x-axis
     ax1.minorticks_on()
-    ax1.grid(which="minor", linestyle=":", linewidth="0.5", color="gray")
+    ax1.tick_params(axis='x', which='minor', bottom=True, top=False)
+    
+    # Add grid lines
+    ax1.grid(which="major", linestyle=":", linewidth="0.5", color="gray")
+    
+    # Set the x-axis limit
     ax1.set_xlim(df_results.index.min(), df_results.index.max())
+    
+    # Set the x and y labels
     ax1.set_xlabel("Year")
     ax1.set_ylabel(f"{TRAFFIC_TYPE.capitalize()} vehicle kilometers travelled (VKT)")
+    
+    # Set the title of the plot
     ax1.set_title(
-        f"Scenario Ensemble for {TRAFFIC_TYPE} vehicle kilometers travelled (VKT). Simulation: {SIM_NAME}"
+        f"Scenario Ensemble for {TRAFFIC_TYPE} vehicle kilometers travelled (VKT)"
     )
+    
+    # Enable the grid
     ax1.grid(True)
-    ax1.axvline(
-        x=df_results.index[0], color="gray", linestyle="--", alpha=0.5
-    )  # Add vertical gridline at the first value
+    
+    # Add text annotations for each year in YEARS_KDE
+    for idx, year in enumerate(YEARS_KDE):
+        year_position = df_results.index.get_loc(year)
+        max_value = df_results.iloc[year_position].max()
+        ax1.text(year, max_value + 1e8, str(year), color=colors2[idx], fontsize=8, ha='left', va='bottom')
+
+    # Customize the spines
+    ax1.spines['top'].set_visible(False)
+    if df_results.index.max() in YEARS_KDE: 
+        ax1.spines['right'].set_visible(False)
 
     # Add a second subplot for KDE
     ax2 = plt.subplot(1, 2, 2)
-    values_2030 = df_results.iloc[11]
-    values_2050 = df_results.iloc[-1]
-    sns.kdeplot(y=values_2030, fill=True)
-    sns.kdeplot(y=values_2050, fill=True)
-    ax2.legend(["2030", "2050"])
+    for idx, year in enumerate(years_kde):
+        values = df_results.loc[year]
+        sns.kdeplot(y=values, fill=True, label=str(year), color=colors2[idx])
+    ax2.legend()
     ax2.set_xlabel("Frequency")
     ax2.set_title("Kernel density estimation")
     ax2.grid(True)
@@ -202,9 +236,9 @@ def process_bridge_results():
     plot_results_bridge(df_results, entity_number, save_fig=False)
 
 
-def process_road_network_results(filename, save_fig=False):
-    df_results = load_results_single_df(filename)
-    plot_results_road_network(df_results, save_fig=save_fig)
+def process_road_network_results(filename, years_kde, save_fig=False):
+    df_results = load_results_single_df(filename, index_col=0)
+    plot_results_road_network(df_results, years_kde, save_fig=save_fig)
 
 
 def process_bridge_IC_ratio(entity_number):
@@ -219,7 +253,7 @@ def process_bridge_IC_ratio(entity_number):
 
 def main():
     filename = f"{TRAFFIC_TYPE}_vkm.csv"
-    process_road_network_results(filename, save_fig=SAVE_FIG)
+    process_road_network_results(filename, years_kde=YEARS_KDE, save_fig=SAVE_FIG)
     # process_bridge_results()
     # process_bridge_IC_ratio(entity_number)
 

@@ -1,4 +1,6 @@
 
+from typing import Union
+import warnings
 import numpy as np
 import pandas as pd
 import ema_workbench
@@ -26,8 +28,8 @@ def calculate_basic_statistics(data: np.ndarray or list) -> dict: # type: ignore
     return statistics
 
 
-def convert_continuous_to_categorical(
-    numerical_array: np.array, threshold: float, criterion: str
+def binarize_array(
+    numerical_array: np.array, binarization_threshold: Union[float, int], criterion: str, convert_relative_threshold_to_absolute: bool = True
 ):
     """
     Convert the numerical array to a binary array based on the threshold and criterion
@@ -38,8 +40,6 @@ def convert_continuous_to_categorical(
     # TODO: Implement the 'between' criterion
     if not isinstance(numerical_array, np.ndarray):
         raise TypeError("simulation_output must be a numpy array")
-    if not isinstance(threshold, float):
-        raise TypeError("threshold must be a float")
     if not isinstance(criterion, str):
         raise TypeError("criterion must be a string")
     if criterion not in criterion_values:
@@ -47,32 +47,44 @@ def convert_continuous_to_categorical(
             f"criterion must be one of the following: {', '.join(criterion_values)}, but criterion is '{criterion}'"
         )
 
+    if convert_relative_threshold_to_absolute:
+        if not isinstance(binarization_threshold, (float, int)):
+            raise TypeError("binarization_threshold must be a float or int")
+        if not 0 < binarization_threshold < 1:
+            raise ValueError("binarization_threshold must be between 0 and 1 if convert_relative_threshold_to_absolute is True")
+        absoulute_threshold = np.percentile(numerical_array, binarization_threshold * 100)
+    else:
+        if 0 < binarization_threshold < 1:
+            warnings.warn("The binarization_threshold is between 0 and 1 but not converted to an absolute value as convert_relative_threshold_to_absolute is False", UserWarning)
+        absoulute_threshold = binarization_threshold
+    
+
     # Convert the numerical array to a binary array based on input threshold and criterion
     if criterion == ">":
-        numerical_array = np.where(numerical_array > threshold, 1, 0)
+        binarized_numerical_array = np.where(numerical_array > absoulute_threshold, 1, 0)
     elif criterion == "<":
-        numerical_array = np.where(numerical_array < threshold, 1, 0)
+        binarized_numerical_array = np.where(numerical_array < absoulute_threshold, 1, 0)
     elif criterion == ">=":
-        numerical_array = np.where(numerical_array >= threshold, 1, 0)
+        binarized_numerical_array = np.where(numerical_array >= absoulute_threshold, 1, 0)
     elif criterion == "<=":
-        numerical_array = np.where(numerical_array <= threshold, 1, 0)
+        binarized_numerical_array = np.where(numerical_array <= absoulute_threshold, 1, 0)
     elif criterion == "==":
-        numerical_array = np.where(numerical_array == threshold, 1, 0)
+        binarized_numerical_array = np.where(numerical_array == absoulute_threshold, 1, 0)
     else:
-        Warning("numerical_array is not converted to a binary array")
+        warnings.warn("numerical_array is not converted to a binary array") 
+    return binarized_numerical_array
 
-    return numerical_array
 
-
-def prim(independent_var_df: pd.DataFrame, dependent_var_array: np.array) -> tuple:
+def prim(independent_var_df: pd.DataFrame, dependent_var_array: np.array, binarization_threshold: Union[float, int], criterion: str, convert_relative_threshold_to_absolute: bool = True) -> tuple:
     if not isinstance(independent_var_df, pd.DataFrame):
         raise TypeError("simulation_input must be a pandas DataFrame")
     if not isinstance(dependent_var_array, np.ndarray):
         raise TypeError("dependent_var_array must be a numpy array")
+  
 
-    lower_quartile = calculate_basic_statistics(dependent_var_array)["lower_quartile"]
-    dependent_var_array = convert_continuous_to_categorical(
-        dependent_var_array, lower_quartile, "<"
+    # lower_quartile = calculate_basic_statistics(dependent_var_array)["lower_quartile"]
+    dependent_var_array = binarize_array(
+        dependent_var_array, binarization_threshold, criterion, convert_relative_threshold_to_absolute=True 
     )
 
     prim_obj = ema_workbench.analysis.prim.Prim(
@@ -107,8 +119,9 @@ def cart(simulation_input: pd.DataFrame, simulation_output: np.array):
 def logistic_regression(
     simulation_input: pd.DataFrame, 
     simulation_output: np.array, 
-    limit_section_of_interest_name: str = None, 
-    direction_section_of_interest: str = None
+    binarization_threshold: Union[float, int] = None, 
+    criterion: str = None, 
+    convert_relative_threshold_to_absolute: bool = True
 ):
     if not isinstance(simulation_input, pd.DataFrame):
         raise TypeError("simulation_input must be a pandas DataFrame")
@@ -116,13 +129,13 @@ def logistic_regression(
         raise TypeError("simulation_output must be a numpy array")
 
     # Convert the continuous output to a binary output if needed
-    if limit_section_of_interest_name and direction_section_of_interest and not np.all(np.isin(simulation_output, [0, 1])): # Check if the output is already binary and arguments are provided to make binary
-        simulation_output_stats = calculate_basic_statistics(simulation_output)
-        if limit_section_of_interest_name not in simulation_output_stats:
-            raise ValueError("limit_section_of_interest_name must be one of the keys from the statistics")
-        limit_section_of_interest_value = simulation_output_stats[limit_section_of_interest_name]
-        simulation_output = convert_continuous_to_categorical(simulation_output, limit_section_of_interest_value, direction_section_of_interest)
-
+    if binarization_threshold is not None and criterion is not None and not np.all(np.isin(simulation_output, [0, 1])): # Check if the output is already binary and arguments are provided to make binary
+        simulation_output = binarize_array(
+            numerical_array=simulation_output, 
+            binarization_threshold=binarization_threshold, 
+            criterion=criterion, 
+            convert_relative_threshold_to_absolute=convert_relative_threshold_to_absolute
+        )
 
     lr_object = ema_workbench.analysis.logistic_regression.Logit(
         simulation_input, simulation_output, threshold=0.95
