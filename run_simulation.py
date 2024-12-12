@@ -70,9 +70,9 @@ def main(args=None):
     # output_dir = args[1]
 
     scenario_file = (
-        "data/scenarios_ema_1000/ema_road_model_08_05_2024_scenario_740.json"
+        "data/scenarios/green_ars.json"
     )
-    output_dir = "data/scenarios_ema_1000/ema_road_model_08_05_2024_scenario_740"
+    output_dir = "data/scenarios/green_ars"
 
     run_simulation(scenario_file, output_dir)
 
