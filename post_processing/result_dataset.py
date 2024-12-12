@@ -12,20 +12,21 @@ import numpy as np
 import pandas as pd
 import os
 
-scenarios = []
-enitity_number = 829  # for analysing a certain bridge for example
+attribute = "transport.volume_to_capacity_ratio"
+enitity_number = 491  # for analysing a certain bridge for example
+timestamp = "2050"
 DATA_TO_ANALYSE = "bridges"
 BASE_DIR = Path(__file__).parents[1]
 INIT_DATA_DIR = BASE_DIR / "data/init_data/"
 UPDATES_DIR = Path(
     "/media/p-drive/ET/CME/Current/Sander Mooren/scenarios_ema_1000/Output/"
 )
+SIMULATION_NAME = "ema_road_model_08_05_2024"
 
+scenarios = []
 for i in range(1000):
-    scenario = f"ema_road_model_08_05_2024_scenario_{str(i).zfill(3)}"
+    scenario = f"{SIMULATION_NAME}_scenario_{str(i).zfill(3)}"
     scenarios.append(scenario)
-
-# scenarios = scenarios[-500:]  # slice
 
 if DATA_TO_ANALYSE == "bridges":
     dataset_name = "bridges"
@@ -118,8 +119,16 @@ schema.use(CommonAttributes)
 configure_global_plugins(schema)
 
 
-def jan1_conversion(dataset, entity_group, attribute):
-    slice = dataset.slice(entity_group=entity_group, attribute=attribute)
+def jan1_conversion(slice: dict) -> dict:
+    """
+    Converts the timestamps in the provided slice to include only the first of January for each year.
+
+    Args:
+        slice (dict): The slice of the dataset to be converted.
+
+    Returns:
+       modified_slice (dict): The modified slice containing only the first of January for each year.
+    """
     dates = [timeline_info.timestamp_to_datetime(t) for t in slice["timestamps"]]
     dates_jan1_check = []
     for i in np.arange(2019, 2051):
@@ -130,8 +139,9 @@ def jan1_conversion(dataset, entity_group, attribute):
     slice["timestamps"] = dates
     slice["data"] = [slice["data"][x] for x in dates_jan1_check]
 
-    for i in range(32):
-        slice["data"][i] = slice["data"][i]["data"]
+    # for i in range(32):
+    #     if "data" in slice["data"][i]:
+    #         slice["data"][i] = slice["data"][i]["data"]
     return slice
 
 
@@ -153,7 +163,8 @@ def results_by_attribute(attribute, entity_group, dataset_name, save_csvs=False)
 
         for scenario in tqdm(scenarios):
             dataset = load_results(scenario, dataset_name)
-            slice = jan1_conversion(dataset, entity_group, attribute)
+            slice = dataset.slice(entity_group=entity_group, attribute=attribute)
+            slice = jan1_conversion(slice, entity_group, attribute)
 
             # Convert slice to a dictionary
             data_dict = dict(zip(slice["timestamps"], slice["data"]))
@@ -173,7 +184,8 @@ def results_by_attribute(attribute, entity_group, dataset_name, save_csvs=False)
     elif DATA_TO_ANALYSE == "bridges":
         for scenario in scenarios:
             dataset = load_results(scenario, dataset_name)
-            slice = jan1_conversion(dataset, entity_group, attribute)
+            slice = dataset.slice(entity_group=entity_group, attribute=attribute)
+            slice = jan1_conversion(slice, entity_group, attribute)
 
             bridges_dict = dict(zip(slice["timestamps"], slice["data"]))
             ic_bridges_df = pd.DataFrame.from_dict(bridges_dict)
@@ -186,42 +198,132 @@ def results_by_attribute(attribute, entity_group, dataset_name, save_csvs=False)
             )
 
 
-def results_by_entity(enitity_number):
-    for scenario in scenarios:
-        SCENARIO_UPDATES_DIR = UPDATES_DIR / scenario
+def results_by_entity(entity_number, attribute, save_csv=True):
+    """
+    Creates a dataframe containing the specified attribute of single bridge per scenario (rows) per year (columns). The data is saved as a csv file in the output directory.
 
-        results = SimulationResults(
-            INIT_DATA_DIR,
-            SCENARIO_UPDATES_DIR,
-            timeline_info=timeline_info,
-            attributes=schema,
+    Args:
+        entity_number (int): The entity number to be analysed.
+        attribute (str): The attribute to be analysed.
+        save_csv (bool, optional): Whether to save the results as a csv file. Defaults to True.
+
+    Returns:
+        pd.DataFrame: Dataframe containing the data for the specified entity and attribute. Rows are the scenarios, columns are the years.
+
+    """
+    ic_bridges_df = pd.DataFrame(columns=[str(year) for year in range(2019, 2051)])
+    for scenario in tqdm(scenarios):
+        dataset = load_results(scenario, dataset_name)
+        slice = dataset.slice("bridge_entities", entity_selector=entity_number)
+        slice["data"] = slice["data"][attribute]
+        slice = jan1_conversion(slice=slice)
+
+        scenario_name = scenario.split("_")[-2] + "_" + scenario.split("_")[-1]
+        ic_bridges_df.loc[scenario_name] = slice["data"]
+
+    if save_csv:
+        csv_name = f"{OUTPUT_DIR}/{SIMULATION_NAME}_Bridge_{entity_number}_ICratio.csv"
+        if os.path.exists(csv_name):
+            user_input = input(
+                f"File {csv_name} already exists. Do you want to overwrite it (o), save as a new file (n), or skip save (s)? "
+            ).lower()
+            if user_input == "o":
+                ic_bridges_df.to_csv(csv_name, index=True)
+            elif user_input == "n":
+                counter = 1
+                new_csv_name = f"{csv_name.split('.csv')[0]}_{counter}.csv"
+                while os.path.exists(new_csv_name):
+                    counter += 1
+                    new_csv_name = f"{csv_name.split('.csv')[0]}_{counter}.csv"
+                ic_bridges_df.to_csv(new_csv_name, index=True)
+        else:
+            ic_bridges_df.to_csv(csv_name, index=True)
+
+    return ic_bridges_df
+
+
+def results_by_attribute_and_year(
+    attribute: str, timestamp: str, dataset_name="bridges", save_csv=True
+) -> pd.DataFrame:
+    """
+    Slices the dataset over the specified attribute and timestamp. The data is saved as a csv file in the output directory.
+
+    Args:
+        attribute (str): property to be analysed as defined in simulation (e.g. "transport.volume_to_capacity_ratio")
+        timestamp (str): year to be analysed (e.g. "2050")
+        dataset_name (str, optional): dataset to be analysed. Defaults to "bridges".
+
+    Returns:
+        pd.DataFrame: Dataframe containing the data for the specified attribute and timestamp. Rows are the entities, columns are the scenarios.
+    """
+    data = {}
+    for scenario in tqdm(scenarios):
+        # Load the dataset
+        dataset = load_results(scenario, dataset_name)
+
+        # Slice the dataset over the attribute
+        slice = dataset.slice(
+            "bridge_entities",
+            attribute=attribute,
         )
+        slice = jan1_conversion(slice=slice)
 
-        dataset = results.get_dataset("bridges")
+        # Slice the dataset over the timestamp
+        timestamp_index = slice["timestamps"].index(timestamp)
+        slice["timestamps"] = slice["timestamps"][timestamp_index]
+        slice["data"] = slice["data"][timestamp_index]
 
-        slice = dataset.slice("bridge_entities", entity_selector=enitity_number)
-        dates = [timeline_info.timestamp_to_datetime(t) for t in slice["timestamps"]]
+        # # Slice the dataset over the entity number
+        # entity_index = np.where(slice["id"] == entity_number)[0][0]
+        # slice["data"] = slice["data"][entity_index]
+        # slice["id"] = entity_index
+        scenario_name = scenario.split("_")[-2] + "_" + scenario.split("_")[-1]
+        data[scenario_name] = slice["data"]
+    data = pd.DataFrame.from_dict(data)
 
-        dates_jan1_check = []
-        for i in np.arange(2019, 2051):
-            index = dates.index(dt.datetime(year=i, month=1, day=1))
-            dates_jan1_check.append(index)
-        dates = [dates[x] for x in dates_jan1_check]
-        dates = [dt.datetime.strftime(x, "%Y") for x in dates]
-        slice["timestamps"] = dates
-        slice["data"] = [slice["data"][x] for x in dates_jan1_check]
+    if save_csv:
+        csv_name = f"{OUTPUT_DIR}/{SIMULATION_NAME}/bridges/{SIMULATION_NAME}_{attribute}_{timestamp}.csv"
+        if os.path.exists(csv_name):
+            while True:
+                user_input = input(
+                    f"File {csv_name} already exists. Do you want to overwrite it (o), save as a new file (n), or skip save (s)? "
+                )
+                if user_input.lower() == "o":
+                    data.to_csv(csv_name, index=True)
+                    break
+                elif user_input.lower() == "n":
+                    counter = 1
+                    new_csv_name = f"{csv_name.split('.csv')[0]}_{counter}.csv"
+                    while os.path.exists(new_csv_name):
+                        counter += 1
+                        new_csv_name = f"{csv_name.split('.csv')[0]}_{counter}.csv"
+                    data.to_csv(new_csv_name, index=True)
+                    break
+                elif user_input.lower() == "s":
+                    break
+                else:
+                    print(
+                        "Invalid input. Please enter 'o' to overwrite, 'n' to save as a new file, or 's' to skip save."
+                    )
+        else:
+            data.to_csv(csv_name, index=True)
 
-        for i in range(32):
-            slice["data"][i] = slice["data"][i]["data"]
+    return data
 
-        bridges = dict(zip(slice["timestamps"], slice["data"]))
-        ic_bridges_df = pd.DataFrame.from_dict(bridges)
-        ic_bridges_df.to_csv(f"{OUTPUT_DIR}/bridges_ICratio_{scenario}.csv", index=True)
+
+def results_by_entity_and_attribute():
+    pass
 
 
 if __name__ == "__main__":
-    results_by_attribute(attribute, entity_group, dataset_name, save_csvs=True)
-    # results_by_entity(enitity_number)
+    # results_by_attribute(attribute, entity_group, dataset_name, save_csvs=True)
+    results_by_entity(enitity_number, attribute=attribute, save_csv=True)
+    # results_by_attribute_and_year(
+    #     attribute=attribute,
+    #     timestamp=timestamp,
+    #     dataset_name="bridges",
+    #     save_csv=True,
+    # )
 
 
 # print(
