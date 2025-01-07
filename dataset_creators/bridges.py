@@ -3,18 +3,18 @@ from pathlib import Path
 from movici_simulation_core.preprocessing.dataset_creator import create_dataset
 
 CURRENT_DIR = Path(__file__).parent
-DATASET_NAME = "bridges"
+DATASET_NAME = "highway_railway_bridges"
 
 config = {
     "__meta__": {"crs": "EPSG:28992"},
     "__sources__": {
         "bridges": {
             "source_type": "file",
-            "path": str(CURRENT_DIR.parent.joinpath("B&V+rs_pivoted.shp")),
+            "path": str(CURRENT_DIR.joinpath("HighwayRailwayIntersections.shp")),
         }
     },
     "name": DATASET_NAME,  # lowercase en underscore
-    "display_name": "Bridges",  # anything goes
+    "display_name": "Highway Railway Bridges",  # anything goes
     "type": "bridges",
     "version": 4,
     "general": {
@@ -33,19 +33,21 @@ config = {
     "data": {
         "bridge_entities": {
             "__meta__": {"source": "bridges", "geometry": "points"},
-            "reference": {"property": "bo_id", "loaders": ["str"]},
+            "geometry.x": {"property": "X", "loaders": ["float"]},
+            "geometry.y": {"property": "Y", "loaders": ["float"]},
             "connection.upper_references": {
-                "property": "FID_upper",
+                "property": "fid_upper",
                 "loaders": [
                     "csv",
                 ],
             },
             "connection.lower_references": {
-                "property": "FID_lower",
+                "property": "fid_lower",
                 "loaders": [
                     "csv",
                 ],
-            },
+            },            
+            "reference": {"property": "bridge_id", "loaders": ["str"]},
         }
     },
 }
