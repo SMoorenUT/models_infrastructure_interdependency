@@ -12,16 +12,15 @@ SIM_INPUT_DIR = (
     BASE_DIR / "data/init_data"
 )  # Directory with the input data for the simulation
 SIM_OUTPUT_DIR = (
-    BASE_DIR / "output_simulations" / "bridges" / SIM_NAME
+    BASE_DIR / "output_simulations" / SIM_NAME
 )  # Directory with the results of the simulations
 OUTPUT_DIR = BASE_DIR / "analysis"  # Directory to save the analysis data
 NUMBER_OF_SCENARIOS = 1000
 SIMULATION_YEARS = list(range(2019, 2051))
+BRIDGE_NO = 829
+SAVE_TO_CSV = True
 
 data_files = ["ema_road_model_08_05_2024_transport.volume_to_capacity_ratio_2050.csv"]
-# data_files = [
-#     "passenger_vkm.csv"
-# ]  # Overwrite because this case only has passenger_vkm.csv
 year = 2050
 
 
@@ -173,7 +172,7 @@ def process_output_data(data_files, bridge_no):
 
     for file in data_files:
         data_files_dfs[file] = load_output_data(SIM_OUTPUT_DIR_TEMP / file)
-        data[bridge_no] = data_files_dfs[bridge_no][
+        data[bridge_no] = data_files_dfs[file][
             data_files_dfs[file].index == bridge_no
         ].values.tolist()[0]
 
@@ -187,17 +186,19 @@ def main(save_to_csv=False):
 
     local_data, global_data = load_data()
     init_data_df = process_init_data(local_data, global_data, year=year)
-    output_data_df = process_output_data(data_files, year=year)
+    output_data_df = process_output_data(data_files, BRIDGE_NO)
 
     analysis_ready_df = pd.concat([init_data_df, output_data_df], axis=1)
 
     (
-        analysis_ready_df.to_csv(OUTPUT_DIR / f"{SIM_NAME}_results.csv")
+        analysis_ready_df.to_csv(
+            OUTPUT_DIR / f"Bridge_{BRIDGE_NO}_year{year}_{SIM_NAME}_results.csv"
+        )
         if save_to_csv
         else None
     )
 
 
 if __name__ == "__main__":
-    main(save_to_csv=True)
+    main(save_to_csv=SAVE_TO_CSV)
     print("Finished running script.")
