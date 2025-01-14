@@ -13,7 +13,7 @@ import pandas as pd
 import os
 
 attribute = "transport.volume_to_capacity_ratio"
-enitity_number = 491  # for analysing a certain bridge for example
+enitity_number = 720  # for analysing a certain bridge for example
 timestamp = "2050"
 DATA_TO_ANALYSE = "bridges"
 BASE_DIR = Path(__file__).parents[1]
@@ -104,9 +104,9 @@ ATTRIBUTES = [
     AttributeSpec("transport.lighting_upper", DataType(int), enum_name="kpi_status"),
     AttributeSpec("transport.lighting_lower", DataType(int), enum_name="kpi_status"),
     AttributeSpec("transport.automatic_incident_detection_presence", DataType(bool)),
-    AttributeSpec("transport.automatic_incident_detection", DataType(int)),
+    AttributeSpec("transport.automatic_incident_detection", DataType(int), enum_name="kpi_status"),
     AttributeSpec("transport.light_presence", DataType(bool)),
-    AttributeSpec("transport.lighting", DataType(int)),
+    AttributeSpec("transport.lighting", DataType(int), enum_name="kpi_status"),
     AttributeSpec("noise.level", DataType(float)),
 ]
 

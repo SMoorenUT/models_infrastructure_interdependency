@@ -11,13 +11,13 @@ from tabulate import tabulate
 
 matplotlib.use("TkAgg")
 
-entity_number = 829
+entity_number = 720
 SIM_NAME = "ema_road_model_08_05_2024"
 TRAFFIC_TYPE = "combined"  # "cargo", "passenger" or "combined"
 YEARS_KDE = [2030, 2040, 2050] # Years for which to plot the kernel density estimation. TODO: Implement None
 SAVE_FIG = False  # Boolean to determine whether to save the figure or not
-colors1 = sns.color_palette("Spectral", 100)
-colors2 = sns.color_palette("Dark2", len(YEARS_KDE))
+colors1 = sns.color_palette("Spectral", 100) # Colors for the scenarios
+colors2 = sns.color_palette("Dark2", len(YEARS_KDE)) # Colors for the years of the KDE plot
 BASE_DIR = Path(__file__).parent
 PLOT_DIR = BASE_DIR / "plots"
 DATA_DIR = (
@@ -315,7 +315,7 @@ def process_bridge_results():
     attribute = "transport.volume_to_capacity_ratio"
     entity_number = 2
     df_results = load_results_bridges(entity_number)
-    plot_results_bridge(df_results, entity_number, save_fig=False)
+    plot_results_bridge(df_results, entity_number, YEARS_KDE, save_fig=False)
 
 
 def process_road_network_results(filename, years_kde, save_fig=False):
@@ -336,9 +336,9 @@ def process_bridge_IC_ratio(entity_number, years_kde, save_fig=False):
 
 
 def main():
-    process_road_network_results(filename= f"{TRAFFIC_TYPE}_vkm.csv", years_kde=YEARS_KDE, save_fig=SAVE_FIG)
+    # process_road_network_results(filename= f"{TRAFFIC_TYPE}_vkm.csv", years_kde=YEARS_KDE, save_fig=SAVE_FIG)
     # process_bridge_results()
-    # process_bridge_IC_ratio(entity_number, years_kde=YEARS_KDE,save_fig=SAVE_FIG)
+    process_bridge_IC_ratio(entity_number, years_kde=YEARS_KDE,save_fig=SAVE_FIG)
 
 
 if __name__ == "__main__":
