@@ -32,7 +32,7 @@ if DATA_TO_ANALYSE == "bridges":
     dataset_name = "bridges"
     attribute = "transport.volume_to_capacity_ratio"
     entity_group = "bridge_entities"
-    output_subdir = "bridges"
+    output_subdir = "bridges/individual"
     output_filename = "ICratio_{enitity_number}.csv"
 elif DATA_TO_ANALYSE == "road_network: passenger_demand_vkm":
     dataset_name = "road_network"
@@ -104,7 +104,9 @@ ATTRIBUTES = [
     AttributeSpec("transport.lighting_upper", DataType(int), enum_name="kpi_status"),
     AttributeSpec("transport.lighting_lower", DataType(int), enum_name="kpi_status"),
     AttributeSpec("transport.automatic_incident_detection_presence", DataType(bool)),
-    AttributeSpec("transport.automatic_incident_detection", DataType(int), enum_name="kpi_status"),
+    AttributeSpec(
+        "transport.automatic_incident_detection", DataType(int), enum_name="kpi_status"
+    ),
     AttributeSpec("transport.light_presence", DataType(bool)),
     AttributeSpec("transport.lighting", DataType(int), enum_name="kpi_status"),
     AttributeSpec("noise.level", DataType(float)),
@@ -212,7 +214,7 @@ def results_by_entity(entity_number, attribute, save_csv=True):
 
     """
     ic_bridges_df = pd.DataFrame(columns=[str(year) for year in range(2019, 2051)])
-    for scenario in tqdm(scenarios):
+    for scenario in tqdm(scenarios, desc=f"Bridge {entity_number}"):
         dataset = load_results(scenario, dataset_name)
         slice = dataset.slice("bridge_entities", entity_selector=entity_number)
         slice["data"] = slice["data"][attribute]
@@ -315,9 +317,23 @@ def results_by_entity_and_attribute():
     pass
 
 
-if __name__ == "__main__":
+def main():
+    data = pd.read_csv(
+        BASE_DIR
+        / "output_simulations"
+        / "ema_road_model_08_05_2024"
+        / "bridges"
+        / "ema_road_model_08_05_2024_transport.volume_to_capacity_ratio_2050_sorted.csv",
+        index_col=0,
+    )
+    entity_numbers = data.index
     # results_by_attribute(attribute, entity_group, dataset_name, save_csvs=True)
-    results_by_entity(enitity_number, attribute=attribute, save_csv=True)
+    for entity_number in entity_numbers:
+        csv_name = f"{OUTPUT_DIR}/{SIMULATION_NAME}_Bridge_{entity_number}_ICratio.csv"
+        if os.path.exists(csv_name):
+            print(f"File {csv_name} already exists. Skipping...")
+            continue
+        results_by_entity(entity_number, attribute, save_csv=True)
     # results_by_attribute_and_year(
     #     attribute=attribute,
     #     timestamp=timestamp,
@@ -326,19 +342,5 @@ if __name__ == "__main__":
     # )
 
 
-# print(
-#     "Slicing a dataset over a specific attribute",
-#     slice,
-#     sep="\n",
-# )
-# print(
-#     "Slicing a dataset over a specific entity (entity ID 12)",
-#     dataset.slice(dataset, entity_selector=12),
-#     sep="\n",
-# )
-#
-# print(
-#     "Slicing a dataset over a specific timestamp",
-#     dataset.slice(dataset, timestamp="2020"),
-#     sep="\n",
-# )
+if __name__ == "__main__":
+    main()
