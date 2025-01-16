@@ -126,8 +126,6 @@ def prim(independent_var_df: pd.DataFrame, dependent_var_array: np.array, binari
     if not isinstance(dependent_var_array, np.ndarray):
         raise TypeError("dependent_var_array must be a numpy array")
   
-
-    # lower_quartile = calculate_basic_statistics(dependent_var_array)["lower_quartile"]
     dependent_var_array = binarize_array(
         dependent_var_array, binarization_threshold, criterion, threshold_is_relative=True 
     )
@@ -136,6 +134,7 @@ def prim(independent_var_df: pd.DataFrame, dependent_var_array: np.array, binari
         independent_var_df,
         dependent_var_array,
         threshold=0.8,
+        mode=sdutil.RuleInductionType.BINARY
     )
 
     box = prim_obj.find_box()
