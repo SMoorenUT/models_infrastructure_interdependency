@@ -1,0 +1,610 @@
+{
+  "name": "scenario_0",
+  "display_name": "scenario_0",
+  "version": 4,
+  "epsg_code": 28992,
+  "bounding_box": [
+    1,
+    2,
+    3,
+    4
+  ],
+  "simulation_info": {
+    "mode": "time_oriented",
+    "start_time": 0,
+    "time_scale": 1,
+    "reference_time": 1546333200,
+    "duration": 1009152000
+  },
+  "created_on": "06/03/2024 13:02:29",
+  "description": "Ritri scenario_0 scenario. Calculations reference: Asgarpour, S., Konstantinos, K., Hartmann, A., and Neef, R. (2021). Modeling interdependent infrastructures under future scenarios. Work in Progress.",
+  "models": [
+    {
+      "type": "data_collector",
+      "name": "data_collector",
+      "aggregate_updates": true,
+      "gather_filter": "*"
+    },
+    {
+      "type": "data_collector",
+      "name": "data_collector_unaggregated",
+      "aggregate_updates": false,
+      "gather_filter": {
+        "road_network": {
+          "road_segment_entities": [
+            "transport.passenger_vkm.peak_yearly",
+            "transport.cargo_vkm.peak_yearly"
+          ]
+        }
+      },
+      "storage_dir": "/home/moorens/code/data/scenarios/test_ema_20240306_output_unaggregated"
+    },
+    {
+      "type": "tape_player",
+      "name": "scenario_0_local_parameters_tape_tape_player",
+      "tabular": "scenario_0_local_parameters_tape"
+    },
+    {
+      "type": "area_aggregation",
+      "name": "road_municipalities_aggregation",
+      "target_entity_group": [
+        "municipalities_area_set",
+        "area_entities"
+      ],
+      "aggregations": [
+        {
+          "source_entity_group": [
+            "road_network",
+            "road_segment_entities"
+          ],
+          "source_attribute": "transport.cargo_vehicle_flow",
+          "target_attribute": "transport.cargo_vehicle_flow.roads",
+          "function": "max",
+          "source_geometry": "line"
+        },
+        {
+          "source_entity_group": [
+            "road_network",
+            "road_segment_entities"
+          ],
+          "source_attribute": "transport.volume_to_capacity_ratio",
+          "target_attribute": "transport.volume_to_capacity_ratio.roads.max",
+          "function": "max",
+          "source_geometry": "line"
+        },
+        {
+          "source_entity_group": [
+            "road_network",
+            "road_segment_entities"
+          ],
+          "source_attribute": "transport.delay_factor",
+          "target_attribute": "transport.delay_factor.roads.max",
+          "function": "max",
+          "source_geometry": "line"
+        },
+        {
+          "source_entity_group": [
+            "road_network",
+            "road_segment_entities"
+          ],
+          "source_attribute": "transport.cargo_vehicle_flow",
+          "target_attribute": "transport.cargo_vehicle_flow.roads.total",
+          "function": "sum",
+          "source_geometry": "line"
+        },
+        {
+          "source_entity_group": [
+            "road_network",
+            "road_segment_entities"
+          ],
+          "source_attribute": "transport.volume_to_capacity_ratio",
+          "target_attribute": "transport.volume_to_capacity_ratio.roads.average",
+          "function": "average",
+          "source_geometry": "line"
+        },
+        {
+          "source_entity_group": [
+            "road_network",
+            "road_segment_entities"
+          ],
+          "source_attribute": "transport.delay_factor",
+          "target_attribute": "transport.delay_factor.roads.average",
+          "function": "average",
+          "source_geometry": "line"
+        },
+        {
+          "source_entity_group": [
+            "road_network",
+            "road_segment_entities"
+          ],
+          "source_attribute": "transport.passenger_vehicle_flow",
+          "target_attribute": "transport.passenger_vehicle_flow.roads",
+          "function": "max",
+          "source_geometry": "line"
+        },
+        {
+          "source_entity_group": [
+            "road_network",
+            "road_segment_entities"
+          ],
+          "source_attribute": "transport.passenger_vehicle_flow",
+          "target_attribute": "transport.passenger_vehicle_flow.roads.total",
+          "function": "sum",
+          "source_geometry": "line"
+        }
+      ],
+      "output_interval": 2628000
+    },
+    {
+      "type": "traffic_assignment_calculation",
+      "name": "road_traffic_assignment",
+      "modality": "roads",
+      "dataset": "road_network",
+      "vdf_alpha": 0.64,
+      "vdf_beta": 4,
+      "cargo_pcu": 2
+    },
+    {
+      "type": "traffic_demand_calculation",
+      "name": "road_passenger_demand_estimation",
+      "demand_path": [
+        "road_network",
+        "virtual_node_entities",
+        "transport.passenger_demand"
+      ],
+      "global_parameters": [
+        {
+          "name": "consumer_energy_price",
+          "elasticity": -0.045
+        },
+        {
+          "name": "gdp",
+          "elasticity": 0.19
+        },
+        {
+          "name": "train_ticket_price",
+          "elasticity": 0.01
+        },
+        {
+          "name": "total_vehicles",
+          "elasticity": 0.3
+        },
+        {
+          "name": "commuting_jobs_share",
+          "elasticity": 0.64
+        }
+      ],
+      "local_parameters": [
+        {
+          "attribute_path": [
+            "municipalities_area_set",
+            "area_entities",
+            "jobs.count.index"
+          ],
+          "geometry": "polygon",
+          "elasticity": 0.64,
+          "mapping_type": "nearest"
+        },
+        {
+          "attribute_path": [
+            "municipalities_area_set",
+            "area_entities",
+            "people.count.index"
+          ],
+          "geometry": "polygon",
+          "elasticity": 0.33,
+          "mapping_type": "nearest"
+        },
+        {
+          "attribute_path": [
+            "road_network",
+            "road_segment_entities",
+            "transport.average_time.star"
+          ],
+          "geometry": "line",
+          "elasticity": -1.1,
+          "mapping_type": "route"
+        },
+        {
+          "attribute_path": [
+            "road_network",
+            "virtual_node_entities",
+            "transport.shortest_path_lane_length"
+          ],
+          "geometry": "point",
+          "elasticity": 0.25,
+          "mapping_type": "nearest"
+        }
+      ],
+      "parameter_dataset": "scenario_0_global_parameters",
+      "total_outward_demand_attribute": "transport.total_outward_passenger_demand_vehicles",
+      "total_inward_demand_attribute": "transport.total_inward_passenger_demand_vehicles",
+      "atol": 0.001,
+      "rtol": 1e-06,
+      "max_iterations": 50
+    },
+    {
+      "type": "traffic_demand_calculation",
+      "name": "road_domestic_cargo_demand_estimation",
+      "demand_path": [
+        "road_network",
+        "virtual_node_entities",
+        "transport.domestic_cargo_demand"
+      ],
+      "global_parameters": [
+        {
+          "name": "consumer_energy_price",
+          "elasticity": -0.035
+        },
+        {
+          "name": "gdp",
+          "elasticity": 0.285
+        },
+        {
+          "name": "share_service_sector_gdp",
+          "elasticity": -0.4
+        },
+        {
+          "name": "road_load_factor_index",
+          "elasticity": -0.5
+        }
+      ],
+      "local_parameters": [],
+      "parameter_dataset": "scenario_0_global_parameters",
+      "total_outward_demand_attribute": "transport.total_outward_domestic_cargo_demand_vehicles",
+      "total_inward_demand_attribute": "transport.total_inward_domestic_cargo_demand_vehicles",
+      "atol": 0.001,
+      "rtol": 1e-06,
+      "max_iterations": 50
+    },
+    {
+      "type": "traffic_demand_calculation",
+      "name": "road_international_cargo_demand_estimation",
+      "demand_path": [
+        "road_network",
+        "virtual_node_entities",
+        "transport.international_cargo_demand"
+      ],
+      "global_parameters": [
+        {
+          "name": "consumer_energy_price",
+          "elasticity": -0.035
+        },
+        {
+          "name": "world_trade_volume",
+          "elasticity": 0.205
+        },
+        {
+          "name": "share_service_sector_gdp",
+          "elasticity": -0.4
+        },
+        {
+          "name": "road_load_factor_index",
+          "elasticity": -0.5
+        }
+      ],
+      "local_parameters": [],
+      "parameter_dataset": "scenario_0_global_parameters",
+      "total_outward_demand_attribute": "transport.total_outward_international_cargo_demand_vehicles",
+      "total_inward_demand_attribute": "transport.total_inward_international_cargo_demand_vehicles",
+      "atol": 0.001,
+      "rtol": 1e-06,
+      "max_iterations": 50
+    },
+    {
+      "name": "road_relaxation",
+      "type": "udf",
+      "entity_group": [
+        "road_network",
+        "road_segment_entities"
+      ],
+      "inputs": {
+        "outgoing": "transport.average_time.star",
+        "incoming": "transport.average_time"
+      },
+      "functions": [
+        {
+          "expression": "default(outgoing, incoming)*0.3+incoming*0.7",
+          "output": "transport.average_time.star"
+        }
+      ]
+    },
+    {
+      "name": "road_combined_cargo_demand",
+      "type": "udf",
+      "entity_group": [
+        "road_network",
+        "virtual_node_entities"
+      ],
+      "inputs": {
+        "domestic": "transport.domestic_cargo_demand",
+        "intl": "transport.international_cargo_demand"
+      },
+      "functions": [
+        {
+          "expression": "domestic+intl",
+          "output": "transport.cargo_demand"
+        }
+      ]
+    },
+    {
+      "name": "road_total_cargo_demand",
+      "type": "udf",
+      "entity_group": [
+        "road_network",
+        "virtual_node_entities"
+      ],
+      "inputs": {
+        "total_inward_domestic": "transport.total_inward_domestic_cargo_demand_vehicles",
+        "total_inward_intl": "transport.total_inward_international_cargo_demand_vehicles",
+        "total_outward_domestic": "transport.total_outward_domestic_cargo_demand_vehicles",
+        "total_outward_intl": "transport.total_outward_international_cargo_demand_vehicles"
+      },
+      "functions": [
+        {
+          "expression": "total_inward_domestic+total_inward_intl",
+          "output": "transport.total_inward_cargo_demand_vehicles"
+        },
+        {
+          "expression": "total_outward_domestic+total_outward_intl",
+          "output": "transport.total_outward_cargo_demand_vehicles"
+        }
+      ]
+    },
+    {
+      "name": "road_lane_length",
+      "type": "udf",
+      "entity_group": [
+        "road_network",
+        "road_segment_entities"
+      ],
+      "inputs": {
+        "layout": "transport.layout",
+        "length": "shape.length"
+      },
+      "functions": [
+        {
+          "expression": "sum(layout)*length",
+          "output": "transport.lane_length"
+        }
+      ]
+    },
+    {
+      "name": "road_lane_length_shortest_path",
+      "type": "shortest_path",
+      "transport_segments": [
+        "road_network",
+        "road_segment_entities"
+      ],
+      "cost_factor": "transport.average_time",
+      "calculations": [
+        {
+          "type": "sum",
+          "input": "transport.lane_length",
+          "output": "transport.shortest_path_lane_length"
+        }
+      ],
+      "no_update_shortest_path": true
+    },
+    {
+      "name": "road_length_shortest_path",
+      "type": "shortest_path",
+      "transport_segments": [
+        "road_network",
+        "road_segment_entities"
+      ],
+      "cost_factor": "transport.average_time",
+      "calculations": [
+        {
+          "type": "sum",
+          "input": "shape.length",
+          "output": "transport.shortest_path_length"
+        }
+      ],
+      "no_update_shortest_path": false
+    },
+    {
+      "name": "road_vkm",
+      "type": "udf",
+      "entity_group": [
+        "road_network",
+        "virtual_node_entities"
+      ],
+      "inputs": {
+        "cargo_demand": "transport.cargo_demand",
+        "passenger_demand": "transport.passenger_demand",
+        "shortest_path_length": "transport.shortest_path_length"
+      },
+      "functions": [
+        {
+          "expression": "cargo_demand*shortest_path_length",
+          "output": "transport.cargo_demand_vkm"
+        },
+        {
+          "expression": "cargo_demand*shortest_path_length*2520",
+          "output": "transport.cargo_demand_vkm.peak_yearly"
+        },
+        {
+          "expression": "passenger_demand*shortest_path_length",
+          "output": "transport.passenger_demand_vkm"
+        },
+        {
+          "expression": "passenger_demand*shortest_path_length*2520",
+          "output": "transport.passenger_demand_vkm.peak_yearly"
+        }
+      ]
+    },
+    {
+      "type": "tape_player",
+      "name": "road_network_investment_tape_tape_player",
+      "tabular": "road_network_investment_tape"
+    },
+    {
+      "name": "road_yearly_peak_demand",
+      "type": "udf",
+      "entity_group": [
+        "road_network",
+        "virtual_node_entities"
+      ],
+      "inputs": {
+        "domestic_cargo_demand": "transport.domestic_cargo_demand",
+        "international_cargo_demand": "transport.international_cargo_demand",
+        "cargo_demand": "transport.cargo_demand",
+        "passenger_demand": "transport.passenger_demand"
+      },
+      "functions": [
+        {
+          "expression": "sum(domestic_cargo_demand*2520)",
+          "output": "transport.domestic_cargo_demand.peak_yearly"
+        },
+        {
+          "expression": "sum(international_cargo_demand*2520)",
+          "output": "transport.international_cargo_demand.peak_yearly"
+        },
+        {
+          "expression": "sum(cargo_demand*2520)",
+          "output": "transport.cargo_demand.peak_yearly"
+        },
+        {
+          "expression": "sum(passenger_demand*1120)",
+          "output": "transport.passenger_demand.peak_yearly"
+        }
+      ]
+    },
+    {
+      "name": "road_yearly_peak_flow",
+      "type": "udf",
+      "entity_group": [
+        "road_network",
+        "road_segment_entities"
+      ],
+      "inputs": {
+        "cargo_flow": "transport.cargo_vehicle_flow",
+        "length": "shape.length",
+        "passenger_flow": "transport.passenger_vehicle_flow"
+      },
+      "functions": [
+        {
+          "expression": "cargo_flow*length*0.001*2520",
+          "output": "transport.cargo_vkm.peak_yearly"
+        },
+        {
+          "expression": "passenger_flow*length*0.001*1120",
+          "output": "transport.passenger_vkm.peak_yearly"
+        }
+      ]
+    },
+    {
+      "type": "area_aggregation",
+      "name": "road_total_aggregation",
+      "target_entity_group": [
+        "total_area",
+        "area_entities"
+      ],
+      "aggregations": [
+        {
+          "source_entity_group": [
+            "road_network",
+            "road_segment_entities"
+          ],
+          "source_attribute": "transport.cargo_vkm.peak_yearly",
+          "target_attribute": "transport.cargo_vkm.peak_yearly.roads",
+          "function": "sum",
+          "source_geometry": "line"
+        },
+        {
+          "source_entity_group": [
+            "road_network",
+            "virtual_node_entities"
+          ],
+          "source_attribute": "transport.domestic_cargo_demand.peak_yearly",
+          "target_attribute": "transport.domestic_cargo_demand.peak_yearly.roads",
+          "function": "sum",
+          "source_geometry": "point"
+        },
+        {
+          "source_entity_group": [
+            "road_network",
+            "virtual_node_entities"
+          ],
+          "source_attribute": "transport.international_cargo_demand.peak_yearly",
+          "target_attribute": "transport.international_cargo_demand.peak_yearly.roads",
+          "function": "sum",
+          "source_geometry": "point"
+        },
+        {
+          "source_entity_group": [
+            "road_network",
+            "virtual_node_entities"
+          ],
+          "source_attribute": "transport.cargo_demand.peak_yearly",
+          "target_attribute": "transport.cargo_demand.peak_yearly.roads",
+          "function": "sum",
+          "source_geometry": "point"
+        },
+        {
+          "source_entity_group": [
+            "road_network",
+            "road_segment_entities"
+          ],
+          "source_attribute": "transport.passenger_vkm.peak_yearly",
+          "target_attribute": "transport.passenger_vkm.peak_yearly.roads",
+          "function": "sum",
+          "source_geometry": "line"
+        },
+        {
+          "source_entity_group": [
+            "road_network",
+            "virtual_node_entities"
+          ],
+          "source_attribute": "transport.passenger_demand.peak_yearly",
+          "target_attribute": "transport.passenger_demand.peak_yearly.roads",
+          "function": "sum",
+          "source_geometry": "point"
+        }
+      ]
+    },
+    {
+      "type": "intensity_capacity",
+      "name": "ic_bridges",
+      "transport_dataset": "road_network",
+      "bridges_dataset": "bridges",
+      "capacity_threshold": 2000
+    },
+    {
+      "type": "safety_model",
+      "name": "safety_model",
+      "transport_dataset": "road_network"
+    }
+  ],
+  "datasets": [
+    {
+      "name": "scenario_0_global_parameters",
+      "type": "parameters"
+    },
+    {
+      "name": "road_network",
+      "type": "transport_network"
+    },
+    {
+      "name": "bridges",
+      "type": "bridges"
+    },
+    {
+      "name": "municipalities_area_set",
+      "type": "area_set"
+    },
+    {
+      "name": "total_area",
+      "type": "area_set"
+    },
+    {
+      "name": "scenario_0_local_parameters_tape",
+      "type": "tabular"
+    },
+    {
+      "name": "road_network_investment_tape",
+      "type": "tabular"
+    }
+  ]
+}
