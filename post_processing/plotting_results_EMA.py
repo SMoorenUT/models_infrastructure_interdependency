@@ -11,7 +11,7 @@ from tabulate import tabulate
 
 matplotlib.use("TkAgg")
 
-entity_number = 870
+entity_number = 594
 SIM_NAME = "ema_road_model_08_05_2024"
 TRAFFIC_TYPE = "combined"  # "cargo", "passenger" or "combined"
 YEARS_KDE = [
@@ -206,6 +206,8 @@ def plot_results_bridge(
     plt.tight_layout()
     plt.subplots_adjust(wspace=0.1)  # Adjust the spacing between subplots
     plt.show()
+    print(f"Bridge ID: {entity_number}")
+    print()
 
 
 def plot_results_road_network(

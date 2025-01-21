@@ -214,7 +214,7 @@ def results_by_entity(entity_number, attribute, save_csv=True):
 
     """
     ic_bridges_df = pd.DataFrame(columns=[str(year) for year in range(2019, 2051)])
-    for scenario in tqdm(scenarios, desc=f"Bridge {entity_number}"):
+    for scenario in tqdm(scenarios, desc=f"Bridge {entity_number}", colour="green"):
         dataset = load_results(scenario, dataset_name)
         slice = dataset.slice("bridge_entities", entity_selector=entity_number)
         slice["data"] = slice["data"][attribute]
