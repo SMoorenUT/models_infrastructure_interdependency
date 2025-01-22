@@ -8,10 +8,11 @@ from pathlib import Path
 from matplotlib.ticker import ScalarFormatter
 from scipy.stats import median_abs_deviation
 from tabulate import tabulate
+from translator_id_reference import reference_dict
 
 matplotlib.use("TkAgg")
 
-entity_number = 594
+entity_number = 856
 SIM_NAME = "ema_road_model_08_05_2024"
 TRAFFIC_TYPE = "combined"  # "cargo", "passenger" or "combined"
 YEARS_KDE = [
@@ -201,13 +202,13 @@ def plot_results_bridge(
     ax2.set_title("Kernel density estimation")
     ax2.grid(True)
 
+    print(f"Bridge ID: {entity_number}")
+    print(f"Bridge reference: {reference_dict(entity_number)}")
     if save_fig:
         plt.savefig(PLOT_DIR / f"bridge_{entity_number}_volume_to_capacity_ratio.png")
     plt.tight_layout()
     plt.subplots_adjust(wspace=0.1)  # Adjust the spacing between subplots
     plt.show()
-    print(f"Bridge ID: {entity_number}")
-    print()
 
 
 def plot_results_road_network(
