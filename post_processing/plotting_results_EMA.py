@@ -10,10 +10,16 @@ from scipy.stats import median_abs_deviation
 from tabulate import tabulate
 from translator_id_reference import reference_dict
 
+# Below is a workaround to import sdf from the parent directory. This is necessary to run the script from the command line.
+import sys
+from pathlib import Path
+sys.path[0] = str(Path(sys.path[0]).parent)
+from analysis.scenario_discovery_functions import scenario_discovery_functions as sdf
+
 matplotlib.use("TkAgg")
 
-entity_number = 856
-SIM_NAME = "ema_road_model_08_05_2024"
+entity_number = 885 # Number of the bridge to plot
+SIM_NAME = "ema_road_model_08_05_2024" # Name of the simulation the results are from
 TRAFFIC_TYPE = "combined"  # "cargo", "passenger" or "combined"
 YEARS_KDE = [
     2030,
@@ -21,7 +27,7 @@ YEARS_KDE = [
     2050,
 ]  # Years for which to plot the kernel density estimation. TODO: Implement None
 SAVE_FIG = False  # Boolean to determine whether to save the figure or not
-colors1 = sns.color_palette("Spectral", 100)  # Colors for the scenarios
+color_palette = "Spectral"  # Colors for the scenarios (was Spectral 100)
 colors2 = sns.color_palette(
     "Dark2", len(YEARS_KDE)
 )  # Colors for the years of the KDE plot
@@ -36,6 +42,14 @@ DATA_SUBDIR_BRIDGES = Path(
 DATA_SUBDIR_ROAD_NETWORK = (
     f"road_network"  # Subdirectory of the data directory where the results are stored
 )
+# Declare variables for the complex binarization of the IC ratio of two years
+IC_DF = pd.read_csv(DATA_DIR / f"bridges/individual/ema_road_model_08_05_2024_Bridge_{entity_number}_ICratio.csv", index_col=0)
+YEAR_1 = 2035
+CONDITION_1 = ">"
+THRESHOLD_1 = 0.75
+YEAR_2 = 2050
+CONDITION_2 = ">"
+THRESHOLD_2 = 0.75
 
 
 def get_scenario_list():
@@ -101,6 +115,7 @@ def plot_results_bridge(
     df_results: pd.DataFrame,
     entity_number: int,
     years_kde: list[int],
+    subset_pop_out: np.array = None,
     save_fig: bool = False,
 ) -> None:
     # Check input types
@@ -119,11 +134,11 @@ def plot_results_bridge(
     fig, (ax1, ax2) = plt.subplots(
         1, 2, gridspec_kw={"width_ratios": [9, 1]}, sharey=True
     )
+    # Set the figure size
+    fig.set_size_inches(18, 9)
 
     # Draw the first subplot
     ax1 = plt.subplot(1, 2, 1)
-    # Cycle through colors for the scenarios
-    color_cycle = itertools.cycle(colors1)
 
     # Add vertical lines and year annotations for each year in YEARS_KDE
     for idx, year in enumerate(YEARS_KDE):
@@ -150,18 +165,44 @@ def plot_results_bridge(
                 ha="left",
                 va="bottom",
             )
+    def plot_result_lines(dataframe, color_cycle):
+        # Plot each scenario as a line
+        if isinstance(color_cycle, str):
+            color = color_cycle
+            for scenario in dataframe.columns:
+                ax1.plot(
+                    dataframe.index,
+                    dataframe[scenario],
+                    label=scenario,
+                    linestyle=":",
+                    linewidth=0.3,
+                    color=color,
+                    alpha=0.5,
+                )
+        else:
+            for scenario in dataframe.columns:
+                color = next(color_cycle)
+                ax1.plot(
+                    dataframe.index,
+                    dataframe[scenario],
+                    label=scenario,
+                    linewidth=0.8,
+                    color=color,
+                    alpha=1,
+                )
 
-    # Plot each scenario with a different color
-    for scenario in df_results.columns:
-        color = next(color_cycle)
-        ax1.plot(
-            df_results.index,
-            df_results[scenario],
-            label=scenario,
-            linewidth=0.5,
-            color=color,
-            alpha=1,
-        )
+
+    if subset_pop_out is None:
+        # Cycle through colors for the scenarios
+        color_cycle = itertools.cycle(sns.color_palette(color_palette, min(len(df_results_popped_out), 100)))
+        plot_result_lines(df_results, color_cycle=color_cycle)
+    else:
+        df_results_popped_out = df_results.drop(columns=df_results.columns[~subset_pop_out])
+        df_results_background = df_results.drop(columns=df_results.columns[subset_pop_out])
+
+        color_cycle = itertools.cycle(sns.color_palette(color_palette, min(len(df_results_popped_out), 100)))
+        plot_result_lines(df_results_background, color_cycle="gray")
+        plot_result_lines(df_results_popped_out, color_cycle=color_cycle)
 
     # Set the y-axis limit
     ax1.set_ylim(0, df_results.max().max())
@@ -182,7 +223,7 @@ def plot_results_bridge(
 
     # Set the title of the plot
     ax1.set_title(
-        f"Bridge {entity_number}: Scenario Ensemble for Volume to Capacity Ratio"
+        f"Bridge {entity_number}: Scenario Ensemble"
     )
 
     # Enable the grid
@@ -199,15 +240,18 @@ def plot_results_bridge(
         sns.kdeplot(y=values, fill=True, label=str(year), color=colors2[idx])
     ax2.legend()
     ax2.set_xlabel("Frequency")
-    ax2.set_title("Kernel density estimation")
+    ax2.set_title("Kernel density estimation", fontsize=9)
     ax2.grid(True)
 
-    print(f"Bridge ID: {entity_number}")
-    print(f"Bridge reference: {reference_dict(entity_number)}")
-    if save_fig:
-        plt.savefig(PLOT_DIR / f"bridge_{entity_number}_volume_to_capacity_ratio.png")
     plt.tight_layout()
     plt.subplots_adjust(wspace=0.1)  # Adjust the spacing between subplots
+    if save_fig:
+        if subset_pop_out is None:
+            plt.savefig(PLOT_DIR / f"bridge_{entity_number}_volume_to_capacity_ratio.png", dpi=600, bbox_inches="tight")
+        else:
+            plt.savefig(PLOT_DIR / f"bridge_{entity_number}_{YEAR_1}_{CONDITION_1}_{THRESHOLD_1}_{YEAR_2}_{CONDITION_2}_{THRESHOLD_2}.png", dpi=600, bbox_inches="tight")
+    print(f"Bridge ID: {entity_number}")
+    print(f"Bridge reference: {reference_dict(entity_number)}")
     plt.show()
 
 
@@ -333,39 +377,6 @@ def plot_results_road_network(
     plt.show()
 
 
-def get_spread_stats(df_results: pd.DataFrame, years_kde: list[int]) -> pd.DataFrame:
-    # Check input types
-    if not isinstance(df_results, pd.DataFrame):
-        raise TypeError("df_results must be a pandas DataFrame")
-    if not isinstance(years_kde, list) or not all(
-        isinstance(year, int) for year in years_kde
-    ):
-        raise TypeError("years_kde must be a list of integers")
-
-    # Initialize the DataFrame to store the spread statistics
-    spread_stats = pd.DataFrame(
-        columns=["Year", "Mean", "Std", "Min", "25%", "50%", "75%", "Max", "IQR", "MAD"]
-    )
-    spread_stats["Year"] = years_kde
-    spread_stats.set_index("Year", inplace=True)
-
-    # Calculate the spread statistics for each year in YEARS_KDE
-    for year in years_kde:
-        values = df_results.loc[year]
-        spread_stats.loc[year, "Mean"] = values.mean()
-        spread_stats.loc[year, "Std"] = values.std()
-        spread_stats.loc[year, "Min"] = values.min()
-        spread_stats.loc[year, "25%"] = values.quantile(0.25)
-        spread_stats.loc[year, "50%"] = values.median()
-        spread_stats.loc[year, "75%"] = values.quantile(0.75)
-        spread_stats.loc[year, "Max"] = values.max()
-        spread_stats.loc[year, "IQR"] = values.quantile(0.75) - values.quantile(0.25)
-        spread_stats.loc[year, "MAD"] = median_abs_deviation(values)
-
-    print(tabulate(spread_stats, headers="keys", tablefmt="pretty"))
-    return spread_stats
-
-
 def process_bridge_results():
     attribute = "transport.volume_to_capacity_ratio"
     entity_number = 2
@@ -375,7 +386,7 @@ def process_bridge_results():
 
 def process_road_network_results(filename, years_kde, save_fig=False):
     df_results = load_results_single_df(filename, index_col=0)
-    get_spread_stats(df_results=df_results, years_kde=years_kde)
+    sdf.get_spread_stats(df_results=df_results, years_kde=years_kde)
     plot_results_road_network(df_results, years_kde, save_fig=save_fig)
 
 
@@ -387,12 +398,22 @@ def process_bridge_IC_ratio(entity_number, years_kde, save_fig=False):
         index_col=0,
     )
     df_results.index = df_results.index.astype(int)
-    plot_results_bridge(df_results, entity_number, years_kde, save_fig)
+    binary_array_coi = sdf.binarize_array_complex(
+        ic_dataframe=IC_DF,
+        year_1=YEAR_1,
+        threshold_1=THRESHOLD_1,
+        condition_1=CONDITION_1,
+        year_2=YEAR_2,
+        threshold_2=THRESHOLD_2,
+        condition_2=CONDITION_2,
+    )
+    plot_results_bridge(df_results, entity_number, years_kde, binary_array_coi,save_fig)
 
 
 def main():
     # process_road_network_results(filename= f"{TRAFFIC_TYPE}_vkm.csv", years_kde=YEARS_KDE, save_fig=SAVE_FIG)
     # process_bridge_results()
+
     process_bridge_IC_ratio(entity_number, years_kde=YEARS_KDE, save_fig=SAVE_FIG)
 
 
