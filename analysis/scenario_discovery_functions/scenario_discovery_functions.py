@@ -32,6 +32,7 @@ def calculate_basic_statistics(data: np.ndarray or list) -> dict:  # type: ignor
 
     return statistics
 
+
 def get_spread_stats(df_results: pd.DataFrame, years_kde: list[int]) -> pd.DataFrame:
     # Check input types
     if not isinstance(df_results, pd.DataFrame):
@@ -175,26 +176,32 @@ def binarize_array(
 def prim(
     independent_var_df: pd.DataFrame,
     dependent_var_array: np.array,
-    binarization_threshold: Union[float, int],
-    criterion: str,
+    binarization_threshold: Union[float, int] = None,
+    criterion: str = None,
     threshold_is_relative: bool = True,
+    prim_threshold: float = 0.8,
 ) -> tuple:
     if not isinstance(independent_var_df, pd.DataFrame):
         raise TypeError("simulation_input must be a pandas DataFrame")
     if not isinstance(dependent_var_array, np.ndarray):
         raise TypeError("dependent_var_array must be a numpy array")
 
-    dependent_var_array = binarize_array(
-        dependent_var_array,
-        binarization_threshold,
-        criterion,
-        threshold_is_relative=threshold_is_relative,
-    )
+    if (
+        binarization_threshold is not None
+        and criterion is not None
+        and not np.all(np.isin(dependent_var_array, [0, 1]))
+    ):
+        dependent_var_array = binarize_array(
+            dependent_var_array,
+            binarization_threshold,
+            criterion,
+            threshold_is_relative=threshold_is_relative,
+        )
 
     prim_obj = ema_workbench.analysis.prim.Prim(
         independent_var_df,
         dependent_var_array,
-        threshold=0.8,
+        threshold=prim_threshold,
         mode=sdutil.RuleInductionType.BINARY,
     )
 
@@ -297,10 +304,12 @@ def binarize_array_complex(
         ic_dataframe[year_2].values, threshold_2, condition_2, threshold_2_is_relative
     )
 
-    binarized_array = np.logical_and(condition_1_result, condition_2_result).astype(bool)
+    binarized_array = np.logical_and(condition_1_result, condition_2_result).astype(
+        bool
+    )
     return_df = pd.DataFrame(
         binarized_array, index=ic_dataframe.index, columns=["Binarized"]
-    ) # not returend atm, but could in the future
+    )  # not returend atm, but could in the future
     return binarized_array
 
 

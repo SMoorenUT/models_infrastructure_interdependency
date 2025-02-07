@@ -18,10 +18,12 @@ OUTPUT_DIR = BASE_DIR / "analysis"  # Directory to save the analysis data
 NUMBER_OF_SCENARIOS = 1000
 SIMULATION_YEARS = list(range(2019, 2051))
 BRIDGE_NO = 885
-SAVE_TO_CSV = False
+SAVE_TO_CSV = True
 
-data_files = ["ema_road_model_08_05_2024_transport.volume_to_capacity_ratio_2050.csv"]
-year = 2050
+year = 2035
+data_files = [
+    f"ema_road_model_08_05_2024_transport.volume_to_capacity_ratio_{year}.csv"
+]
 
 
 def establish_length_num_samples(num_samples: int):

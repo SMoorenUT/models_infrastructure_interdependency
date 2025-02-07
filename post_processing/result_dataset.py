@@ -13,8 +13,8 @@ import pandas as pd
 import os
 
 attribute = "transport.volume_to_capacity_ratio"
-enitity_number = 720  # for analysing a certain bridge for example
-timestamp = "2050"
+entity_number = 885  # for analysing a certain bridge for example
+timestamp = "2035"
 DATA_TO_ANALYSE = "bridges"
 BASE_DIR = Path(__file__).parents[1]
 INIT_DATA_DIR = BASE_DIR / "data/init_data/"
@@ -28,12 +28,16 @@ for i in range(1000):
     scenario = f"{SIMULATION_NAME}_scenario_{str(i).zfill(3)}"
     scenarios.append(scenario)
 
+scenarios = scenarios[:10]
+
 if DATA_TO_ANALYSE == "bridges":
     dataset_name = "bridges"
     attribute = "transport.volume_to_capacity_ratio"
     entity_group = "bridge_entities"
-    output_subdir = "bridges/individual"
-    output_filename = "ICratio_{enitity_number}.csv"
+    output_subdir = "bridges"
+    output_filename = (
+        f"ema_road_model_08_05_2024_transport.volume_to_capacity_ratio_{timestamp}.csv"
+    )
 elif DATA_TO_ANALYSE == "road_network: passenger_demand_vkm":
     dataset_name = "road_network"
     attribute = "transport.passenger_demand_vkm"
@@ -280,11 +284,11 @@ def results_by_attribute_and_year(
         # slice["data"] = slice["data"][entity_index]
         # slice["id"] = entity_index
         scenario_name = scenario.split("_")[-2] + "_" + scenario.split("_")[-1]
-        data[scenario_name] = slice["data"]
+        data[scenario_name] = slice["data"]["data"]
     data = pd.DataFrame.from_dict(data)
 
     if save_csv:
-        csv_name = f"{OUTPUT_DIR}/{SIMULATION_NAME}/bridges/{SIMULATION_NAME}_{attribute}_{timestamp}.csv"
+        csv_name = f"{OUTPUT_DIR}/{SIMULATION_NAME}_bridge_{entity_number}_{attribute}_{timestamp}.csv"
         if os.path.exists(csv_name):
             while True:
                 user_input = input(
@@ -318,28 +322,27 @@ def results_by_entity_and_attribute():
 
 
 def main():
-    data = pd.read_csv(
-        BASE_DIR
-        / "output_simulations"
-        / "ema_road_model_08_05_2024"
-        / "bridges"
-        / "ema_road_model_08_05_2024_transport.volume_to_capacity_ratio_2050_sorted.csv",
-        index_col=0,
-    )
-    entity_numbers = data.index
-    # results_by_attribute(attribute, entity_group, dataset_name, save_csvs=True)
-    for entity_number in entity_numbers:
-        csv_name = f"{OUTPUT_DIR}/{SIMULATION_NAME}_Bridge_{entity_number}_ICratio.csv"
-        if os.path.exists(csv_name):
-            print(f"File {csv_name} already exists. Skipping...")
-            continue
-        results_by_entity(entity_number, attribute, save_csv=True)
-    # results_by_attribute_and_year(
-    #     attribute=attribute,
-    #     timestamp=timestamp,
-    #     dataset_name="bridges",
-    #     save_csv=True,
+    # data = pd.read_csv(
+    #     BASE_DIR
+    #     / "output_simulations"
+    #     / "ema_road_model_08_05_2024"
+    #     / "bridges"
+    #     / "ema_road_model_08_05_2024_transport.volume_to_capacity_ratio_2050_sorted.csv",
+    #     index_col=0,
     # )
+    # entity_numbers = data.index
+    # results_by_attribute(attribute, entity_group, dataset_name, save_csvs=True)
+    # for entity_number in entity_numbers:
+    # csv_name = f"{OUTPUT_DIR}/{SIMULATION_NAME}_Bridge_{entity_number}_ICratio.csv"
+    # if os.path.exists(csv_name):
+    #     print(f"File {csv_name} already exists. Skipping...")
+    # results_by_entity(entity_number, attribute, save_csv=True)
+    results_by_attribute_and_year(
+        attribute=attribute,
+        timestamp=timestamp,
+        dataset_name="bridges",
+        save_csv=True,
+    )
 
 
 if __name__ == "__main__":

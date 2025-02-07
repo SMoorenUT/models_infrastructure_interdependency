@@ -13,20 +13,21 @@ from translator_id_reference import reference_dict
 # Below is a workaround to import sdf from the parent directory. This is necessary to run the script from the command line.
 import sys
 from pathlib import Path
+
 sys.path[0] = str(Path(sys.path[0]).parent)
 from analysis.scenario_discovery_functions import scenario_discovery_functions as sdf
 
 matplotlib.use("TkAgg")
 
-entity_number = 885 # Number of the bridge to plot
-SIM_NAME = "ema_road_model_08_05_2024" # Name of the simulation the results are from
+entity_number = 885  # Number of the bridge to plot
+SIM_NAME = "ema_road_model_08_05_2024"  # Name of the simulation the results are from
 TRAFFIC_TYPE = "combined"  # "cargo", "passenger" or "combined"
 YEARS_KDE = [
     2030,
     2040,
     2050,
 ]  # Years for which to plot the kernel density estimation. TODO: Implement None
-SAVE_FIG = False  # Boolean to determine whether to save the figure or not
+SAVE_FIG = True  # Boolean to determine whether to save the figure or not
 color_palette = "Spectral"  # Colors for the scenarios (was Spectral 100)
 colors2 = sns.color_palette(
     "Dark2", len(YEARS_KDE)
@@ -43,13 +44,38 @@ DATA_SUBDIR_ROAD_NETWORK = (
     f"road_network"  # Subdirectory of the data directory where the results are stored
 )
 # Declare variables for the complex binarization of the IC ratio of two years
-IC_DF = pd.read_csv(DATA_DIR / f"bridges/individual/ema_road_model_08_05_2024_Bridge_{entity_number}_ICratio.csv", index_col=0)
+IC_DF = pd.read_csv(
+    DATA_DIR
+    / f"bridges/individual/ema_road_model_08_05_2024_Bridge_{entity_number}_ICratio.csv",
+    index_col=0,
+)
 YEAR_1 = 2035
 CONDITION_1 = ">"
 THRESHOLD_1 = 0.75
 YEAR_2 = 2050
 CONDITION_2 = ">"
 THRESHOLD_2 = 0.75
+
+
+def get_cluster_name(condition, threshold):
+    if condition == ">" and threshold == 0.75:
+        name = "high"
+    elif condition == "<" and threshold == 0.25:
+        name = "low"
+    else:
+        raise ValueError("Condition and threshold combination not recognized.")
+    return name
+
+
+analysis_name = (
+    str(YEAR_1)
+    + "_"
+    + get_cluster_name(CONDITION_1, THRESHOLD_1)
+    + "_"
+    + str(YEAR_2)
+    + "_"
+    + get_cluster_name(CONDITION_2, THRESHOLD_2)
+)
 
 
 def get_scenario_list():
@@ -165,6 +191,7 @@ def plot_results_bridge(
                 ha="left",
                 va="bottom",
             )
+
     def plot_result_lines(dataframe, color_cycle):
         # Plot each scenario as a line
         if isinstance(color_cycle, str):
@@ -191,18 +218,35 @@ def plot_results_bridge(
                     alpha=1,
                 )
 
-
     if subset_pop_out is None:
         # Cycle through colors for the scenarios
-        color_cycle = itertools.cycle(sns.color_palette(color_palette, min(len(df_results_popped_out), 100)))
+        color_cycle = itertools.cycle(
+            sns.color_palette(color_palette, min(len(df_results_popped_out), 100))
+        )
         plot_result_lines(df_results, color_cycle=color_cycle)
     else:
-        df_results_popped_out = df_results.drop(columns=df_results.columns[~subset_pop_out])
-        df_results_background = df_results.drop(columns=df_results.columns[subset_pop_out])
+        df_results_popped_out = df_results.drop(
+            columns=df_results.columns[~subset_pop_out]
+        )
+        df_results_background = df_results.drop(
+            columns=df_results.columns[subset_pop_out]
+        )
 
-        color_cycle = itertools.cycle(sns.color_palette(color_palette, min(len(df_results_popped_out), 100)))
+        color_cycle = itertools.cycle(
+            sns.color_palette(color_palette, min(len(df_results_popped_out), 100))
+        )
         plot_result_lines(df_results_background, color_cycle="gray")
         plot_result_lines(df_results_popped_out, color_cycle=color_cycle)
+
+        number_highlighted_scenarios = subset_pop_out.sum()
+        ax1.text(
+            0.01,
+            0.99,
+            f"{number_highlighted_scenarios} scenarios in cluster",
+            transform=ax1.transAxes,
+            fontsize=12,
+            verticalalignment="top",
+        )
 
     # Set the y-axis limit
     ax1.set_ylim(0, df_results.max().max())
@@ -223,7 +267,7 @@ def plot_results_bridge(
 
     # Set the title of the plot
     ax1.set_title(
-        f"Bridge {entity_number}: Scenario Ensemble"
+        f"Bridge {entity_number}: Scenario Ensemble. {analysis_name.replace('_', ' ')}"
     )
 
     # Enable the grid
@@ -247,9 +291,17 @@ def plot_results_bridge(
     plt.subplots_adjust(wspace=0.1)  # Adjust the spacing between subplots
     if save_fig:
         if subset_pop_out is None:
-            plt.savefig(PLOT_DIR / f"bridge_{entity_number}_volume_to_capacity_ratio.png", dpi=600, bbox_inches="tight")
+            plt.savefig(
+                PLOT_DIR / f"bridge_{entity_number}_volume_to_capacity_ratio.png",
+                dpi=600,
+                bbox_inches="tight",
+            )
         else:
-            plt.savefig(PLOT_DIR / f"bridge_{entity_number}_{YEAR_1}_{CONDITION_1}_{THRESHOLD_1}_{YEAR_2}_{CONDITION_2}_{THRESHOLD_2}.png", dpi=600, bbox_inches="tight")
+            plt.savefig(
+                PLOT_DIR / f"bridge_{entity_number}_clusters_{analysis_name}.png",
+                dpi=600,
+                bbox_inches="tight",
+            )
     print(f"Bridge ID: {entity_number}")
     print(f"Bridge reference: {reference_dict(entity_number)}")
     plt.show()
@@ -407,7 +459,9 @@ def process_bridge_IC_ratio(entity_number, years_kde, save_fig=False):
         threshold_2=THRESHOLD_2,
         condition_2=CONDITION_2,
     )
-    plot_results_bridge(df_results, entity_number, years_kde, binary_array_coi,save_fig)
+    plot_results_bridge(
+        df_results, entity_number, years_kde, binary_array_coi, save_fig
+    )
 
 
 def main():
