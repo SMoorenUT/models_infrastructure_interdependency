@@ -1,6 +1,6 @@
 import numpy as np
 import pytest
-from pre_processing.global_parameters_sampling import (
+from pre_processing.parameter_generators.global_parameters_sampling import (
     create_global_parameters_scenarios,
     read_csv_file,
     clear_df,

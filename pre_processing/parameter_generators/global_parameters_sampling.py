@@ -6,7 +6,7 @@ from scipy.stats import uniform
 from scipy.interpolate import CubicSpline
 import matplotlib.pyplot as plt
 import pathlib
-from tape_creator_functions import (
+from .tape_creator_functions import (
     create_lists_sampling_input,
     latin_hypercube_sampling,
     cubic_spline_interpolation,
@@ -109,10 +109,14 @@ def add_global_variable(
 def add_global_variables(
     dictionary_of_global_variables_to_add: dict, dictionary_to_add_to: dict
 ):
-    return_dictionary = dictionary_to_add_to.copy()  # Create a copy of the original dictionary
+    return_dictionary = (
+        dictionary_to_add_to.copy()
+    )  # Create a copy of the original dictionary
     for variable_name, values in dictionary_of_global_variables_to_add.items():
         return_dictionary = add_global_variable(
-            variable_name, values, return_dictionary  # Update the copy of the dictionary
+            variable_name,
+            values,
+            return_dictionary,  # Update the copy of the dictionary
         )
     return return_dictionary
 
@@ -137,7 +141,7 @@ def save_global_parameters_scenarios_as_csv(
     final_scenarios_dfs: dict,
     output_path: pathlib.Path = OUTPUT_DIR,
 ):
-    """ 
+    """
     Save the DataFrames to CSV files
     """
     for scenario, df in final_scenarios_dfs.items():
@@ -148,9 +152,7 @@ def save_global_parameters_scenarios_as_csv(
 
 
 def create_global_parameters_scenarios(
-    num_samples: int = 10,
-    output_path: pathlib.Path = OUTPUT_DIR,
-    seed = 0
+    num_samples: int = 10, output_path: pathlib.Path = OUTPUT_DIR, seed=0
 ):
     """
     The main function to create X number of global parameter scenarions based on the number of samples provided.
@@ -179,15 +181,16 @@ def main():
 
 if __name__ == "__main__":
     from tape_creator_functions import (
-    create_lists_sampling_input,
-    latin_hypercube_sampling,
-    cubic_spline_interpolation,
-)
+        create_lists_sampling_input,
+        latin_hypercube_sampling,
+        cubic_spline_interpolation,
+    )
+
     main()
 # else:
 #     from tape_creator_functions import (
 #     create_lists_sampling_input,
 #     latin_hypercube_sampling,
 #     cubic_spline_interpolation,
-# )  
+# )
 #     main()

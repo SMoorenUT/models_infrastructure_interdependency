@@ -19,7 +19,7 @@ from analysis.scenario_discovery_functions import scenario_discovery_functions a
 
 matplotlib.use("TkAgg")
 
-entity_number = 885  # Number of the bridge to plot
+entity_number = 856  # Number of the bridge to plot
 SIM_NAME = "ema_road_model_08_05_2024"  # Name of the simulation the results are from
 TRAFFIC_TYPE = "combined"  # "cargo", "passenger" or "combined"
 YEARS_KDE = [
@@ -27,7 +27,6 @@ YEARS_KDE = [
     2040,
     2050,
 ]  # Years for which to plot the kernel density estimation. TODO: Implement None
-SAVE_FIG = True  # Boolean to determine whether to save the figure or not
 color_palette = "Spectral"  # Colors for the scenarios (was Spectral 100)
 colors2 = sns.color_palette(
     "Dark2", len(YEARS_KDE)
@@ -50,11 +49,14 @@ IC_DF = pd.read_csv(
     index_col=0,
 )
 YEAR_1 = 2035
-CONDITION_1 = ">"
-THRESHOLD_1 = 0.75
+CONDITION_1 = "<"
+THRESHOLD_1 = 0.25
 YEAR_2 = 2050
-CONDITION_2 = ">"
-THRESHOLD_2 = 0.75
+CONDITION_2 = "<"
+THRESHOLD_2 = 0.25
+
+FONTSIZE = 20  # Font size for the plot
+SAVE_FIG = True  # Boolean to determine whether to save the figure or not
 
 
 def get_cluster_name(condition, threshold):
@@ -74,6 +76,15 @@ analysis_name = (
     + "_"
     + str(YEAR_2)
     + "_"
+    + get_cluster_name(CONDITION_2, THRESHOLD_2)
+)
+analysis_name_human_readable = (
+    str(YEAR_1)
+    + "-"
+    + get_cluster_name(CONDITION_1, THRESHOLD_1)
+    + " & "
+    + str(YEAR_2)
+    + "-"
     + get_cluster_name(CONDITION_2, THRESHOLD_2)
 )
 
@@ -177,7 +188,7 @@ def plot_results_bridge(
                 max_value,
                 str(year),
                 color=colors2[idx],
-                fontsize=8,
+                fontsize=FONTSIZE * 0.8,
                 ha="center",
                 va="bottom",
             )
@@ -187,7 +198,7 @@ def plot_results_bridge(
                 max_value + 0.1,
                 str(year),
                 color=colors2[idx],
-                fontsize=8,
+                fontsize=FONTSIZE * 0.8,
                 ha="left",
                 va="bottom",
             )
@@ -221,7 +232,7 @@ def plot_results_bridge(
     if subset_pop_out is None:
         # Cycle through colors for the scenarios
         color_cycle = itertools.cycle(
-            sns.color_palette(color_palette, min(len(df_results_popped_out), 100))
+            sns.color_palette(color_palette, min(len(df_results), 100))
         )
         plot_result_lines(df_results, color_cycle=color_cycle)
     else:
@@ -254,6 +265,9 @@ def plot_results_bridge(
     # Enable minor ticks on the x-axis
     ax1.minorticks_on()
     ax1.tick_params(axis="x", which="minor", bottom=True, top=False)
+    ax1.tick_params(
+        axis="both", which="major", labelsize=FONTSIZE * 0.8
+    )  # Change font size of tick labels
 
     # Add grid lines
     ax1.grid(which="major", linestyle=":", linewidth="0.5", color="gray")
@@ -261,14 +275,21 @@ def plot_results_bridge(
     # Set the x-axis limit
     ax1.set_xlim(df_results.index.min(), df_results.index.max() + 0.1)
 
-    # Set the x and y labels
-    ax1.set_xlabel("Year")
-    ax1.set_ylabel("Volume to Capacity Ratio")
+    # Set the x and y labels with larger font sizes
+    ax1.set_xlabel("Year", fontsize=FONTSIZE)
+    ax1.set_ylabel("Volume to Capacity Ratio", fontsize=FONTSIZE)
 
     # Set the title of the plot
-    ax1.set_title(
-        f"Bridge {entity_number}: Scenario Ensemble. {analysis_name.replace('_', ' ')}"
-    )
+    if subset_pop_out is None:
+        ax1.set_title(
+            f"Scenario ensemble bridge {entity_number}",
+            fontsize=FONTSIZE * 1.5,
+        )
+    else:
+        ax1.set_title(
+            f"Scenario ensemble bridge {entity_number}. {analysis_name_human_readable}.\nHighlighted scenarios in cluster",
+            fontsize=FONTSIZE * 1.5,
+        )
 
     # Enable the grid
     ax1.grid(True)
@@ -280,11 +301,15 @@ def plot_results_bridge(
     # Add a second subplot for KDE
     ax2 = plt.subplot(1, 2, 2)
     for idx, year in enumerate(years_kde):
-        values = df_results.loc[year]
+        if subset_pop_out is None:
+            values = df_results.loc[year]
+        else:
+            # Use the popped out dataframe for KDE
+            values = df_results_popped_out.loc[year]
         sns.kdeplot(y=values, fill=True, label=str(year), color=colors2[idx])
     ax2.legend()
-    ax2.set_xlabel("Frequency")
-    ax2.set_title("Kernel density estimation", fontsize=9)
+    ax2.set_xlabel("Frequency", fontsize=FONTSIZE)
+    ax2.set_title("KDE", fontsize=FONTSIZE)
     ax2.grid(True)
 
     plt.tight_layout()
@@ -292,14 +317,24 @@ def plot_results_bridge(
     if save_fig:
         if subset_pop_out is None:
             plt.savefig(
-                PLOT_DIR / f"bridge_{entity_number}_volume_to_capacity_ratio.png",
-                dpi=600,
+                PLOT_DIR / f"bridge_{entity_number}_volume_to_capacity_ratio.tiff",
+                dpi=1200,
+                bbox_inches="tight",
+            )
+            plt.savefig(
+                PLOT_DIR / f"bridge_{entity_number}_volume_to_capacity_ratio.jpeg",
+                dpi=1200,
                 bbox_inches="tight",
             )
         else:
             plt.savefig(
-                PLOT_DIR / f"bridge_{entity_number}_clusters_{analysis_name}.png",
-                dpi=600,
+                PLOT_DIR / f"bridge_{entity_number}_clusters_{analysis_name}.tiff",
+                dpi=1200,
+                bbox_inches="tight",
+            )
+            plt.savefig(
+                PLOT_DIR / f"bridge_{entity_number}_clusters_{analysis_name}.jpeg",
+                dpi=1200,
                 bbox_inches="tight",
             )
     print(f"Bridge ID: {entity_number}")
@@ -330,7 +365,9 @@ def plot_results_road_network(
     # Draw the first subplot
     ax1 = plt.subplot(1, 2, 1)
     # Cycle through colors for the scenarios
-    color_cycle = itertools.cycle(colors1)
+    color_cycle = itertools.cycle(
+        sns.color_palette(color_palette, min(len(df_results), 100))
+    )
 
     # Add vertical lines and year annotations for each year in YEARS_KDE
     for idx, year in enumerate(YEARS_KDE):
@@ -344,7 +381,7 @@ def plot_results_road_network(
                 max_value,
                 str(year),
                 color=colors2[idx],
-                fontsize=8,
+                fontsize=FONTSIZE * 0.8,
                 ha="center",
                 va="bottom",
             )
@@ -354,7 +391,7 @@ def plot_results_road_network(
                 max_value + 1e8,
                 str(year),
                 color=colors2[idx],
-                fontsize=8,
+                fontsize=FONTSIZE * 0.8,
                 ha="left",
                 va="bottom",
             )
@@ -376,6 +413,9 @@ def plot_results_road_network(
     # Enable minor ticks on the x-axis
     ax1.minorticks_on()
     ax1.tick_params(axis="x", which="minor", bottom=True, top=False)
+    ax1.tick_params(
+        axis="both", which="major", labelsize=FONTSIZE * 0.8
+    )  # Change font size of tick labels
 
     # Add grid lines
     ax1.grid(which="major", linestyle=":", linewidth="0.5", color="gray")
@@ -383,13 +423,17 @@ def plot_results_road_network(
     # Set the x-axis limit
     ax1.set_xlim(df_results.index.min(), df_results.index.max() + 0.01)
 
-    # Set the x and y labels
-    ax1.set_xlabel("Year")
-    ax1.set_ylabel(f"{TRAFFIC_TYPE.capitalize()} vehicle kilometers travelled (VKT)")
+    # Set the x and y labels with larger font sizes
+    ax1.set_xlabel("Year", fontsize=FONTSIZE)
+    ax1.set_ylabel(
+        f"{TRAFFIC_TYPE.capitalize()} vehicle kilometers travelled (VKT)",
+        fontsize=FONTSIZE,
+    )
 
     # Set the title of the plot
     ax1.set_title(
-        f"Scenario Ensemble for {TRAFFIC_TYPE} vehicle kilometers travelled (VKT)"
+        f"Scenario Ensemble for {TRAFFIC_TYPE} vehicle kilometers travelled (VKT)",
+        fontsize=FONTSIZE * 1.5,
     )
 
     # Enable the grid
@@ -410,8 +454,8 @@ def plot_results_road_network(
         values = df_results.loc[year]
         sns.kdeplot(y=values, fill=True, label=str(year), color=colors2[idx])
     ax2.legend()
-    ax2.set_xlabel("Frequency")
-    ax2.set_title("Kernel density estimation", fontsize=9)
+    ax2.set_xlabel("Frequency", fontsize=FONTSIZE)
+    ax2.set_title("KDE", fontsize=FONTSIZE)
     ax2.grid(which="major", linestyle=":", linewidth="0.5", color="gray")
     ax2.grid(True)
     ax2.xaxis.set_major_formatter(ScalarFormatter(useMathText=True))
@@ -421,10 +465,12 @@ def plot_results_road_network(
     plt.subplots_adjust(wspace=0.05)  # Adjust the spacing between subplots
     plt.tight_layout()
     if save_fig:
-        fig_format = "svg"
-        plt.savefig(
-            PLOT_DIR / f"{TRAFFIC_TYPE}_VKT.{fig_format}", dpi=600, bbox_inches="tight"
-        )
+        for fig_format in ["tiff", "jpeg"]:
+            plt.savefig(
+                PLOT_DIR / f"{TRAFFIC_TYPE}_VKT.{fig_format}",
+                dpi=1200,
+                bbox_inches="tight",
+            )
         print(f"Figure saved as {TRAFFIC_TYPE}_VKT.{fig_format} at {PLOT_DIR}/")
     plt.show()
 
@@ -459,16 +505,16 @@ def process_bridge_IC_ratio(entity_number, years_kde, save_fig=False):
         threshold_2=THRESHOLD_2,
         condition_2=CONDITION_2,
     )
-    plot_results_bridge(
-        df_results, entity_number, years_kde, binary_array_coi, save_fig
-    )
+    plot_results_bridge(df_results, entity_number, years_kde, save_fig=save_fig)
 
 
 def main():
-    # process_road_network_results(filename= f"{TRAFFIC_TYPE}_vkm.csv", years_kde=YEARS_KDE, save_fig=SAVE_FIG)
+    process_road_network_results(
+        filename=f"{TRAFFIC_TYPE}_vkm.csv", years_kde=YEARS_KDE, save_fig=SAVE_FIG
+    )
     # process_bridge_results()
 
-    process_bridge_IC_ratio(entity_number, years_kde=YEARS_KDE, save_fig=SAVE_FIG)
+    # process_bridge_IC_ratio(entity_number, years_kde=YEARS_KDE, save_fig=SAVE_FIG)
 
 
 if __name__ == "__main__":
