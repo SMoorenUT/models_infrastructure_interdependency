@@ -6,7 +6,7 @@ from scipy.interpolate import CubicSpline
 from typing import Union, List
 import cbsodata
 import json
-from tape_creator_functions import (
+from .tape_creator_functions import (
     create_lists_sampling_input,
     establish_length_num_samples,
     latin_hypercube_sampling,
@@ -699,7 +699,7 @@ def sample_jobs(df_jobs, num_samples=50, seed=0):
 #     return cs_dict
 
 
-def create_jobs_scenarions_dict(df_jobs, num_samples=50, seed = 0):
+def create_jobs_scenarions_dict(df_jobs, num_samples=50, seed=0):
     """
     Create a dictionary with the sampled jobs for each municipality for the years 2019, 2030 and 2050.
     The years 2030 and 2050 are sampled from the minimum and maximum values of the jobs in the corop areas.
@@ -714,7 +714,9 @@ def create_jobs_scenarions_dict(df_jobs, num_samples=50, seed = 0):
 
 def generate_jobs_data(num_samples, seed=0):
     df_jobs = read_jobs_data()
-    jobs_interpolated_dictionary = create_jobs_scenarions_dict(df_jobs, num_samples, seed)
+    jobs_interpolated_dictionary = create_jobs_scenarions_dict(
+        df_jobs, num_samples, seed
+    )
     return jobs_interpolated_dictionary
 
 
@@ -1018,43 +1020,70 @@ def create_local_parameters_scenarios(
             population_swapped,
             jobs_swapped,
             output_path,
-            seed
+            seed,
         )
-        # scenario.create_json_file()
+        scenario.create_json_file()
         scenario_objects.append(scenario)
 
     return scenario_objects
+
 
 def get_absolute_jobs_municipalities():
     jobs = pd.DataFrame(cbsodata.get_data("83582NED"))
     jobs["RegioS"] = jobs["RegioS"].replace(municipality_rename_dict)
     jobs = jobs[jobs["Perioden"] == "2019 december"]
     jobs = jobs[jobs["RegioS"].isin(municipalities_unique)]
-    jobs = jobs[jobs["BedrijfstakkenBranchesSBI2008"] == "A-U Alle economische activiteiten"]
-    
+    jobs = jobs[
+        jobs["BedrijfstakkenBranchesSBI2008"] == "A-U Alle economische activiteiten"
+    ]
+
     return jobs
 
-def get_absolute_population_municipalities(year = 2019):
+
+def get_absolute_population_municipalities(year=2019):
     population_2019 = df_bevolking_2019_2023[df_bevolking_2019_2023["Year"] == year]
     return population_2019
 
-def get_absolute_data_local_2019(save_to_csv = False):
+
+def get_absolute_data_local_2019(save_to_csv=False):
     jobs_2019 = get_absolute_jobs_municipalities()
     population_2019 = get_absolute_population_municipalities()
-    absolute_data_local_2019 = pd.merge(jobs_2019, population_2019, left_on="RegioS", right_on="Gemeentenaam")
-    absolute_data_local_2019 = absolute_data_local_2019[["BanenVanWerknemersInDecember_1", "Population (x 1 000)", "Gemeentenaam"]]
-    absolute_data_local_2019 = absolute_data_local_2019.rename(columns={"BanenVanWerknemersInDecember_1": "jobs", "Population (x 1 000)": "population", "Gemeentenaam": "municipality"})
-    absolute_data_local_2019 = absolute_data_local_2019[['municipality', 'jobs', 'population']]
+    absolute_data_local_2019 = pd.merge(
+        jobs_2019, population_2019, left_on="RegioS", right_on="Gemeentenaam"
+    )
+    absolute_data_local_2019 = absolute_data_local_2019[
+        ["BanenVanWerknemersInDecember_1", "Population (x 1 000)", "Gemeentenaam"]
+    ]
+    absolute_data_local_2019 = absolute_data_local_2019.rename(
+        columns={
+            "BanenVanWerknemersInDecember_1": "jobs",
+            "Population (x 1 000)": "population",
+            "Gemeentenaam": "municipality",
+        }
+    )
+    absolute_data_local_2019 = absolute_data_local_2019[
+        ["municipality", "jobs", "population"]
+    ]
 
     municipalities_ordered = df_bevolking_extended["Gemeentenaam"].unique().tolist()
-    
-    absolute_data_local_2019_ordered = absolute_data_local_2019.loc[absolute_data_local_2019['municipality'].isin(municipalities_ordered)]
-    absolute_data_local_2019_ordered = absolute_data_local_2019_ordered.sort_values(by='municipality', key=lambda x: x.map({municipality: i for i, municipality in enumerate(municipalities_ordered)}))
-    
+
+    absolute_data_local_2019_ordered = absolute_data_local_2019.loc[
+        absolute_data_local_2019["municipality"].isin(municipalities_ordered)
+    ]
+    absolute_data_local_2019_ordered = absolute_data_local_2019_ordered.sort_values(
+        by="municipality",
+        key=lambda x: x.map(
+            {municipality: i for i, municipality in enumerate(municipalities_ordered)}
+        ),
+    )
+
     if save_to_csv:
-        absolute_data_local_2019_ordered.to_csv(CURR_DIR.parents[1] / "analysis" / "absolute_data_2019.csv", index=False)
+        absolute_data_local_2019_ordered.to_csv(
+            CURR_DIR.parents[1] / "analysis" / "absolute_data_2019.csv", index=False
+        )
 
     return absolute_data_local_2019
+
 
 def main():
     get_absolute_data_local_2019(save_to_csv=True)
