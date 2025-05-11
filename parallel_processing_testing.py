@@ -4,14 +4,16 @@ import math
 from pathlib import Path
 import tempfile
 import os
-from movici_simulation_core import Simulation
 import concurrent.futures
 import math
 import time
 from run_simulation import run_simulation
+from tqdm import tqdm
 
-
-PRIMES = list(range(1, 100000))
+starting_number = int(100000)
+growth_factor = 4
+length_of_simulation = 1000
+NUMBERS = list(range(int(starting_number * growth_factor), int(starting_number * growth_factor + 10)))
 
 def is_prime(n):
     if n < 2:
@@ -27,6 +29,16 @@ def is_prime(n):
             return False
     return True
 
+def factorial(n):
+    if n < 0:
+        raise ValueError("Factorial is not defined for negative numbers")
+    if n == 0 or n == 1:
+        return 1
+    result = 1
+    for i in range(2, n + 1):
+        result *= i
+    return result
+
 def timemit(func):
     def wrapper(*args, **kwargs):
         start_time = time.time()
@@ -39,14 +51,14 @@ def timemit(func):
 @timemit
 def run_concurrent():
     with concurrent.futures.ProcessPoolExecutor() as executor:
-        for number, prime in zip(PRIMES, executor.map(is_prime, PRIMES)):
+        for number in tqdm(executor.map(factorial, NUMBERS), total=len(NUMBERS), desc="Concurrent Processing"):
             pass
 
 
 @timemit
 def run_sequential():
-    for number in PRIMES:
-        prime = is_prime(number)
+    for number in tqdm(NUMBERS, desc="Sequential Processing"):
+        prime = factorial(number)
         pass
 
 TASKS = [
@@ -98,5 +110,6 @@ def main():
 
 
 if __name__ == "__main__":
+    print(f"Started at {int(starting_number * growth_factor)}")
     run_concurrent()
     run_sequential()
