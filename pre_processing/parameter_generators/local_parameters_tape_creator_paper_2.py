@@ -6,16 +6,29 @@ from scipy.interpolate import CubicSpline
 from typing import Union, List
 import cbsodata
 import json
-from tape_creator_functions import (
-    create_lists_sampling_input,
-    establish_length_num_samples,
-    latin_hypercube_sampling,
-    cubic_spline_interpolation,
-    find_unique_values,
-    normalize_df,
-    swap_dictionary_structure,
-)
 from tqdm import tqdm
+
+# Ugly workaround to whether the file is ran directly or imported
+if __name__ == "main":
+    from .tape_creator_functions import (
+        create_lists_sampling_input,
+        establish_length_num_samples,
+        latin_hypercube_sampling,
+        cubic_spline_interpolation,
+        find_unique_values,
+        normalize_df,
+        swap_dictionary_structure,
+    )
+else:
+    from tape_creator_functions import (
+        create_lists_sampling_input,
+        establish_length_num_samples,
+        latin_hypercube_sampling,
+        cubic_spline_interpolation,
+        find_unique_values,
+        normalize_df,
+        swap_dictionary_structure,
+    )
 
 
 CURR_DIR = pathlib.Path(__file__).parent
@@ -540,21 +553,7 @@ df_bevolking_extended = combine_historic_population_with_prognosis(
 )
 
 
-def create_population_dict_sample(df_bevolking):
-    """
-    Generates a dictionary for a single scenario containing normalized population scenarios for each municipality and year.
-    This function processes a DataFrame containing historical and projected population data for multiple municipalities.
-    It creates a nested dictionary where each municipality maps to a dictionary of years (2019-2050), with each year
-    containing a population value. Historical values (2019-2023) are filled directly from the DataFrame. For future years
-    (2025-2050, every 5 years), population values are randomly sampled between the provided lower and upper bounds.
-    Missing values are interpolated using cubic spline interpolation. Finally, all population values are normalized so
-    that the value for 2019 is 100 for each municipality.
-    Args:
-        df_bevolking (pd.DataFrame): DataFrame containing columns 'Gemeentenaam', 'Year', 'Population (x 1 000)',
-                                     'Ondergrens totale bevolking (x 1 000)', and 'Bovengrens totale bevolking (x 1 000)'.
-    Returns:
-        dict: Nested dictionary of the form {municipality: {year: normalized_population_value, ...}, ...}
-    """
+def create_population_dict_sample(df_bevolking, variable_names, sampled_values, scenario_number):
     # Create a dictionary with the population of each municipality for each year
     population_scenario_dict = {}
     for municipality in municipalities_unique:
@@ -569,17 +568,9 @@ def create_population_dict_sample(df_bevolking):
         population = row["Population (x 1 000)"]
         population_scenario_dict[municipality][year] = population
 
-    # Sample 2025-2050 population values from the DataFrame every 5 years between ondergrens and bovengrens column
-    for index, row in df_bevolking.iterrows():
-        municipality = row["Gemeentenaam"]
-        year = row["Year"]
-        ondergrens = row["Ondergrens totale bevolking (x 1 000)"]
-        bovengrens = row["Bovengrens totale bevolking (x 1 000)"]
-        # Sample 2025-2050 population values from the DataFrame every 5 years between ondergrens and bovengrens column
-        if year in range(2025, 2051, 5):
-            population_scenario_dict[municipality][year] = np.random.uniform(
-                ondergrens, bovengrens
-            )
+    # Fill (2030 and) 2050 population
+    population_factor_2030_index = variable_names.index("people.count.index_2030") 
+    population_factor_2050_index = variable_names.index("people.count.index_2050")
 
     # Convert NaN values to None
     population_scenario_dict = {
@@ -590,23 +581,54 @@ def create_population_dict_sample(df_bevolking):
         for municipality, years in population_scenario_dict.items()
     }
 
+    years_reference = [2019, 2020, 2021, 2022, 2023, 2024]
+    for municipality, value in population_scenario_dict.items():
+        years_missing_population = []
+        for year in range(2019, 2024):
+            if population_scenario_dict[municipality][year] is None:
+                years_missing_population.append(year)
+        if 2022 not in years_missing_population:
+            base_year_population = 2022
+        else:
+            available_years = [y for y in years_reference if y not in years_missing_population]
+            base_year_population = min(available_years, key=lambda y: abs(y - 2022)) if available_years else ValueError  # Fallback to 2019 if no years are available
+
+        population_factor_2030 = sampled_values[scenario_number, population_factor_2030_index]
+        population_factor_2050 = sampled_values[scenario_number, population_factor_2050_index]
+        population_scenario_dict[municipality][2030] = population_factor_2030 * value[base_year_population] / 100 # Multiply by the municipality's population in 2022
+        population_scenario_dict[municipality][2050] = population_factor_2050 * value[base_year_population] / 100
+
     # Fill the remaining values with cubic spline interpolation
     for municipality in municipalities_unique:
+        years_missing_population = []
+        for year in range(2019, 2024):
+            if population_scenario_dict[municipality][year] is None:
+                years_missing_population.append(year)
+        
         x = []
         y = []
         for year, population in population_scenario_dict[municipality].items():
             if population is not None:
                 x.append(year)
                 y.append(population)
+
+        # Keep only the final 3 values for interpolation (2023, 2030, 2050)
+        x = x[-3:]
+        # Adjust x[0] if it matches any value in years_missing_population
+        # while x[0] in years_missing_population:
+        #     x[0] -= 1
+        y = y[-3:]
         # Create a cubic spline interpolation function
         cs = CubicSpline(x, y)
         # Create a list of years to interpolate
-        x_interp = list(range(2019, 2051))
+        x_interp = list(range(x[0], 2051))
         # Interpolate the population values
         y_interp = cs(x_interp)
+
         # Replace the population values in the dictionary with the interpolated values
         for year, population in zip(x_interp, y_interp):
             population_scenario_dict[municipality][year] = population
+        
 
     # Normalize the population values with the first value being 100
     for municipality in municipalities_unique:
@@ -634,7 +656,7 @@ def read_jobs_data():
     return rv
 
 
-def create_dict_for_jobs_sampling(df_jobs, operator="min"):
+def create_dict_for_jobs_sampling(df_jobs):
     """
     Create a dictionary to sample jobs from based on the df_jobs DataFrame
     """
@@ -644,16 +666,16 @@ def create_dict_for_jobs_sampling(df_jobs, operator="min"):
     # Creating the dictionary
     result_dict = {
         "2019": create_lists_sampling_input(df_jobs_normalised, 2019, "min"),
-        "2030_min": create_lists_sampling_input(df_jobs_normalised, 2030, "min"),
-        "2030_max": create_lists_sampling_input(df_jobs_normalised, 2030, "max"),
-        "2050_min": create_lists_sampling_input(df_jobs_normalised, 2050, "min"),
-        "2050_max": create_lists_sampling_input(df_jobs_normalised, 2050, "max"),
+        "2030": create_lists_sampling_input(df_jobs_normalised, 2030, "min"),
+        "2030": create_lists_sampling_input(df_jobs_normalised, 2030, "max"),
+        "2050": create_lists_sampling_input(df_jobs_normalised, 2050, "min"),
+        "2050": create_lists_sampling_input(df_jobs_normalised, 2050, "max"),
     }
     return result_dict
 
 
-def sample_jobs(df_jobs, num_samples=50, seed=0):
-    jobs_sampling_dict = create_dict_for_jobs_sampling(df_jobs, operator="min")
+def sample_jobs(df_jobs):
+    jobs_sampling_dict = create_dict_for_jobs_sampling(df_jobs)
     sampled_jobs_dict = latin_hypercube_sampling(
         jobs_sampling_dict, num_samples=num_samples
     )
@@ -713,23 +735,23 @@ def sample_jobs(df_jobs, num_samples=50, seed=0):
 #     return cs_dict
 
 
-def create_jobs_scenarions_dict(df_jobs, num_samples=50, seed=0):
+def create_jobs_scenarions_dict(df_jobs, num_samples=50):
     """
     Create a dictionary with the sampled jobs for each municipality for the years 2019, 2030 and 2050.
     The years 2030 and 2050 are sampled from the minimum and maximum values of the jobs in the corop areas.
     The remaining years are interpolated using cubic spline interpolation.
     """
-    jobs_dict_sample = sample_jobs(df_jobs, num_samples=num_samples, seed=seed)
+    jobs_dict_sample = sample_jobs(df_jobs, num_samples=num_samples)
     jobs_interpolated_dictionary = cubic_spline_interpolation(
         jobs_dict_sample, corop_areas_study_area
     )
     return jobs_interpolated_dictionary
 
 
-def generate_jobs_data(num_samples, seed=0):
+def generate_jobs_data(num_samples):
     df_jobs = read_jobs_data()
     jobs_interpolated_dictionary = create_jobs_scenarions_dict(
-        df_jobs, num_samples, seed
+        df_jobs, num_samples
     )
     return jobs_interpolated_dictionary
 
@@ -763,6 +785,17 @@ def derive_jobs_municipality_level(jobs_interpolated_dictionary, corop_dict_cbs)
 
 
 def compare_dicts(dict1, dict2):
+    """
+    Compares the structure of two nested dictionaries to ensure they have the same top-level keys (scenarios)
+    and the same set of secondary keys (municipalities) for each scenario.
+    Args:
+        dict1 (dict): The first dictionary to compare, expected to have a structure like {scenario: {municipality: ...}}.
+        dict2 (dict): The second dictionary to compare, expected to have a similar structure.
+    Returns:
+        bool: True if both dictionaries have the same structure (same scenarios and same municipalities for each scenario).
+    Raises:
+        ValueError: If the dictionaries have different scenarios or different sets of municipalities.
+    """
     scenarios_same = list(dict1.keys()) == list(dict2.keys())
 
     first_key = list(dict1.keys())[0]
@@ -980,29 +1013,65 @@ class LocalParametersConfig:
         filepath.write_text(json.dumps(self.config, indent=2))
         return
 
+def create_job_data(variable_names: list, sampled_values: np.ndarray):
+    # General info
+    num_samples = sampled_values.shape[0]
+    digits_num_samples = establish_length_num_samples(num_samples)
+    jobs_2030_index = variable_names.index("jobs.count.index_2030")
+    jobs_2050_index = variable_names.index("jobs.count.index_2050")
+
+    jobs_corp_level = {}
+    df_jobs = read_jobs_data()
+    df_jobs = df_jobs.drop(columns=["2030_min", "2030_max", "2050_min", "2050_max"])
+
+    for index, values in enumerate(sampled_values):
+        jobs_2030_value = values[jobs_2030_index]
+        jobs_2050_value = values[jobs_2050_index]
+        df_jobs[2030] = jobs_2030_value
+        df_jobs[2050] = jobs_2050_value
+        df_jobs = df_jobs.rename(columns={2030: "2030", 2050: "2050"})
+
+
+
+        jobs_corp_level[f"Scenario_{index:0{digits_num_samples}d}"] = {}
+
+    jobs_corop_level = generate_jobs_data(num_samples) # Create dataframe of jobs (normalized) at corop level
+    corop_dict_cbs, corop_municipalities_cbs = get_corop_dictionary() # Get the corop dictionary and the list of municipalities in the corop areas
+    find_unique_values(municipalities_unique, corop_municipalities_cbs)
+    jobs = derive_jobs_municipality_level(jobs_corop_level, corop_dict_cbs) # Derive the jobs per municipality by summing the jobs in the corop areas
+    return jobs
 
 def generate_population_and_job_data(
-    num_samples: int = 10, length_num_samples: int = 4, seed: int = 0
+    variable_names: list,
+    sampled_values: np.ndarray,
 ):
     """
     Generate population and job data for the given number of samples.
     Both the job and population dictionaries, as well as the municipalities_index_dict are fed into the LocalParametersConfig as a class variable.
     """
+    num_samples = sampled_values.shape[0]
+    digits_num_samples = establish_length_num_samples(num_samples)
+    # Create a population dictionary for each scenario
     population = {
-        f"Scenario_{i:0{length_num_samples}d}": create_population_dict_sample(
-            df_bevolking_extended
+        f"Scenario_{scen:0{digits_num_samples}d}": create_population_dict_sample(
+            df_bevolking_extended, variable_names, sampled_values, scenario_number=scen
         )
-        for i in tqdm(range(num_samples), desc="Creating population dictionaries")
+        for scen in tqdm(range(num_samples), desc="Creating population dictionaries")
     }
-    jobs_corop_level = generate_jobs_data(num_samples, seed)
-    corop_dict_cbs, corop_municipalities_cbs = get_corop_dictionary()
-    find_unique_values(municipalities_unique, corop_municipalities_cbs)
-    jobs = derive_jobs_municipality_level(jobs_corop_level, corop_dict_cbs)
-    compare_dicts(population, jobs)
+    # Create a jobs dictionary for each scenario
+    jobs = create_job_data(num_samples)
 
+    jobs_corop_level = generate_jobs_data(num_samples) # Create dataframe of jobs (normalized) at corop level
+    corop_dict_cbs, corop_municipalities_cbs = get_corop_dictionary() # Get the corop dictionary and the list of municipalities in the corop areas
+    find_unique_values(municipalities_unique, corop_municipalities_cbs)
+    jobs = derive_jobs_municipality_level(jobs_corop_level, corop_dict_cbs) # Derive the jobs per municipality by summing the jobs in the corop areas
+    compare_dicts(population, jobs) # Verify that the population and jobs dictionaries have the same structure
+
+    # Swap the population and jobs dictionaries to have the years as keys and municipalities as subkeys
     municipalities_name_structure_match(list(population.items())[0][1])
     population_swapped = swap_dictionary_structure(population)
     jobs_swapped = swap_dictionary_structure(jobs)
+    # Set the class variables for LocalParametersConfig
     LocalParametersConfig.population_dict_in_year_municipality_order = (
         population_swapped
     )
@@ -1015,26 +1084,27 @@ def generate_population_and_job_data(
 
 
 def create_local_parameters_scenarios(
-    num_samples: int = 10,
+    variables_list_global_parameters: list,
+    sampled_values: np.ndarray,
     output_path: pathlib.Path = OUTPUT_DIR,
-    seed: int = 0,
 ):
+    number_of_samples = len(sampled_values)
     length_num_samples = establish_length_num_samples(
-        num_samples
+        number_of_samples
     )  # To format the scenario names with approriate number of leading zeros
 
     population_swapped, jobs_swapped = generate_population_and_job_data(
-        num_samples, length_num_samples, seed
+        variable_names= variables_list_global_parameters,
+        sampled_values=sampled_values
     )
 
     scenario_objects = []
-    for i in tqdm(range(0, num_samples), desc="Writing local parameters files"):
+    for i in tqdm(range(0, number_of_samples), desc="Writing local parameters files"):
         scenario = LocalParametersConfig(
             f"Scenario_{i:0{length_num_samples}d}",
             population_swapped,
             jobs_swapped,
-            output_path,
-            seed,
+            output_path
         )
         scenario.create_json_file()
         scenario_objects.append(scenario)

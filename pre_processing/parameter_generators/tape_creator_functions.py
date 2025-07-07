@@ -43,11 +43,8 @@ def establish_length_num_samples(num_samples: int):
 
 
 def latin_hypercube_sampling(
-    input_sample_dict: dict, num_samples: int = 100, seed=0
+    input_sample_dict: dict, num_samples: int = 100
 ) -> dict:
-    # Set the random seed for reproducibility
-    np.random.seed(seed)
-
     # Define lower and upper bounds
     lower_bound_2030 = input_sample_dict[
         "2030_min"
@@ -99,6 +96,23 @@ def latin_hypercube_sampling(
 
 
 def cubic_spline_interpolation(samples_dict, columns):
+    """
+    Performs cubic spline interpolation on a set of sample data for multiple scenarios and variables.
+    Given a dictionary of sample values organized by scenario and year, and a list of variable names (columns),
+    this function interpolates the values for each variable across the years 2019, 2030, and 2050 using cubic splines.
+    It returns interpolated values for each year in the range 2019 to 2050 (inclusive) for every scenario and variable.
+    Parameters:
+        samples_dict (dict): 
+            A nested dictionary structured as {scenario: {year: [values]}}, where each scenario contains years as keys,
+            and each year maps to a list of values corresponding to the variables in 'columns'.
+        columns (list): 
+            A list of variable names (strings) corresponding to the order of values in the inner lists of samples_dict.
+    Returns:
+        dict: 
+            A nested dictionary structured as {scenario: {variable: np.ndarray}}, where each variable contains
+            the interpolated values for the years 2019 to 2050 (inclusive).
+    """
+
     # Create Data Points
     x = [2019, 2030, 2050]
 
@@ -169,6 +183,83 @@ def cubic_spline_interpolation(samples_dict, columns):
 
     return cs_dict
 
+def cubic_spline_interpolation_without_dict_transformation(samples_dict, columns):
+    """
+    Performs cubic spline interpolation on a set of sample data for multiple scenarios and variables.
+    Given a dictionary of sample values organized by scenario and year, and a list of variable names (columns),
+    this function interpolates the values for each variable across the years 2019, 2030, and 2050 using cubic splines.
+    It returns interpolated values for each year in the range 2019 to 2050 (inclusive) for every scenario and variable.
+    Parameters:
+        samples_dict (dict): 
+            A nested dictionary structured as {scenario: {year: [values]}}, where each scenario contains years as keys,
+            and each year maps to a list of values corresponding to the variables in 'columns'.
+        columns (list): 
+            A list of variable names (strings) corresponding to the order of values in the inner lists of samples_dict.
+    Returns:
+        dict: 
+            A nested dictionary structured as {scenario: {variable: np.ndarray}}, where each variable contains
+            the interpolated values for the years 2019 to 2050 (inclusive).
+    """
+
+    # Create Data Points
+    x = [2019, 2030, 2050]
+
+    ## Transform the dictionary to {
+    #   Scenario1:
+    #       {Variable1: [2019value, 2030value, 2050value],
+    #       Variable2: [2019value, 2030value, 2050value],
+    #       VariableN:[..]
+    #       },
+    #   ScenarioN:
+    #       {VariableN:...}
+    #   }
+
+    ##  Or transform the dictionary to {
+    #   Scenario1:
+    #       {corop1: [2019value, 2030value, 2050value],
+    #       corop2: [2019value, 2030value, 2050value],
+    #       coropN:[..]
+    #       },
+    #   ScenarioN:
+    #       {coropN:...}
+    #   }
+ 
+
+    # Make list of scenario's to loop through (['Scenario_0001', 'Scenario_0002', ... , 'Scenario_XXXX'])
+    scenarios = list(samples_dict.keys())
+
+    # List of column indices
+    column_indices = np.arange(len(columns))
+
+    # Dictionary to store cubic spline objects
+    cs_dict = {}
+
+    # Loop through scenarios
+    for scenario in scenarios:
+        # Create a nested dictionary for each scenario
+        scenario_dict = {}
+
+        # Loop through columns
+        for column_index in column_indices:
+            y = samples_dict[scenario][columns[column_index]]
+
+            # Perform Cubic Spline Interpolation
+            cs = CubicSpline(x, y)
+
+            # Evaluate Interpolation Function
+            x_interp = list(range(2019, 2051))
+            y_interp = cs(x_interp)
+
+            column_name = columns[
+                column_index
+            ]  # Create a name for the variable (nested inside the scenario)
+            scenario_dict[column_name] = y_interp
+
+        # Assign the nested dictionary to the scenario key
+        cs_dict[scenario] = scenario_dict
+
+    return cs_dict
+
 
 def find_unique_values(list1, list2):
     unique_in_list1 = set(list1) - set(list2)
@@ -198,3 +289,38 @@ def swap_dictionary_structure(dictionary: dict):
                     new_dict[scenario][year] = {}
                 new_dict[scenario][year][municipality] = values
     return new_dict
+
+def add_commuting_jobs_share(variable_names, sampled_values, base_values_2019, commuting_jobs_share_2019):
+    """ "
+    (Working_days - Remote_working_days * Percentage_of_remote_workers) / Working_days = Commuting_jobs_share
+    This function calculates the commuting_jobs_share based on the sampled values
+    and adds it to the variable_names and sampled_values lists.
+    """
+    # First for 2030 and 2050
+    for year in [2030, 2050]:
+        working_days = f"average_number_working_days_{year}"
+        remote_working_days = f"average_number_remote_working_days_{year}"
+        percentage_of_remote_workers = f"percentage_of_remote_workers_{year}"
+        commuting_jobs_share = f"commuting_jobs_share_{year}"
+
+        # Find index of the variables in the variable_names list
+        working_days_index = variable_names.index(working_days)
+        remote_working_days_index = variable_names.index(remote_working_days)
+        percentage_of_remote_workers_index = variable_names.index(
+            percentage_of_remote_workers
+        )
+
+        # Calculate the commuting jobs share
+        commuting_jobs_share_value = (
+            sampled_values[:, working_days_index]
+            - sampled_values[:, remote_working_days_index]
+            * (sampled_values[:, percentage_of_remote_workers_index] / 100)
+        ) / sampled_values[:, working_days_index]
+
+        # Add the commuting jobs share to the variable names and sampled values
+        variable_names.append(commuting_jobs_share)
+        sampled_values = np.column_stack((sampled_values, commuting_jobs_share_value))
+    # Add 2019 commuting_jobs_share
+    base_values_2019["commuting_jobs_share_2019"] = commuting_jobs_share_2019
+
+    return variable_names, sampled_values, base_values_2019

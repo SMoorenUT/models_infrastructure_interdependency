@@ -541,20 +541,6 @@ df_bevolking_extended = combine_historic_population_with_prognosis(
 
 
 def create_population_dict_sample(df_bevolking):
-    """
-    Generates a dictionary for a single scenario containing normalized population scenarios for each municipality and year.
-    This function processes a DataFrame containing historical and projected population data for multiple municipalities.
-    It creates a nested dictionary where each municipality maps to a dictionary of years (2019-2050), with each year
-    containing a population value. Historical values (2019-2023) are filled directly from the DataFrame. For future years
-    (2025-2050, every 5 years), population values are randomly sampled between the provided lower and upper bounds.
-    Missing values are interpolated using cubic spline interpolation. Finally, all population values are normalized so
-    that the value for 2019 is 100 for each municipality.
-    Args:
-        df_bevolking (pd.DataFrame): DataFrame containing columns 'Gemeentenaam', 'Year', 'Population (x 1 000)',
-                                     'Ondergrens totale bevolking (x 1 000)', and 'Bovengrens totale bevolking (x 1 000)'.
-    Returns:
-        dict: Nested dictionary of the form {municipality: {year: normalized_population_value, ...}, ...}
-    """
     # Create a dictionary with the population of each municipality for each year
     population_scenario_dict = {}
     for municipality in municipalities_unique:
@@ -576,7 +562,7 @@ def create_population_dict_sample(df_bevolking):
         ondergrens = row["Ondergrens totale bevolking (x 1 000)"]
         bovengrens = row["Bovengrens totale bevolking (x 1 000)"]
         # Sample 2025-2050 population values from the DataFrame every 5 years between ondergrens and bovengrens column
-        if year in range(2025, 2051, 5):
+        if year in [2030, 2050]:
             population_scenario_dict[municipality][year] = np.random.uniform(
                 ondergrens, bovengrens
             )
@@ -655,7 +641,7 @@ def create_dict_for_jobs_sampling(df_jobs, operator="min"):
 def sample_jobs(df_jobs, num_samples=50, seed=0):
     jobs_sampling_dict = create_dict_for_jobs_sampling(df_jobs, operator="min")
     sampled_jobs_dict = latin_hypercube_sampling(
-        jobs_sampling_dict, num_samples=num_samples
+        jobs_sampling_dict, num_samples=num_samples, seed=seed
     )
     return sampled_jobs_dict
 
