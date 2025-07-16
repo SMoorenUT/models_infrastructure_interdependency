@@ -1,0 +1,27 @@
+{
+  "name": "lock_investment_tape",
+  "display_name": "waterway_network investment tape",
+  "type": "tabular",
+  "format": "unstructured",
+  "project_name": "ritri",
+  "version": 1,
+  "epsg_code": null,
+  "bounding_box": null,
+  "general": {},
+  "has_data": true,
+  "data": {
+    "tabular_data_name": "waterway_network",
+    "time_series": [
+      220752000
+    ],
+    "data_series": [
+      {
+        "waterway_segment_entities": {
+          "id": [379],
+          "reference": ["552"],
+          "transport.capacity.hours": [142]
+        }
+      }
+    ]
+  }
+}
