@@ -56,6 +56,12 @@ def run_simulation(scenario_file, output_dir):
             AttributeSpec(
                 "transport.shortest_path_lane_length", DataType(float, csr=True)
             ),
+            AttributeSpec(
+                "transport.average_time.star", DataType(float)
+            ),
+            AttributeSpec(
+                "share_service_sector_gdp", DataType(float)
+            )
         ]
     )
     sim.configure(scenario)
@@ -70,9 +76,9 @@ def main(args=None):
     # output_dir = args[1]
 
     scenario_file = (
-        "data/scenarios/green_ars.json"
+        "data/scenarios/ema_road_model_16_07_2025_scenario_08.json"
     )
-    output_dir = "data/scenarios/green_ars"
+    output_dir = "data/scenarios/paper_2_test/ema_road_model_16_07_2025_scenario_08"
 
     run_simulation(scenario_file, output_dir)
 

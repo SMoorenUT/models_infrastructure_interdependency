@@ -50,48 +50,43 @@ def save_global_parameters_scenarios_as_csv(
         ).with_suffix(".csv")
         df.to_csv(file_path, index=True, header=True, sep=",", decimal=".")
 
-def create_interpolation_input_dict(variables_list_global_params: list,
+def create_interpolation_input_dict(
+    variables_list_global_params: list,
     base_values_2019: dict,
-    sampled_values: np.ndarray) -> dict:
-    """
-    """
-    _number_of_scenarios = len(sampled_values)
-    _variables_to_interpolate = [
-        var for var in variables_list_global_params if "_2050" in var
-    ]
-    _variables_to_interpolate = [
-        var.replace("_2050", "") for var in _variables_to_interpolate
+    sampled_values: np.ndarray,
+) -> dict:
+    number_of_scenarios = len(sampled_values)
+    num_digits = len(str(number_of_scenarios))
+    variables_to_interpolate = [
+        var.replace("_2050", "")
+        for var in variables_list_global_params
+        if "_2050" in var
     ]
 
     interpolation_input_dict = {}
-    interpolated_values = {}
     if any("_2030" in var for var in variables_list_global_params):
         print("At least one variable contains '_2030'")
-        # Create a mask for variables that contain '_2030'
-        mask_2030 = [
+        indices_2030 = [
             i for i, var in enumerate(variables_list_global_params) if "_2030" in var
         ]
-        # Create a mask for variables that contain '_2050'
-        mask_2050 = [
+        indices_2050 = [
             i for i, var in enumerate(variables_list_global_params) if "_2050" in var
         ]
-        # assert len(mask_2030) == len(mask_2050) == len(base_values_2019), "The number of '_2030' and '_2050' variables must match."
 
-        # Fill interpolation_input_dict with scenario keys and variable keys with empty lists
-        for k, v in enumerate(sampled_values):
-            scenario_key = f"Scenario_{k}"
+        for scenario_idx, scenario_values in enumerate(sampled_values):
+            scenario_key = f"Scenario_{scenario_idx:0{num_digits}d}"
             interpolation_input_dict[scenario_key] = {}
-            for i, var in enumerate(_variables_to_interpolate):
-                variable_value_2019 = base_values_2019.get(f"{var}_2019", np.nan)
-                interpolation_input_dict[scenario_key][var] = [
-                    variable_value_2019,
-                    v[mask_2030[i]],
-                    v[mask_2050[i]],
+            for i, variable_name in enumerate(variables_to_interpolate):
+                value_2019 = base_values_2019.get(f"{variable_name}_2019", np.nan)
+                interpolation_input_dict[scenario_key][variable_name] = [
+                    value_2019,
+                    scenario_values[indices_2030[i]],
+                    scenario_values[indices_2050[i]],
                 ]
     else:
         print("No variables contain '_2030'")
-        # TODO: implement this properly
-    return interpolation_input_dict, _variables_to_interpolate
+        # TODO: Write logic for when no '_2030' variables are present
+    return interpolation_input_dict, variables_to_interpolate
 
 
 
@@ -99,8 +94,7 @@ def create_global_parameters_scenarios(
     variables_list_global_params: list,
     sampled_values,
     base_values_2019: dict,
-    output_path: pathlib.Path = OUTPUT_DIR,
-):
+    output_path: pathlib.Path = OUTPUT_DIR):
     """
     The main function to create X number of global parameter scenarions based on the number of samples provided.
     Take the

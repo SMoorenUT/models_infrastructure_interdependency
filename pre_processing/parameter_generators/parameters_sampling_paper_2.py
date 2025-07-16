@@ -16,22 +16,21 @@ def create_parameter_files(
     sampled_values: np.ndarray,
     base_values_2019,
     output_path: pathlib.Path = OUTPUT_PATH,
+    lloyd_optimization: bool = False,
 ):
     # Check if the output folder is empty
-    # output_folder_empty_check(output_path.joinpath("init_data_EMA"))
-    # # Sample global scenarios
-    # create_global_parameters_scenarios(
-    #     variables_list_global_params, sampled_values, base_values_2019, output_path
-    # )
+    output_folder_empty_check(output_path)
+    # Sample global scenarios
+    create_global_parameters_scenarios(
+        variables_list_global_params, sampled_values, base_values_2019, output_path
+    )
     print("Global parameters created")
     # Sample local scenarios
-    create_local_parameters_scenarios(variables_list_global_params, sampled_values, output_path)
+    create_local_parameters_scenarios(
+        variables_list_global_params, sampled_values, output_path
+    )
     print("Local parameters created")
     print("Parameter files created")
-
-
-def create_scenario_config_files():
-    pass  # to be implemented
 
 
 def output_folder_empty_check(output_path: pathlib.Path) -> bool:
@@ -53,6 +52,7 @@ def output_folder_empty_check(output_path: pathlib.Path) -> bool:
                     file.unlink()
             print("Output folder cleared")
             return
+
 
 
 def main():

@@ -34,4 +34,4 @@ def reference_dict(bridge_number: int, direction = "id_to_reference") -> int:
      
 
 if __name__ == "__main__":
-    print(reference_dict(856, "id_to_reference"))
+    print(reference_dict(885, "id_to_reference"))
