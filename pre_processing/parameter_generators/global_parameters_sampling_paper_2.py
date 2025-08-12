@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 import pathlib
 from .tape_creator_functions import (
     create_lists_sampling_input,
+    establish_length_num_samples,
     latin_hypercube_sampling,
     cubic_spline_interpolation_without_dict_transformation,
 )
@@ -56,7 +57,7 @@ def create_interpolation_input_dict(
     sampled_values: np.ndarray,
 ) -> dict:
     number_of_scenarios = len(sampled_values)
-    num_digits = len(str(number_of_scenarios))
+    num_digits = establish_length_num_samples(number_of_scenarios)
     variables_to_interpolate = [
         var.replace("_2050", "")
         for var in variables_list_global_params
