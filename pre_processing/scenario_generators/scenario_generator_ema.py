@@ -1167,10 +1167,6 @@ def generate_and_output_multiple_scenarios(num_scenarios: int, path=None):
     if not isinstance(num_scenarios, int) or num_scenarios <= 0:
         raise ValueError("Number of scenarios must be an integer higher than zero.")
 
-    # Ensure the directory exists
-    if path is not None:
-        path.mkdir(parents=True, exist_ok=True)
-
     length_num_scenarios = establish_length_num_samples(num_scenarios)
 
     for i in range(num_scenarios):

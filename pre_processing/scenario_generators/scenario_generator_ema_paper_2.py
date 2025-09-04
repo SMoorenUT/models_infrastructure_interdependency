@@ -77,7 +77,9 @@ def make_config(
         },
         "created_on": NOW_STRING,
         "total_scenarios": number_of_scenarios or "unknown",
-        "random_seed_used": random_seed_number if random_seed_number is not None else "unknown",
+        "random_seed_used": (
+            random_seed_number if random_seed_number is not None else "unknown"
+        ),
         "Lloyd_optimization_used": lloyd_optimization_used,
         "description": (
             f"Pronto. Sander Mooren {display_name} scenario. Calculations reference: Asgarpour, S.,"
@@ -1264,94 +1266,103 @@ def generate_and_output_multiple_scenarios(
         else:
             output_folder_empty_check(output_path)
 
-    # Establish the number of digits for scenario numbering
-    num_digits_scenarios = establish_length_num_samples(num_scenarios)
+    # Establish the number of digits for experiment numbering
+    num_digits_scenarios = establish_length_num_samples(num_scenarios * 2)
     include_tunnel_in_road_tape_player = True
-    for scenario_index, sampled_values_array_current_scenario in enumerate(
-        tqdm(sampled_values, desc="Scenario configuration generation", unit="scenario")
-    ):
-        # Set include_tunnel_in_road_tape_player to False halfway through
-        if scenario_index == num_scenarios // 2:
+    for policy in [1, 2]:
+        if policy == 1:
+            include_tunnel_in_road_tape_player = True
+        elif policy == 2:
             include_tunnel_in_road_tape_player = False
-        scenario_number = scenario_index
-        name = f"ema_road_model_{NOW_STRING_DATE}_scenario_{scenario_index:0{num_digits_scenarios}d}"
-        display_name = (
-            f"EMA road model - Scenario {scenario_number} - {NOW_STRING_DATE}"
-        )
-        name_short = f"scenario_{scenario_index:0{num_digits_scenarios}d}"
-        scenario_global = f"{name_short}_global_parameters"
-
-        elasticity_array_current_scenario = [
-            value
-            for name, value in zip(
-                variable_names, sampled_values_array_current_scenario
+        for scenario_index, sampled_values_array_current_scenario in enumerate(
+            tqdm(
+                sampled_values,
+                desc=f"Scenario configuration generation for policy {policy}",
+                unit="experiment",
             )
-            if name.endswith("_elasticity")
-        ]
+        ):
+            experiment_number = (
+                scenario_index if policy == 1 else scenario_index + num_scenarios
+            )
+            scenario_number = scenario_index
+            name = f"ema_road_model_{NOW_STRING_DATE}_experiment_{experiment_number:0{num_digits_scenarios}d}"
+            display_name = (
+                f"EMA road model - Experiment {experiment_number} - {NOW_STRING_DATE}"
+            )
+            name_short = f"scenario_{scenario_number:0{num_digits_scenarios}d}"
+            scenario_global = f"{name_short}_global_parameters"
 
-        # Create the scenario parameters from sampled elasticities
-        # Apply elasticity_mask to filter elasticities for each submodel
-        def filter_globals(mask_key):
-            mask = elasticity_mask.get(mask_key, [True] * len(variable_names))
-            rv = []
-            for var_name, var_value, m in zip(
-                variable_names, elasticity_array_current_scenario, mask
-            ):
-                if m:
-                    name = var_name.replace("_elasticity", "")
-                    if name.startswith(
-                        "gdp"
-                    ):  # Account for gdp_passenger and gdp_cargo which have different elasticities, but will look for the same parameter developments
-                        name = "gdp"
-                    rv.append(GlobalDemandParameter(name, var_value))
-            if mask_key == "passenger":
-                # Add commuting_jobs_share parameter
-                jobs_count_index_value = next(
-                    (
-                        var_value
-                        for var_name, var_value in zip(
-                            variable_names, elasticity_array_current_scenario
+            elasticity_array_current_scenario = [
+                value
+                for name, value in zip(
+                    variable_names, sampled_values_array_current_scenario
+                )
+                if name.endswith("_elasticity")
+            ]
+
+            # Create the scenario parameters from sampled elasticities
+            def filter_globals(mask_key):
+                mask = elasticity_mask.get(mask_key, [True] * len(variable_names))
+                rv = []
+
+                for var_name, var_value, m in zip(
+                    variable_names, elasticity_array_current_scenario, mask
+                ):
+                    if m:
+                        name = var_name.replace("_elasticity", "")
+                        if name.startswith(
+                            "gdp"
+                        ):  # Account for gdp_passenger and gdp_cargo which have different elasticities, but will look for the same parameter developments
+                            name = "gdp"
+                        rv.append(GlobalDemandParameter(name, var_value))
+                if mask_key == "passenger":
+                    # Add commuting_jobs_share parameter
+                    jobs_count_index_value = next(
+                        (
+                            var_value
+                            for var_name, var_value in zip(
+                                variable_names, elasticity_array_current_scenario
+                            )
+                            if var_name == "jobs.count.index_elasticity"
                         )
-                        if var_name == "jobs.count.index_elasticity"
                     )
-                )
-                rv.append(
-                    GlobalDemandParameter(
-                        "commuting_jobs_share", jobs_count_index_value
+                    rv.append(
+                        GlobalDemandParameter(
+                            "commuting_jobs_share", jobs_count_index_value
+                        )
                     )
-                )
-            return rv
+                return rv
 
-        elasticities_dict = {
-            "passenger_global": filter_globals("passenger"),
-            "cargo_domestic_global": filter_globals("cargo_domestic"),
-            "cargo_international_global": filter_globals("cargo_international"),
-        }
+            # Apply elasticity_mask to filter elasticities for each submodel
+            elasticities_dict = {
+                "passenger_global": filter_globals("passenger"),
+                "cargo_domestic_global": filter_globals("cargo_domestic"),
+                "cargo_international_global": filter_globals("cargo_international"),
+            }
 
-        # Make a mask to later remove local parameters that are not needed
-        local_parameters_mask = [
-            param.name in local_parameters_to_drop
-            for param in elasticities_dict["passenger_global"]
-        ]
+            # Make a mask to later remove local parameters that are not needed
+            local_parameters_mask = [
+                param.name in local_parameters_to_drop
+                for param in elasticities_dict["passenger_global"]
+            ]
 
-        result = json.dumps(
-            generate(
-                name,
-                display_name,
-                scenario_global,
-                name_short,
-                elasticities_dict,
-                local_parameters_mask,
-                include_tunnel_in_road_tape_player,
-                number_of_scenarios=num_scenarios,
-                random_seed_number_used=random_seed_number_used,
-                lloyd_optimization_used=lloyd_optimization_used,
-            ),
-            indent=2,
-        )
-        filepath = output_path / f"{name}.json"
-        filepath.write_text(result)
-    pass
+            result = json.dumps(
+                generate(
+                    name,
+                    display_name,
+                    scenario_global,
+                    name_short,
+                    elasticities_dict,
+                    local_parameters_mask,
+                    include_tunnel_in_road_tape_player,
+                    number_of_scenarios=num_scenarios,
+                    random_seed_number_used=random_seed_number_used,
+                    lloyd_optimization_used=lloyd_optimization_used,
+                ),
+                indent=2,
+            )
+            filepath = output_path / f"{name}.json"
+            filepath.write_text(result)
 
 
 def test_main():

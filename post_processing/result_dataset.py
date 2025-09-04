@@ -15,20 +15,21 @@ import os
 attribute = "transport.volume_to_capacity_ratio"
 entity_number = 885  # for analysing a certain bridge for example
 timestamp = "2035"
-DATA_TO_ANALYSE = "bridges"
+DATA_TO_ANALYSE = "road_network: passenger_demand_vkm"
 BASE_DIR = Path(__file__).parents[1]
 INIT_DATA_DIR = BASE_DIR / "data/init_data/"
 UPDATES_DIR = Path(
     "/media/p-drive/ET/CME/Current/Sander Mooren/scenarios_ema_1000/Output/"
 )
 SIMULATION_NAME = "ema_road_model_08_05_2024"
+SAVE_CSV = True  # Set to False if you do not want to save the csv files
 
 scenarios = []
 for i in range(1000):
     scenario = f"{SIMULATION_NAME}_scenario_{str(i).zfill(3)}"
     scenarios.append(scenario)
 
-scenarios = scenarios[:10]
+# scenarios = scenarios[:10]
 
 if DATA_TO_ANALYSE == "bridges":
     dataset_name = "bridges"
@@ -170,14 +171,14 @@ def results_by_attribute(attribute, entity_group, dataset_name, save_csvs=False)
         for scenario in tqdm(scenarios):
             dataset = load_results(scenario, dataset_name)
             slice = dataset.slice(entity_group=entity_group, attribute=attribute)
-            slice = jan1_conversion(slice, entity_group, attribute)
+            slice = jan1_conversion(slice)
+
+            # VKM is originally a list of lists, should be summed.
+            for i in range(len(slice["data"])):
+                slice["data"][i] = np.sum(slice["data"][i]["data"])
 
             # Convert slice to a dictionary
             data_dict = dict(zip(slice["timestamps"], slice["data"]))
-
-            # VKM is originally a list of lists, should be summed.
-            for key in data_dict:
-                data_dict[key] = np.sum(data_dict[key])
 
             road_network_vkm_dict[scenario] = data_dict
         vkm_df = pd.DataFrame.from_dict(road_network_vkm_dict)
@@ -337,11 +338,17 @@ def main():
     # if os.path.exists(csv_name):
     #     print(f"File {csv_name} already exists. Skipping...")
     # results_by_entity(entity_number, attribute, save_csv=True)
-    results_by_attribute_and_year(
+    # results_by_attribute_and_year(
+    #     attribute=attribute,
+    #     timestamp=timestamp,
+    #     dataset_name="bridges",
+    #     save_csv=True,
+    # )
+    results_by_attribute(
         attribute=attribute,
-        timestamp=timestamp,
-        dataset_name="bridges",
-        save_csv=True,
+        entity_group=entity_group,
+        dataset_name=dataset_name,
+        save_csvs=SAVE_CSV,
     )
 
 

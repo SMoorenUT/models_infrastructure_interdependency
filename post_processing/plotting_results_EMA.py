@@ -21,7 +21,7 @@ matplotlib.use("TkAgg")
 
 entity_number = 856  # Number of the bridge to plot
 SIM_NAME = "ema_road_model_08_05_2024"  # Name of the simulation the results are from
-TRAFFIC_TYPE = "combined"  # "cargo", "passenger" or "combined"
+TRAFFIC_TYPE = "passenger"  # "cargo", "passenger" or "combined"
 YEARS_KDE = [
     2030,
     2040,
@@ -56,7 +56,7 @@ CONDITION_2 = "<"
 THRESHOLD_2 = 0.25
 
 FONTSIZE = 20  # Font size for the plot
-SAVE_FIG = True  # Boolean to determine whether to save the figure or not
+SAVE_FIG = False  # Boolean to determine whether to save the figure or not
 
 
 def get_cluster_name(condition, threshold):

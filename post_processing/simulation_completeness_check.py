@@ -1,5 +1,7 @@
 import os
 
+DIRECTORY = "/media/p-drive/ET/CME/Current/Sander Mooren/scenarios_ema_1000/Output/"
+
 
 def check_folders_complete(directory):
     max_files = 0
@@ -29,5 +31,4 @@ def check_folders_complete(directory):
 
 
 if __name__ == "__main__":
-    directory = "/media/p-drive/ET/CME/Current/Sander Mooren/scenarios_ema_1000/Output/"
-    check_folders_complete(directory)
+    check_folders_complete(DIRECTORY)

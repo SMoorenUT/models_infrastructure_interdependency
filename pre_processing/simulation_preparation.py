@@ -14,7 +14,13 @@ CURR_DIR = pathlib.Path(__file__).parent
 number_of_scenarios = 10
 output_path = CURR_DIR.parent / "data" / "scenarios_ema"
 
-parameters_sampling.create_parameter_files(number_of_scenarios)
-scenario_generator_ema.generate_and_output_multiple_scenarios(
-    num_scenarios=number_of_scenarios, path=output_path
-)
+
+def main():
+    parameters_sampling.create_parameter_files(number_of_scenarios)
+    scenario_generator_ema.generate_and_output_multiple_scenarios(
+        num_scenarios=number_of_scenarios, path=output_path
+    )
+
+
+if __name__ == "__main__":
+    main()

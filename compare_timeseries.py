@@ -69,17 +69,23 @@ noise = [
     662688000.0,
 ]
 
+
 def take_closest(myList, myNumber):
-    closest = min(myList, key=lambda x:abs(x-myNumber))
+    closest = min(myList, key=lambda x: abs(x - myNumber))
     return closest
 
+
 investment_rounded = [take_closest(localinfra, x) for x in investment]
+
 
 def convert_to_datetime(timelist):
     timelist = [element + 1546333200 for element in timelist]
     timelist = [dt.datetime.fromtimestamp(x) for x in timelist]
     return timelist
 
+
 localinfra = convert_to_datetime(localinfra)
 investment = convert_to_datetime(investment)
 noise = convert_to_datetime(noise)
+
+print(investment)

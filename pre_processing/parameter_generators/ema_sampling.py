@@ -19,6 +19,7 @@ NUMBER_OF_SCENARIOS = 10
 OUTPUT_PATH = pathlib.Path(__file__).parents[2] / "data" / "init_data_EMA"
 RANDOM_SEED_NUMBER = 0
 
+
 def create_elasticity_mask(bandwiths_file, variable_names):
     """
     Create a mask for the elasticities to know which elasticities are part of which model.
@@ -36,7 +37,9 @@ def create_elasticity_mask(bandwiths_file, variable_names):
         for var in variable_names:
             # Find the row in bandwiths_file where 'var' matches the current variable
             var_name = var.removesuffix("_elasticity")
-            matching_rows = bandwiths_file[bandwiths_file['var'].astype(str).str.contains(var_name)]
+            matching_rows = bandwiths_file[
+                bandwiths_file["var"].astype(str).str.contains(var_name)
+            ]
             # TODO Hard code GDP as special case
             if not matching_rows.empty and matching_rows.iloc[0][model] == 1:
                 if var.startswith("gdp") and (model in var):
@@ -49,6 +52,7 @@ def create_elasticity_mask(bandwiths_file, variable_names):
                 mask.append(False)
         elasticity_mask[model] = mask
     return elasticity_mask
+
 
 def load_bandwith_data(file_path: str):
     """
@@ -134,7 +138,9 @@ def load_bandwith_data(file_path: str):
         "upper_bounds": [v[1] for v in bandwiths.values()],
     }
 
-    elasticity_mask = create_elasticity_mask(bandwiths_file, bandwiths_summary["Variable_names"])
+    elasticity_mask = create_elasticity_mask(
+        bandwiths_file, bandwiths_summary["Variable_names"]
+    )
 
     return bandwiths_summary, base_values_2019, elasticity_mask
 
@@ -238,15 +244,18 @@ def sample_elasticities_and_params(
     for name, l, u in zip(variable_names, l_bounds, u_bounds):
         if l >= u:
             variables_not_to_sample.append(name)
-    warnings.warn(f"({len(variables_not_to_sample)} variables have not been sampled. {variables_not_to_sample}")
-
+    warnings.warn(
+        f"({len(variables_not_to_sample)} variables have not been sampled. {variables_not_to_sample}"
+    )
 
     sampler = qmc.LatinHypercube(
         d=len(l_bounds) - sum(invalid_bounds_mask),
         seed=random_seed_number,
-        optimization=lloyd_optimization if lloyd_optimization else None,
+        optimization="lloyd" if lloyd_optimization else None,
     )
-    samples = sampler.random(n=number_of_scenarios)
+    samples = sampler.random(
+        n=number_of_scenarios // 2
+    )  # Half the number of scenarios because it will be doubled over policy
 
     # Evaluate the quality of the Latin Hypercube Sample
     quality_metrics = evaluate_lhs_quality(samples)
@@ -266,19 +275,22 @@ def sample_elasticities_and_params(
         name for name, valid in zip(variable_names, invalid_bounds_mask) if not valid
     ]
     scaled_samples = qmc.scale(samples, valid_l_bounds, valid_u_bounds)
-    
+
     variable_names_to_return = variable_names_sampled.copy()
     scenario_input_values = scaled_samples.copy()
     for idx, var_name in enumerate(variable_names):
         if var_name not in variable_names_sampled:
             variable_names_to_return.append(var_name)
-            new_col = np.full((number_of_scenarios, 1), bandwiths_dict["lower_bounds"][idx])
+            new_col = np.full(
+                (number_of_scenarios // 2, 1), bandwiths_dict["lower_bounds"][idx]
+            )
             scenario_input_values = np.hstack([scenario_input_values, new_col])
-            
 
-    assert len(variable_names_to_return) == scenario_input_values.shape[1] == len(variable_names), (
-        "Variable names and scaled samples must have the same number of columns."
-    )
+    assert (
+        len(variable_names_to_return)
+        == scenario_input_values.shape[1]
+        == len(variable_names)
+    ), "Variable names and scaled samples must have the same number of columns."
     return variable_names_to_return, scenario_input_values
 
 

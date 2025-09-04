@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 import pathlib
 from .tape_creator_functions import (
     create_lists_sampling_input,
+    establish_length_num_samples,
     latin_hypercube_sampling,
     cubic_spline_interpolation_without_dict_transformation,
 )
@@ -50,13 +51,14 @@ def save_global_parameters_scenarios_as_csv(
         ).with_suffix(".csv")
         df.to_csv(file_path, index=True, header=True, sep=",", decimal=".")
 
+
 def create_interpolation_input_dict(
     variables_list_global_params: list,
     base_values_2019: dict,
     sampled_values: np.ndarray,
 ) -> dict:
     number_of_scenarios = len(sampled_values)
-    num_digits = len(str(number_of_scenarios))
+    num_digits = establish_length_num_samples(number_of_scenarios * 2)
     variables_to_interpolate = [
         var.replace("_2050", "")
         for var in variables_list_global_params
@@ -89,12 +91,12 @@ def create_interpolation_input_dict(
     return interpolation_input_dict, variables_to_interpolate
 
 
-
 def create_global_parameters_scenarios(
     variables_list_global_params: list,
     sampled_values,
     base_values_2019: dict,
-    output_path: pathlib.Path = OUTPUT_DIR):
+    output_path: pathlib.Path = OUTPUT_DIR,
+):
     """
     The main function to create X number of global parameter scenarions based on the number of samples provided.
     Take the
@@ -103,11 +105,13 @@ def create_global_parameters_scenarios(
     """
     # Interpolate the values between 2019 and 2030 and between 2030 and 2050
     # TODO: implement properly
-    
-    interpolation_input_dict, variables_to_interpolate = create_interpolation_input_dict(
-        variables_list_global_params=variables_list_global_params,
-        base_values_2019=base_values_2019,
-        sampled_values=sampled_values,
+
+    interpolation_input_dict, variables_to_interpolate = (
+        create_interpolation_input_dict(
+            variables_list_global_params=variables_list_global_params,
+            base_values_2019=base_values_2019,
+            sampled_values=sampled_values,
+        )
     )
 
     interpolated_values = cubic_spline_interpolation_without_dict_transformation(

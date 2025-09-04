@@ -1024,6 +1024,16 @@ class LocalParametersConfig:
         return
 
 
+def normalize_job_years(df_jobs: pd.DataFrame) -> pd.DataFrame:
+    """
+    Normalize the 2030 and 2050 columns in the jobs DataFrame based on the 2019 column.
+    """
+    df_jobs["2030"] = df_jobs["2030"] / df_jobs["2019"] * 100
+    df_jobs["2050"] = df_jobs["2050"] / df_jobs["2019"] * 100
+    df_jobs["2019"] = 100
+    return df_jobs
+
+
 def create_job_data(variable_names: list, sampled_values: np.ndarray):
     # General info
     num_samples = sampled_values.shape[0]
@@ -1035,20 +1045,21 @@ def create_job_data(variable_names: list, sampled_values: np.ndarray):
     df_jobs = read_jobs_data()
     df_jobs = df_jobs.drop(columns=["2030_min", "2030_max", "2050_min", "2050_max"])
     df_jobs = df_jobs.rename(columns={"2012": "2019"})
-    df_jobs = df_jobs.copy()
+    # df_jobs = df_jobs.copy()  # Unnecessary, already a new DataFrame per scenario
 
     for scenario_index, list_of_sampled_values_current_scen in enumerate(
         sampled_values
     ):
         jobs_2030_value = list_of_sampled_values_current_scen[jobs_2030_index]
         jobs_2050_value = list_of_sampled_values_current_scen[jobs_2050_index]
-        df_jobs["2030"] = (
-            jobs_2030_value * df_jobs["2019"] / 100
-        )  # Multiply by the jobs in 2019 (2012) and normalize
-        df_jobs["2050"] = (
-            jobs_2050_value * df_jobs["2019"] / 100
-        )  # Multiply by the jobs in 2019 (2012) and normalize
-        
+        df_jobs["2019"] = (
+            3855.6  # Set the jobs in 2019 to a constant value (3855.6), which is the total number of jobs in the study area in 2019
+        )
+        df_jobs["2030"] = jobs_2030_value
+        df_jobs["2050"] = jobs_2050_value
+        # Normalize the dataframe based on 2019 values
+        df_jobs = normalize_job_years(df_jobs)
+
         jobs_dict = {}
         # Interpolate all the rows using the 2019, 2030, and 2050 data
         for idx, row in df_jobs.iterrows():
@@ -1060,9 +1071,9 @@ def create_job_data(variable_names: list, sampled_values: np.ndarray):
             # Store the interpolated values as a numpy array in the DataFrame
             jobs_dict[idx] = interpolated
 
-
-        jobs_corop_level[f"Scenario_{scenario_index:0{digits_num_samples}d}"] = jobs_dict
-
+        jobs_corop_level[f"Scenario_{scenario_index:0{digits_num_samples}d}"] = (
+            jobs_dict
+        )
 
     corop_dict_cbs, corop_municipalities_cbs = (
         get_corop_dictionary()
@@ -1093,7 +1104,7 @@ def generate_population_and_job_data(
     }
     # Create a jobs dictionary for each scenario
     jobs = create_job_data(variable_names, sampled_values)
-    
+
     compare_dicts(
         population, jobs
     )  # Verify that the population and jobs dictionaries have the same structure
@@ -1121,7 +1132,7 @@ def create_local_parameters_scenarios(
 ):
     number_of_samples = len(sampled_values)
     length_num_samples = establish_length_num_samples(
-        number_of_samples
+        number_of_samples * 2
     )  # To format the scenario names with approriate number of leading zeros
 
     population_swapped, jobs_swapped = generate_population_and_job_data(
