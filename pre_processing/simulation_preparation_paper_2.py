@@ -15,7 +15,7 @@ from scenario_generators import scenario_generator_ema_paper_2 as scenario_gener
 
 # Constants and configurations
 CURR_DIR = pathlib.Path(__file__).parent
-NUMBER_OF_SCENARIOS = 1000
+NUMBER_OF_SCENARIOS = 10
 OUTPUT_DIR = CURR_DIR.parent / "data"
 INPUT_SHEET_DIR = CURR_DIR.joinpath("EMA_input_sample_paper_2.xlsx")
 INCLUDE_2030 = True  # Whether to include 2030 input values in the sampling
