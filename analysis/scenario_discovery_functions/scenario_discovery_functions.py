@@ -179,7 +179,7 @@ def prim(
     binarization_threshold: Union[float, int] = None,
     criterion: str = None,
     threshold_is_relative: bool = True,
-    prim_threshold: float = 0.8,
+    prim_threshold: float = 0.5,
 ) -> tuple:
     if not isinstance(independent_var_df, pd.DataFrame):
         raise TypeError("simulation_input must be a pandas DataFrame")

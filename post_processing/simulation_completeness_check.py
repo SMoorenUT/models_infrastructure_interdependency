@@ -1,6 +1,7 @@
 import os
+from tqdm import tqdm
 
-DIRECTORY = "/media/p-drive/ET/CME/Current/Sander Mooren/scenarios_ema_1000/Output/"
+DIRECTORY = "/media/p-drive/ET/CME/Current/Sander Mooren/Paper_2_data/output"
 
 
 def check_folders_complete(directory):
@@ -19,7 +20,11 @@ def check_folders_complete(directory):
     # Second pass to check completeness based on the maximum number of files
     incomplete_folders = []
 
-    for folder_name, num_files in folder_files_count.items():
+    for folder_name, num_files in tqdm(
+        folder_files_count.items(),
+        total=len(folder_files_count),
+        desc="Checking folders",
+    ):
         if num_files != max_files:
             incomplete_folders.append((folder_name, num_files))
 

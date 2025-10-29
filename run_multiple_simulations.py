@@ -7,11 +7,27 @@ import time
 scenario_stem = "data/scenarios/ema_road_model_17_07_2025_experiment_"
 NUM_SIMULATIONS = 1000
 LEN_SIM = 3
-STARTING_NUMBER = 324
 CURRENT_DATE = time.strftime("%Y-%m-%d")
 
 # Extract the last part of the string before '_scenario_'
 simulation_name = scenario_stem.split("_scenario_", 1)[0]
+
+
+def find_highest_numbered_folder(scenario_stem):
+    base_dir = pathlib.Path(scenario_stem).parent
+    folder_prefix = pathlib.Path(scenario_stem).name
+    max_num = None
+    for folder in base_dir.iterdir():
+        if folder.is_dir() and folder.name.startswith(folder_prefix):
+            suffix = folder.name[len(folder_prefix) :]
+            if suffix.isdigit():
+                num = int(suffix)
+                if max_num is None or num > max_num:
+                    max_num = num
+    return max_num
+
+
+STARTING_NUMBER = find_highest_numbered_folder(scenario_stem)
 
 
 # Printed output will be written to a .txt file

@@ -7,7 +7,7 @@ import json
 # Initialize the data directories
 CURR_DIR = Path(__file__).parent
 BASE_DIR = Path(__file__).parents[1]
-SIM_NAME = "ema_road_model_08_05_2024"
+SIM_NAME = "ema_road_model_17_07_2025"
 SIM_INPUT_DIR = (
     BASE_DIR / "data/init_data"
 )  # Directory with the input data for the simulation
@@ -17,11 +17,13 @@ SIM_OUTPUT_DIR = (
 OUTPUT_DIR = BASE_DIR / "analysis"  # Directory to save the analysis data
 NUMBER_OF_SCENARIOS = 1000
 SIMULATION_YEARS = list(range(2019, 2051))
+SAVE_CSV = True
 
-data_files = ["cargo_vkm.csv", "passenger_vkm.csv", "combined_vkm.csv"]
+DATA_FILES = ["cargo_vkt.csv", "passenger_vkt.csv", "combined_vkt.csv"]
 # data_files = [
-#     "passenger_vkm.csv"
-# ]  # Overwrite because this case only has passenger_vkm.csv
+#     "passenger_vkt.csv"
+# ]  # Overwrite because this case only has passenger_vkt.csv
+MODEL_NAMES_SHORT = {4: "passenger", 5: "cargo_domestic", 6: "cargo_international"}
 year = 2050
 
 
@@ -36,27 +38,32 @@ def establish_length_num_samples(num_samples: int):
     return length_num_samples
 
 
-def generate_scenario_name_list(number_of_scenarios, prefix=None, suffix=None):
+def generate_scenario_name_list(
+    number_of_scenarios, prefix=None, suffix=None, core="scenario_"
+):
     len_num_samples = establish_length_num_samples(number_of_scenarios)
     scenario_name_list = [
-        f"{prefix if prefix else ''}scenario_{str(i).zfill(len_num_samples)}{suffix if suffix else ''}"
+        f"{prefix if prefix else ''}{core}{str(i).zfill(len_num_samples)}{suffix if suffix else ''}"
         for i in range(number_of_scenarios)
     ]
     return scenario_name_list
 
 
-def list_of_scenarios(number_of_scenarios, suffix=None, prefix=None):
+def list_of_scenarios(number_of_scenarios, suffix=None, prefix=None, core="scenario_"):
     scenarios_filenames = generate_scenario_name_list(
-        number_of_scenarios, prefix=prefix, suffix=suffix
+        number_of_scenarios, prefix=prefix, suffix=suffix, core=core
     )
 
     return scenarios_filenames
 
 
 def load_local_data():
-    scenario_filenames = list_of_scenarios(
-        NUMBER_OF_SCENARIOS, suffix="_local_parameters_tape.json"
-    )
+    scenario_filenames = (
+        list_of_scenarios(
+            NUMBER_OF_SCENARIOS // 2, suffix="_local_parameters_tape.json"
+        )
+        * 2
+    )  # Each local parameters file is used twice in the simulation
     local_parameter_files = [
         json.load(open(SIM_INPUT_DIR / file)) for file in scenario_filenames
     ]
@@ -64,19 +71,38 @@ def load_local_data():
 
 
 def load_global_data():
-    scenario_filenames = list_of_scenarios(
-        NUMBER_OF_SCENARIOS, suffix="_global_parameters.csv"
-    )
+    scenario_filenames = (
+        list_of_scenarios(NUMBER_OF_SCENARIOS // 2, suffix="_global_parameters.csv") * 2
+    )  # Each global parameters file is used twice in the simulation
+    # Drop the scenario (857) with no data
+    scenario_filenames.pop(857)
     global_parameter_files = {
         file: pd.read_csv(SIM_INPUT_DIR / file) for file in scenario_filenames
     }
     return global_parameter_files
 
 
+def load_elasticity_data():
+    scenarios_dir = SIM_INPUT_DIR.parent / "scenarios"
+    scenario_filenames = list_of_scenarios(
+        NUMBER_OF_SCENARIOS, prefix=SIM_NAME, suffix=".json", core="_experiment_"
+    )
+    elasticity_data = {}
+    for file in scenario_filenames:
+        with open(scenarios_dir / file, "r") as f:
+            elasticity_data[file] = json.load(f)
+    return elasticity_data
+
+
 def load_data():
     local_data = load_local_data()
     global_data = load_global_data()
-    return local_data, global_data  # Return a tuple with the local and global data
+    elasticity_data = load_elasticity_data()
+    return (
+        local_data,
+        global_data,
+        elasticity_data,
+    )  # Return a tuple with the local, global, and elasticity data
 
 
 def reshape_local_data(
@@ -121,8 +147,11 @@ def reshape_global_data(
     global_data, scenario_name_list, year_position=-1
 ) -> pd.DataFrame:
     global_data_dict = {}
-    for scenario_name in scenario_name_list:
-        csv = global_data[f"{scenario_name}_global_parameters.csv"]
+    half = len(scenario_name_list) // 2
+    for idx, scenario_name in enumerate(scenario_name_list):
+        # use only the first half of scenario names (repeated) to pick CSV files
+        first_half_name = scenario_name_list[idx % half]
+        csv = global_data[f"{first_half_name}_global_parameters.csv"]
         global_data_dict[scenario_name] = csv.to_dict(orient="records")
 
     global_variables = list(global_data_dict[scenario_name_list[0]][0].keys())
@@ -139,7 +168,87 @@ def reshape_global_data(
     return global_data_df
 
 
-def process_init_data(local_data, global_data, year=2050) -> pd.DataFrame:
+def reshape_elasticity_data(elasticity_data, scenario_name_list) -> pd.DataFrame:
+    experiment_name_list = list_of_scenarios(
+        NUMBER_OF_SCENARIOS, prefix=SIM_NAME, suffix=".json", core="_experiment_"
+    )
+    elasticity_data_dict = {}
+    for idx, scenario_name in enumerate(scenario_name_list):
+        exp_name = experiment_name_list[idx]
+        exp = elasticity_data.get(exp_name, {})
+        models = exp.get("models", {})
+        # Keep only models with type == "traffic_demand_calculation"
+        if isinstance(models, dict):
+            models = {
+                k: v
+                for k, v in models.items()
+                if isinstance(v, dict) and v.get("type") == "traffic_demand_calculation"
+            }
+        else:
+            # handle list-like models: use 'id' if present, otherwise the index as key
+            filtered = {}
+            for idx, m in enumerate(models or []):
+                if (
+                    isinstance(m, dict)
+                    and m.get("type") == "traffic_demand_calculation"
+                ):
+                    key = m.get("id", idx)
+                    filtered[key] = m
+                models = filtered
+
+        gp = {}  # Initialize an empty dict to collect global parameters
+        # For each model 4,5,6, extract its global_parameters dict and store values
+        for model in (4, 5, 6):
+            # accept both int and str keys for the models mapping
+            model_key = model if model in models else str(model)
+            model_entry = models[model_key]
+            gp_current_model = model_entry.get("global_parameters", {})
+            if isinstance(gp_current_model, list):
+                transformed = {}
+                for item in gp_current_model:
+                    if not isinstance(item, dict):
+                        continue
+                    name = item.get("name")
+                    if name is None:
+                        continue
+                    transformed[name] = item.get("elasticity")
+                gp_current_model = transformed
+            elif isinstance(gp_current_model, dict):
+                # If values are dicts that contain 'name'/'elasticity', convert them to name: elasticity
+                if any(
+                    isinstance(v, dict) and ("name" in v or "elasticity" in v)
+                    for v in gp_current_model.values()
+                ):
+                    transformed = {}
+                    for k, v in gp_current_model.items():
+                        if isinstance(v, dict) and "name" in v:
+                            transformed[v["name"]] = v.get("elasticity")
+                        else:
+                            transformed[k] = v
+                    gp_current_model = transformed
+            # Rename the keys to indicate the model they belong to
+            gp_current_model = {
+                f"elasticity_{key}_{MODEL_NAMES_SHORT[model]}": value
+                for key, value in gp_current_model.items()
+            }
+            # append the gp_current_model dict to a list under the 'models' key
+            gp.update(gp_current_model)
+            pass
+        pass
+
+        elasticity_data_dict[scenario_name] = (
+            gp  # Overwrite with the processed global_parameters dict
+        )
+
+    # Turn dict into a dataframe
+    elasticity_data_df = pd.DataFrame(elasticity_data_dict).T
+
+    return elasticity_data_df
+
+
+def process_init_data(
+    local_data, global_data, elasticity_data, year=2050
+) -> pd.DataFrame:
     # Initialize values for later use
     number_of_scenarios = len(local_data)
     scenario_name_list = generate_scenario_name_list(
@@ -149,13 +258,25 @@ def process_init_data(local_data, global_data, year=2050) -> pd.DataFrame:
     year_position = SIMULATION_YEARS.index(year)
 
     # Reshape the data into pandas dataframes
+    # First the local data
     local_data_df = reshape_local_data(
         local_data, scenario_name_list, year_position=year_position
     )
+    # Second the global data
     global_data_df = reshape_global_data(
         global_data, scenario_name_list, year_position=year_position
     )
-    combined_data_df = pd.concat([global_data_df, local_data_df], axis=1)
+    # Third the elasticity data
+    elasticity_data_df = reshape_elasticity_data(elasticity_data, scenario_name_list)
+
+    # Ignore local data since it is derived from the global population and jobs data.
+    combined_data_df = pd.concat([global_data_df, elasticity_data_df], axis=1)
+
+    # Drop the row with index "scenario_857" if it exists
+    combined_data_df = combined_data_df.drop(index="scenario_857", errors="ignore")
+
+    n = len(combined_data_df)
+    combined_data_df["blankburgverbinding"] = [1] * min(500, n) + [0] * max(0, n - 500)
 
     return combined_data_df
 
@@ -178,16 +299,22 @@ def process_output_data(data_files, year=2050):
         ].values.tolist()[0]
 
     output_data_df = pd.DataFrame(data)
-    output_data_df.index = generate_scenario_name_list(len(output_data_df))
+    scenario_names = generate_scenario_name_list(len(output_data_df) + 1)
+    scenario_names.pop(
+        857
+    )  # removed is the popped string; scenario_names now lacks that element
+    output_data_df.index = scenario_names
 
     return output_data_df
 
 
 def main(save_to_csv=False):
 
-    local_data, global_data = load_data()
-    init_data_df = process_init_data(local_data, global_data, year=year)
-    output_data_df = process_output_data(data_files, year=year)
+    local_data, global_data, elasticity_data = load_data()
+    init_data_df = process_init_data(
+        local_data, global_data, elasticity_data, year=year
+    )
+    output_data_df = process_output_data(DATA_FILES, year=year)
 
     analysis_ready_df = pd.concat([init_data_df, output_data_df], axis=1)
 
@@ -199,5 +326,5 @@ def main(save_to_csv=False):
 
 
 if __name__ == "__main__":
-    main(save_to_csv=True)
+    main(save_to_csv=SAVE_CSV)
     print("Finished running script.")

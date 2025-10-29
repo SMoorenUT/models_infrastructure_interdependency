@@ -71,9 +71,10 @@ def main(args=None):
     # scenario_file = args[0]
     # output_dir = args[1]
 
-    scenario_file = "data/scenarios/ema_road_model_17_07_2025_experiment_000.json"
-    output_dir = "data/scenarios/ema_road_model_17_07_2025_experiment_000"
+    scenario_file = "data/scenarios/ema_road_model_17_07_2025_experiment_857.json"
+    output_dir = "data/scenarios/ema_road_model_17_07_2025_experiment_857"
 
+    # 127, 521 and 857 were incomplete
     run_simulation(scenario_file, output_dir)
 
 

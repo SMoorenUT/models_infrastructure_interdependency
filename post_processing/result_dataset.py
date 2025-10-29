@@ -15,21 +15,22 @@ import os
 attribute = "transport.volume_to_capacity_ratio"
 entity_number = 885  # for analysing a certain bridge for example
 timestamp = "2035"
-DATA_TO_ANALYSE = "road_network: passenger_demand_vkm"
+DATA_TO_ANALYSE = "road_network: cargo_demand_vkm"
 BASE_DIR = Path(__file__).parents[1]
 INIT_DATA_DIR = BASE_DIR / "data/init_data/"
-UPDATES_DIR = Path(
-    "/media/p-drive/ET/CME/Current/Sander Mooren/scenarios_ema_1000/Output/"
-)
-SIMULATION_NAME = "ema_road_model_08_05_2024"
+UPDATES_DIR = Path("/media/p-drive/ET/CME/Current/Sander Mooren/Paper_2_data/output")
+SIMULATION_NAME = "ema_road_model_17_07_2025"
 SAVE_CSV = True  # Set to False if you do not want to save the csv files
 
 scenarios = []
 for i in range(1000):
-    scenario = f"{SIMULATION_NAME}_scenario_{str(i).zfill(3)}"
+    scenario = f"{SIMULATION_NAME}_experiment_{str(i).zfill(3)}"
     scenarios.append(scenario)
 
-# scenarios = scenarios[:10]
+# Keep `scenarios` as a list containing the single selected scenario (index 13).
+# This prevents iterating the characters of a string when using `for scenario in scenarios:`.
+# Drop only scenario 857 and keep all others
+scenarios = [s for s in scenarios if not s.endswith(f"_experiment_{str(857).zfill(3)}")]
 
 if DATA_TO_ANALYSE == "bridges":
     dataset_name = "bridges"
@@ -37,30 +38,30 @@ if DATA_TO_ANALYSE == "bridges":
     entity_group = "bridge_entities"
     output_subdir = "bridges"
     output_filename = (
-        f"ema_road_model_08_05_2024_transport.volume_to_capacity_ratio_{timestamp}.csv"
+        f"ema_road_model_17_07_2025_transport.volume_to_capacity_ratio_{timestamp}.csv"
     )
 elif DATA_TO_ANALYSE == "road_network: passenger_demand_vkm":
     dataset_name = "road_network"
     attribute = "transport.passenger_demand_vkm"
     entity_group = "virtual_node_entities"
     output_subdir = "road_network"
-    output_filename = "passenger_vkm.csv"
+    output_filename = "passenger_vkt.csv"
 elif DATA_TO_ANALYSE == "road_network: passenger_demand.peak_yearly":
     dataset_name = "road_network"
     attribute = "transport.passenger_demand.peak_yearly"
     entity_group = "virtual_node_entities"
     output_subdir = "road_network"
-    output_filename = "VKM_peak_yearly.csv"
+    output_filename = "VKT_peak_yearly.csv"
 elif DATA_TO_ANALYSE == "road_network: cargo_demand_vkm":
     dataset_name = "road_network"
     attribute = "transport.cargo_demand_vkm"
     entity_group = "virtual_node_entities"
     output_subdir = "road_network"
-    output_filename = "cargo_vkm.csv"
+    output_filename = "cargo_vkt.csv"
 else:
     print("Dataset not found")
 
-OUTPUT_DIR = BASE_DIR / f"output_simulations/ema_road_model_08_05_2024/{output_subdir}"
+OUTPUT_DIR = BASE_DIR / f"output_simulations/{SIMULATION_NAME}/{output_subdir}"
 
 if not OUTPUT_DIR.exists():
     os.makedirs(OUTPUT_DIR)

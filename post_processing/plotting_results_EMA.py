@@ -20,8 +20,8 @@ from analysis.scenario_discovery_functions import scenario_discovery_functions a
 matplotlib.use("TkAgg")
 
 entity_number = 856  # Number of the bridge to plot
-SIM_NAME = "ema_road_model_08_05_2024"  # Name of the simulation the results are from
-TRAFFIC_TYPE = "passenger"  # "cargo", "passenger" or "combined"
+SIM_NAME = "ema_road_model_17_07_2025"  # Name of the simulation the results are from
+TRAFFIC_TYPE = "cargo"  # "cargo", "passenger" or "combined"
 YEARS_KDE = [
     2030,
     2040,
@@ -32,7 +32,7 @@ colors2 = sns.color_palette(
     "Dark2", len(YEARS_KDE)
 )  # Colors for the years of the KDE plot
 BASE_DIR = Path(__file__).parent
-PLOT_DIR = BASE_DIR / "plots"
+PLOT_DIR = BASE_DIR / "plots" / SIM_NAME
 DATA_DIR = (
     BASE_DIR.parent / "output_simulations" / SIM_NAME
 )  # Folder with the results of the simulations as CSV files
@@ -44,8 +44,7 @@ DATA_SUBDIR_ROAD_NETWORK = (
 )
 # Declare variables for the complex binarization of the IC ratio of two years
 IC_DF = pd.read_csv(
-    DATA_DIR
-    / f"bridges/individual/ema_road_model_08_05_2024_Bridge_{entity_number}_ICratio.csv",
+    DATA_DIR / f"road_network/{TRAFFIC_TYPE}_vkt.csv",
     index_col=0,
 )
 YEAR_1 = 2035
@@ -56,7 +55,7 @@ CONDITION_2 = "<"
 THRESHOLD_2 = 0.25
 
 FONTSIZE = 20  # Font size for the plot
-SAVE_FIG = False  # Boolean to determine whether to save the figure or not
+SAVE_FIG = True  # Boolean to determine whether to save the figure or not
 
 
 def get_cluster_name(condition, threshold):
@@ -510,7 +509,7 @@ def process_bridge_IC_ratio(entity_number, years_kde, save_fig=False):
 
 def main():
     process_road_network_results(
-        filename=f"{TRAFFIC_TYPE}_vkm.csv", years_kde=YEARS_KDE, save_fig=SAVE_FIG
+        filename=f"{TRAFFIC_TYPE}_vkt.csv", years_kde=YEARS_KDE, save_fig=SAVE_FIG
     )
     # process_bridge_results()
 

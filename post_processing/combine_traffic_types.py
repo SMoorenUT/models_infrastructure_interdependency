@@ -5,29 +5,29 @@ WEIGHT_FACTOR_CARGO = 2
 
 # Initialize the data directories
 BASE_DIR = Path(__file__).parents[1]
-DATA_DIR = BASE_DIR / "output_simulations/ema_road_model_08_05_2024/road_network"
+DATA_DIR = BASE_DIR / "output_simulations/ema_road_model_17_07_2025/road_network"
 
 
 def load_dataframes():
     # Load the data
-    df_cargo_vkm = pd.read_csv(DATA_DIR / "cargo_vkm.csv", header=0, index_col=0)
-    df_passenger_vkm = pd.read_csv(
-        DATA_DIR / "passenger_vkm.csv", header=0, index_col=0
+    df_cargo_vkt = pd.read_csv(DATA_DIR / "cargo_vkt.csv", header=0, index_col=0)
+    df_passenger_vkt = pd.read_csv(
+        DATA_DIR / "passenger_vkt.csv", header=0, index_col=0
     )
-    return df_cargo_vkm, df_passenger_vkm
+    return df_cargo_vkt, df_passenger_vkt
 
 
 def combine_dataframes(weight_factor_cargo=1):
-    df_cargo_vkm, df_passenger_vkm = load_dataframes()
-    df_combined_vkm = df_cargo_vkm * weight_factor_cargo + df_passenger_vkm
-    print(df_cargo_vkm.tail())
-    print(df_passenger_vkm.tail())
-    print(df_combined_vkm.tail())
-    return df_combined_vkm
+    df_cargo_vkt, df_passenger_vkt = load_dataframes()
+    df_combined_vkt = df_cargo_vkt * weight_factor_cargo + df_passenger_vkt
+    print(df_cargo_vkt.tail())
+    print(df_passenger_vkt.tail())
+    print(df_combined_vkt.tail())
+    return df_combined_vkt
 
 
 def save_dataframe(df):
-    df.to_csv(DATA_DIR / "combined_vkm.csv")
+    df.to_csv(DATA_DIR / "combined_vkt.csv")
 
 
 def main():
