@@ -46392,4 +46392,4 @@ data/scenarios_ema_1000/ema_road_model_08_05_2024_scenario_038/t788400000_2_tota
 data/scenarios_ema_1000/ema_road_model_08_05_2024_scenario_038/t788400000_3_bridges.json
 data/scenarios_ema_1000/ema_road_model_08_05_2024_scenario_038/t788918400_0_road_network.json
 data/scenarios_ema_1000/ema_road_model_08_05_2024_scenario_038/t788918400_1_municipalities_area_set.json
-data
+datapost_processing/plots/**/*.tiff
