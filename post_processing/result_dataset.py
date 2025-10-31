@@ -15,7 +15,7 @@ import os
 attribute = "transport.volume_to_capacity_ratio"
 entity_number = 885  # for analysing a certain bridge for example
 timestamp = "2035"
-DATA_TO_ANALYSE = "road_network: cargo_demand_vkm"
+DATA_TO_ANALYSE = "road_network: passenger_demand"
 BASE_DIR = Path(__file__).parents[1]
 INIT_DATA_DIR = BASE_DIR / "data/init_data/"
 UPDATES_DIR = Path("/media/p-drive/ET/CME/Current/Sander Mooren/Paper_2_data/output")
@@ -32,34 +32,47 @@ for i in range(1000):
 # Drop only scenario 857 and keep all others
 scenarios = [s for s in scenarios if not s.endswith(f"_experiment_{str(857).zfill(3)}")]
 
+# Dataset configuration
 if DATA_TO_ANALYSE == "bridges":
     dataset_name = "bridges"
     attribute = "transport.volume_to_capacity_ratio"
     entity_group = "bridge_entities"
     output_subdir = "bridges"
     output_filename = (
-        f"ema_road_model_17_07_2025_transport.volume_to_capacity_ratio_{timestamp}.csv"
+        f"{SIMULATION_NAME}_transport.volume_to_capacity_ratio_{timestamp}.csv"
     )
-elif DATA_TO_ANALYSE == "road_network: passenger_demand_vkm":
+elif DATA_TO_ANALYSE.startswith("road_network:"):
+    metric = DATA_TO_ANALYSE.split(":", 1)[1].strip()
     dataset_name = "road_network"
-    attribute = "transport.passenger_demand_vkm"
     entity_group = "virtual_node_entities"
     output_subdir = "road_network"
-    output_filename = "passenger_vkt.csv"
-elif DATA_TO_ANALYSE == "road_network: passenger_demand.peak_yearly":
-    dataset_name = "road_network"
-    attribute = "transport.passenger_demand.peak_yearly"
-    entity_group = "virtual_node_entities"
-    output_subdir = "road_network"
-    output_filename = "VKT_peak_yearly.csv"
-elif DATA_TO_ANALYSE == "road_network: cargo_demand_vkm":
-    dataset_name = "road_network"
-    attribute = "transport.cargo_demand_vkm"
-    entity_group = "virtual_node_entities"
-    output_subdir = "road_network"
-    output_filename = "cargo_vkt.csv"
+
+    mapping = {  # metric: (attribute, output_filename)
+        "passenger_demand_vkm": (
+            "transport.passenger_demand_vkm",
+            "passenger_vkt.csv",
+        ),
+        "passenger_demand.peak_yearly": (
+            "transport.passenger_demand_vkm.peak_yearly",
+            "VKT_peak_yearly.csv",
+        ),
+        "cargo_demand_vkm": (
+            "transport.cargo_demand_vkm",
+            "cargo_vkt.csv",
+        ),
+        "cargo_demand": ("transport.cargo_demand", "cargo_demand.csv"),
+        "passenger_demand": (
+            "transport.passenger_demand",
+            "passenger_demand.csv",
+        ),
+    }
+
+    try:
+        attribute, output_filename = mapping[metric]
+    except KeyError:
+        raise ValueError(f"Unknown road_network metric '{metric}' in DATA_TO_ANALYSE")
 else:
-    print("Dataset not found")
+    raise ValueError(f"Unknown DATA_TO_ANALYSE '{DATA_TO_ANALYSE}'")
 
 OUTPUT_DIR = BASE_DIR / f"output_simulations/{SIMULATION_NAME}/{output_subdir}"
 
@@ -167,24 +180,26 @@ def load_results(scenario, dataset_name):
 
 def results_by_attribute(attribute, entity_group, dataset_name, save_csvs=False):
     if "road_network" in DATA_TO_ANALYSE:
-        road_network_vkm_dict = {}  # Dictionary to store the vkm data for each scenario
+        road_network_attribute_dict = (
+            {}
+        )  # Dictionary to store the attribute data for each scenario
 
         for scenario in tqdm(scenarios):
             dataset = load_results(scenario, dataset_name)
             slice = dataset.slice(entity_group=entity_group, attribute=attribute)
             slice = jan1_conversion(slice)
 
-            # VKM is originally a list of lists, should be summed.
+            # A list of lists should be summed
             for i in range(len(slice["data"])):
                 slice["data"][i] = np.sum(slice["data"][i]["data"])
 
             # Convert slice to a dictionary
             data_dict = dict(zip(slice["timestamps"], slice["data"]))
 
-            road_network_vkm_dict[scenario] = data_dict
-        vkm_df = pd.DataFrame.from_dict(road_network_vkm_dict)
+            road_network_attribute_dict[scenario] = data_dict
+        attribute_df = pd.DataFrame.from_dict(road_network_attribute_dict)
         (
-            vkm_df.to_csv(f"{OUTPUT_DIR}/{output_filename}", index=True)
+            attribute_df.to_csv(f"{OUTPUT_DIR}/{output_filename}", index=True)
             if save_csvs
             else None
         )
