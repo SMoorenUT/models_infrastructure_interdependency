@@ -19,7 +19,7 @@ from analysis.scenario_discovery_functions import scenario_discovery_functions a
 
 matplotlib.use("TkAgg")
 
-entity_number = 856  # Number of the bridge to plot
+entity_number = 671  # Number of the bridge to plot
 SIM_NAME = "ema_road_model_17_07_2025"  # Name of the simulation the results are from
 TRAFFIC_TYPE = "cargo"  # "cargo", "passenger" or "combined"
 YEARS_KDE = [
@@ -54,8 +54,9 @@ YEAR_2 = 2050
 CONDITION_2 = "<"
 THRESHOLD_2 = 0.25
 
+PLOT_MODE = "policy"  # "all", "pop", "policy"
 FONTSIZE = 20  # Font size for the plot
-SAVE_FIG = True  # Boolean to determine whether to save the figure or not
+SAVE_FIG = False  # Boolean to determine whether to save the figure or not
 
 
 def get_cluster_name(condition, threshold):
@@ -151,9 +152,17 @@ def plot_results_bridge(
     df_results: pd.DataFrame,
     entity_number: int,
     years_kde: list[int],
-    subset_pop_out: np.array = None,
+    plot_mode: str = "all",  # "all", "pop", "policy"
+    subset_pop_out: np.ndarray = None,
     save_fig: bool = False,
 ) -> None:
+    # Validate plot_mode
+    if plot_mode not in ("all", "pop", "policy"):
+        raise ValueError("plot_mode must be one of: 'all', 'pop', 'policy'")
+    # For "all" mode, ignore any subset provided
+    if plot_mode == "all":
+        subset_pop_out = None
+    save_fig = False
     # Check input types
     if not isinstance(df_results, pd.DataFrame):
         raise TypeError("df_results must be a pandas DataFrame")
@@ -215,6 +224,7 @@ def plot_results_bridge(
                     linewidth=0.3,
                     color=color,
                     alpha=0.5,
+                    zorder=np.random.rand(),
                 )
         else:
             for scenario in dataframe.columns:
@@ -223,18 +233,23 @@ def plot_results_bridge(
                     dataframe.index,
                     dataframe[scenario],
                     label=scenario,
-                    linewidth=0.8,
+                    linewidth=0.3,
                     color=color,
-                    alpha=1,
+                    alpha=1.0,
+                    zorder=np.random.rand(),
                 )
 
-    if subset_pop_out is None:
+    if plot_mode == "all":
         # Cycle through colors for the scenarios
         color_cycle = itertools.cycle(
             sns.color_palette(color_palette, min(len(df_results), 100))
         )
         plot_result_lines(df_results, color_cycle=color_cycle)
-    else:
+        ax1.set_title(
+            f"Scenario ensemble bridge {entity_number}",
+            fontsize=FONTSIZE * 1.5,
+        )
+    elif plot_mode == "pop":
         df_results_popped_out = df_results.drop(
             columns=df_results.columns[~subset_pop_out]
         )
@@ -257,7 +272,48 @@ def plot_results_bridge(
             fontsize=12,
             verticalalignment="top",
         )
+        ax1.set_title(
+            f"Scenario ensemble bridge {entity_number}. {analysis_name_human_readable}.\nHighlighted scenarios in cluster",
+            fontsize=FONTSIZE * 1.5,
+        )
+    elif plot_mode == "policy":
+        # create mask: 500 zeros followed by 499 ones, convert to boolean and adapt to number of scenarios
+        mask = [0] * 500 + [1] * 499
+        if len(mask) != df_results.shape[1]:
+            if len(mask) < df_results.shape[1]:
+                mask += [0] * (df_results.shape[1] - len(mask))
+            else:
+                mask = mask[: df_results.shape[1]]
+        subset_pop_out = np.array(mask, dtype=bool)
+        # Split the dataframe into two based on the mask
+        df_results_policy_0 = df_results.drop(
+            columns=df_results.columns[~subset_pop_out]
+        )
+        df_results_policy_1 = df_results.drop(
+            columns=df_results.columns[subset_pop_out]
+        )
 
+        # Create color cycles for both subsets
+        color_cycle_0 = itertools.cycle(
+            sns.color_palette("autumn", min(len(df_results_policy_0), 100))
+        )
+        color_cycle_1 = itertools.cycle(
+            sns.color_palette("winter", min(len(df_results_policy_1), 100))
+        )
+
+        # Plot background scenarios in ocean color
+        plot_result_lines(df_results_policy_0, color_cycle=color_cycle_0)
+
+        # Plot popped out scenarios in red
+        plot_result_lines(df_results_policy_1, color_cycle=color_cycle_1)
+
+        number_highlighted_scenarios = subset_pop_out.sum()
+        ax1.text(0.01, 0.99, f"{number_highlighted_scenarios} scenarios in cluster"),
+        # Set title
+        ax1.set_title(
+            f"Scenario ensemble bridge {entity_number}.",
+            fontsize=FONTSIZE * 1.5,
+        )
     # Set the y-axis limit
     ax1.set_ylim(0, df_results.max().max())
 
@@ -278,18 +334,6 @@ def plot_results_bridge(
     ax1.set_xlabel("Year", fontsize=FONTSIZE)
     ax1.set_ylabel("Volume to Capacity Ratio", fontsize=FONTSIZE)
 
-    # Set the title of the plot
-    if subset_pop_out is None:
-        ax1.set_title(
-            f"Scenario ensemble bridge {entity_number}",
-            fontsize=FONTSIZE * 1.5,
-        )
-    else:
-        ax1.set_title(
-            f"Scenario ensemble bridge {entity_number}. {analysis_name_human_readable}.\nHighlighted scenarios in cluster",
-            fontsize=FONTSIZE * 1.5,
-        )
-
     # Enable the grid
     ax1.grid(True)
 
@@ -300,7 +344,7 @@ def plot_results_bridge(
     # Add a second subplot for KDE
     ax2 = plt.subplot(1, 2, 2)
     for idx, year in enumerate(years_kde):
-        if subset_pop_out is None:
+        if plot_mode != "pop":
             values = df_results.loc[year]
         else:
             # Use the popped out dataframe for KDE
@@ -489,31 +533,32 @@ def process_road_network_results(filename, years_kde, save_fig=False):
 
 def process_bridge_IC_ratio(entity_number, years_kde, save_fig=False):
     df_results = load_results_single_df(
-        filename=f"ema_road_model_08_05_2024_Bridge_{entity_number}_ICratio.csv",
+        filename=f"{SIM_NAME}_Bridge_{entity_number}_ICratio.csv",
         subdir="bridges",
         transpose=True,
         index_col=0,
     )
     df_results.index = df_results.index.astype(int)
-    binary_array_coi = sdf.binarize_array_complex(
-        ic_dataframe=IC_DF,
-        year_1=YEAR_1,
-        threshold_1=THRESHOLD_1,
-        condition_1=CONDITION_1,
-        year_2=YEAR_2,
-        threshold_2=THRESHOLD_2,
-        condition_2=CONDITION_2,
+    # binary_array_coi = sdf.binarize_array_complex(
+    #     ic_dataframe=IC_DF,
+    #     year_1=YEAR_1,
+    #     threshold_1=THRESHOLD_1,
+    #     condition_1=CONDITION_1,
+    #     year_2=YEAR_2,
+    #     threshold_2=THRESHOLD_2,
+    #     condition_2=CONDITION_2,
+    # )
+    plot_results_bridge(
+        df_results, entity_number, years_kde, plot_mode=PLOT_MODE, save_fig=save_fig
     )
-    plot_results_bridge(df_results, entity_number, years_kde, save_fig=save_fig)
 
 
 def main():
-    process_road_network_results(
-        filename=f"{TRAFFIC_TYPE}_vkt.csv", years_kde=YEARS_KDE, save_fig=SAVE_FIG
-    )
-    # process_bridge_results()
+    # process_road_network_results(
+    #     filename=f"{TRAFFIC_TYPE}_vkt.csv", years_kde=YEARS_KDE, save_fig=SAVE_FIG
+    # )
 
-    # process_bridge_IC_ratio(entity_number, years_kde=YEARS_KDE, save_fig=SAVE_FIG)
+    process_bridge_IC_ratio(entity_number, years_kde=YEARS_KDE, save_fig=SAVE_FIG)
 
 
 if __name__ == "__main__":

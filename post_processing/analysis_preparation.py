@@ -19,10 +19,14 @@ NUMBER_OF_SCENARIOS = 1000
 SIMULATION_YEARS = list(range(2019, 2051))
 SAVE_CSV = True
 
-DATA_FILES = ["cargo_vkt.csv", "passenger_vkt.csv", "combined_vkt.csv"]
-# data_files = [
-#     "passenger_vkt.csv"
-# ]  # Overwrite because this case only has passenger_vkt.csv
+DATA_FILES = [
+    "cargo_vkt.csv",
+    "passenger_vkt.csv",
+    "combined_vkt.csv",
+    "cargo_demand.csv",
+    "passenger_demand.csv",
+    "combined_demand.csv",
+]
 MODEL_NAMES_SHORT = {4: "passenger", 5: "cargo_domestic", 6: "cargo_international"}
 year = 2050
 
@@ -294,9 +298,12 @@ def process_output_data(data_files, year=2050):
 
     for file in data_files:
         data_files_dfs[file] = load_output_data(SIM_OUTPUT_DIR_TEMP / file)
-        data[file + "_year"] = data_files_dfs[file][
-            data_files_dfs[file].index == year
-        ].values.tolist()[0]
+        name = Path(file).stem
+        data[name + f"_year_{year}"] = (
+            data_files_dfs[file]
+            .loc[data_files_dfs[file].index == year]
+            .values.tolist()[0]
+        )
 
     output_data_df = pd.DataFrame(data)
     scenario_names = generate_scenario_name_list(len(output_data_df) + 1)
