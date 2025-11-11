@@ -12,6 +12,7 @@ from translator_id_reference import reference_dict
 from matplotlib.lines import Line2D
 import matplotlib as mpl
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
+from typing import Union, Optional
 
 # Below is a workaround to import sdf from the parent directory. This is necessary to run the script from the command line.
 import sys
@@ -22,7 +23,7 @@ from analysis.scenario_discovery_functions import scenario_discovery_functions a
 
 matplotlib.use("TkAgg")
 
-entity_number = 551  # Number or string of the bridge or road segment to plot
+entity_number = "3228"  # Number or string of the bridge or road segment to plot
 SIM_NAME = "ema_road_model_17_07_2025"  # Name of the simulation the results are from
 PLOT_TYPE = "road_segment"  # "global", "bridge" or "road_segment"
 TRAFFIC_TYPE = "passenger"  # "cargo", "passenger" or "combined"
@@ -98,7 +99,7 @@ def get_scenario_list():
     if DATA_DIR.exists():
         # List CSV files in DATA_DIR and sort them
         scenarios = [
-            file.name for file in Path(DATA_DIR / DATA_SUBDIR_BRIDGES).glob("*.csv")
+            file.name for file in Path(DATA_DIR / DATA_SUBDIR).glob("*.csv")
         ]
         scenarios.sort()
         print(
@@ -157,11 +158,11 @@ def load_results_single_df(
 
 def plot_results_local(
     df_results: pd.DataFrame,
-    entity_number: int or str,
+    entity_number: Union[int, str],
     years_kde: list[int],
     plot_type: str,  # "bridge" or "road_segment"
     plot_mode: str = "all",  # "all", "pop", "policy"
-    subset_pop_out: np.ndarray = None,
+    subset_pop_out: Optional[np.ndarray] = None,
     save_fig: bool = False,
 ) -> None:
     # Validate plot_mode
@@ -218,7 +219,7 @@ def plot_results_local(
                 str(year),
                 color=COLORS2[idx],
                 fontsize=FONTSIZE * 0.8,
-                ha="left",
+                ha="right",
                 va="bottom",
             )
 
@@ -427,6 +428,22 @@ def plot_results_local(
     ax2.set_xlabel("Frequency", fontsize=FONTSIZE)
     ax2.set_title("KDE", fontsize=FONTSIZE)
     ax2.grid(True)
+
+    # give entire figure and axes a grey background
+    bg_color = "#B9B9B9"
+    fig.patch.set_facecolor(bg_color)
+    ax1.set_facecolor(bg_color)
+    ax2.set_facecolor(bg_color)
+
+    # if inset colorbars were created (policy mode), make them match too
+    if "cbax0" in locals():
+        cbax0.set_facecolor(bg_color)
+    if "cbax1" in locals():
+        cbax1.set_facecolor(bg_color)
+
+    # make grid lines stand out on the grey background
+    ax1.grid(which="major", color="white", linestyle=":", linewidth=0.5)
+    ax2.grid(which="major", color="white", linestyle=":", linewidth=0.5)
 
     plt.tight_layout()
     plt.subplots_adjust(wspace=0.1)  # Adjust the spacing between subplots
