@@ -3,15 +3,15 @@ from pathlib import Path
 
 # Input parameters
 SIM_NAME = "ema_road_model_17_07_2025"
-ENTITY_NUMBERS = [3260,651,660] # Must be a list of integers representing road segment IDs with a length of at least 2
+ENTITY_NUMBERS = [422, 127] # Must be a list of integers representing road segment IDs with a length of at least 2
 ATTRIBUTE_NAME = "transport.passenger_car_unit"
 WEIGHT_FACTOR_CARGO = 2
 # Initialize the data directories
 BASE_DIR = Path(__file__).parents[1]
 DATA_DIR = BASE_DIR / f"output_simulations/{SIM_NAME}/road_network/road_segments"
 
-highway = "A20"
-direction = "northbound"
+highway = "A16"
+direction = "southbound"
 OUTPUT_FILENAME = f"{SIM_NAME}_RoadSegment_{highway}{direction}_{ATTRIBUTE_NAME}.csv"
 
 # Validate ENTITY_NUMBERS
