@@ -26,7 +26,7 @@ entity_number = 551  # Number or string of the bridge or road segment to plot
 SIM_NAME = "ema_road_model_17_07_2025"  # Name of the simulation the results are from
 PLOT_TYPE = "road_segment"  # "global", "bridge" or "road_segment"
 TRAFFIC_TYPE = "passenger"  # "cargo", "passenger" or "combined"
-ATTRIBUTE_NAME = "transport.passenger_car_unit"  # Attribute to plot
+ATTRIBUTE_NAME = "transport.delay_factor"  # Attribute to plot
 YEARS_KDE = [
     2030,
     2040,
@@ -306,10 +306,14 @@ def plot_results_local(
 
         # Create color cycles for both subsets
         color_cycle_0 = itertools.cycle(
-            sns.color_palette(COLOR_PALETTE_POLICY_0, min(len(df_results_policy_0), 100))
+            sns.color_palette(
+                COLOR_PALETTE_POLICY_0, min(len(df_results_policy_0), 100)
+            )
         )
         color_cycle_1 = itertools.cycle(
-            sns.color_palette(COLOR_PALETTE_POLICY_1, min(len(df_results_policy_1), 100))
+            sns.color_palette(
+                COLOR_PALETTE_POLICY_1, min(len(df_results_policy_1), 100)
+            )
         )
 
         # Plot scenarios for both policies
@@ -345,8 +349,8 @@ def plot_results_local(
         # place two larger, more spaced horizontal inset colorbars near the top-left
         cbax0 = inset_axes(
             ax1,
-            width="55%",    # wider so gradient is more visible
-            height="40%",   # slightly taller for spacing
+            width="55%",  # wider so gradient is more visible
+            height="40%",  # slightly taller for spacing
             loc="upper left",
             bbox_to_anchor=(0.02, 0.92, 0.55, 0.05),  # moved up and expanded
             bbox_transform=ax1.transAxes,
@@ -371,7 +375,6 @@ def plot_results_local(
         cb0.ax.set_title("Without Blankenburgtunnel", fontsize=FONTSIZE * 0.85, pad=6)
         cb1.ax.set_title("With Blankenburgtunnel", fontsize=FONTSIZE * 0.85, pad=6)
 
-
     # Set the y-axis limit
     ax1.set_ylim(0, df_results.max().max())
 
@@ -395,8 +398,12 @@ def plot_results_local(
         print(f"Bridge ID: {entity_number}")
         print(f"Bridge reference: {reference_dict(entity_number)}")
     elif plot_type == "road_segment":
+        y_axis_labels = {
+            "transport.delay_factor": "Delay Factor",
+            "transport.passenger_car_unit": "Passenger Car Units (PCU)",
+        }
         ax1.set_ylabel(
-            f"Passenger Car Units (PCU)",
+            f"{y_axis_labels.get(ATTRIBUTE_NAME, ATTRIBUTE_NAME)}",
             fontsize=FONTSIZE,
         )
 
@@ -426,12 +433,14 @@ def plot_results_local(
     if save_fig:
         if subset_pop_out is None:
             plt.savefig(
-                PLOT_DIR / f"{PLOT_TYPE}_{entity_number}_{ATTRIBUTE_NAME.replace('.', '_')}.tiff",
+                PLOT_DIR
+                / f"{PLOT_TYPE}_{entity_number}_{ATTRIBUTE_NAME.replace('.', '_')}.tiff",
                 dpi=1200,
                 bbox_inches="tight",
             )
             plt.savefig(
-                PLOT_DIR / f"{PLOT_TYPE}_{entity_number}_{ATTRIBUTE_NAME.replace('.', '_')}.jpeg",
+                PLOT_DIR
+                / f"{PLOT_TYPE}_{entity_number}_{ATTRIBUTE_NAME.replace('.', '_')}.jpeg",
                 dpi=1200,
                 bbox_inches="tight",
             )
@@ -614,7 +623,12 @@ def process_local(entity_number, years_kde, save_fig=False):
     #     condition_2=CONDITION_2,
     # )
     plot_results_local(
-        df_results, entity_number, years_kde, plot_type=PLOT_TYPE, plot_mode=PLOT_MODE, save_fig=save_fig
+        df_results,
+        entity_number,
+        years_kde,
+        plot_type=PLOT_TYPE,
+        plot_mode=PLOT_MODE,
+        save_fig=save_fig,
     )
 
 
