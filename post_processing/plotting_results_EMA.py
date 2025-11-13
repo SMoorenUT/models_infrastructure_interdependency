@@ -98,9 +98,7 @@ def get_scenario_list():
     # Check if DATA_DIR exists
     if DATA_DIR.exists():
         # List CSV files in DATA_DIR and sort them
-        scenarios = [
-            file.name for file in Path(DATA_DIR / DATA_SUBDIR).glob("*.csv")
-        ]
+        scenarios = [file.name for file in Path(DATA_DIR / DATA_SUBDIR).glob("*.csv")]
         scenarios.sort()
         print(
             f"Found {len(scenarios)} scenarios in {DATA_DIR}. First scenario is called {scenarios[0]}"

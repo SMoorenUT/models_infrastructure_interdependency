@@ -15,7 +15,7 @@ import os
 ATTRIBUTE = "transport.volume_to_capacity_ratio"
 entity_number = 885  # for analysing a certain bridge.
 TIMESTAMP = "2050"
-DATA_TO_ANALYSE = "road_segments: passenger_car_unit"
+DATA_TO_ANALYSE = "road_segments: delay"
 BASE_DIR = Path(__file__).parents[1]
 INIT_DATA_DIR = BASE_DIR / "data/init_data/"
 UPDATES_DIR = Path("/media/p-drive/ET/CME/Current/Sander Mooren/Paper_2_data/output")
@@ -29,11 +29,11 @@ road_segment_ids_to_analyse = [
     # 3227,
     # 3228,
     # 613,
-    # 654,
-    # 3260,
-    # 651,
-    # 660,
-    # 422,
+    654,
+    3260,
+    651,
+    660,
+    422,
     127,
     990,
     3299,
