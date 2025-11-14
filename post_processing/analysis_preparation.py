@@ -28,7 +28,9 @@ DATA_FILES_GLOBAL = [
     "combined_demand.csv",
 ]
 MODEL_NAMES_SHORT = {4: "passenger", 5: "cargo_domestic", 6: "cargo_international"}
-DATA_FILES_ROAD_SEGMENTS = [f.name for f in (SIM_OUTPUT_DIR / "road_network" / "road_segments").glob("*.csv")]
+DATA_FILES_ROAD_SEGMENTS = [
+    f.name for f in (SIM_OUTPUT_DIR / "road_network" / "road_segments").glob("*.csv")
+]
 year = 2050
 
 
@@ -277,48 +279,80 @@ def process_init_data(
     # Ignore local data since it is derived from the global population and jobs data.
     combined_data_df = pd.concat([global_data_df, elasticity_data_df], axis=1)
 
-    # Drop the row with index "scenario_857" if it exists
-    combined_data_df = combined_data_df.drop(index="scenario_857", errors="ignore")
+    # Rename the index from scenario's to experiment's
+    combined_data_df.index = combined_data_df.index.str.replace(
+        "scenario_", "experiment_"
+    )
+
+    # Drop the row with index "experiment_857" if it exists
+    combined_data_df = combined_data_df.drop(index="experiment_857", errors="ignore")
 
     n = len(combined_data_df)
-    combined_data_df["blankenburgverbinding"] = [1] * min(500, n) + [0] * max(0, n - 500)
+    combined_data_df["blankenburgverbinding"] = [1] * min(500, n) + [0] * max(
+        0, n - 500
+    )
 
     return combined_data_df
 
 
-def load_output_data(filepath):
+def load_output_data(filepath, transpose=False) -> pd.DataFrame:
     df = pd.read_csv(filepath, index_col=0)
+    if transpose:
+        df = df.T
     return df
 
 
-def process_output_data(data_files_global, data_files_road_segments,  year=2050):
+def process_output_data(data_files_global, data_files_road_segments, year=2050):
     SIM_OUTPUT_DIR_TEMP = SIM_OUTPUT_DIR / "road_network"
 
     data_files_dfs = {}
     data = {}
 
+    def _get_row_values_for_year(df, year, file_name):
+        # Try direct label lookup first
+        if year in df.index:
+            row = df.loc[year]
+        else:
+            # Try numeric match if index contains numeric-like labels
+            idx_numeric = pd.to_numeric(df.index, errors="coerce")
+            matches = idx_numeric == year
+            if matches.any():
+                # pick the first matching row
+                row = df.loc[matches].iloc[0]
+            else:
+                # Helpful error with examples of available indices
+                sample_idx = list(df.index[:10])
+                raise IndexError(
+                    f"Year {year} not found in file '{file_name}'. "
+                    f"Available index samples: {sample_idx} (total {len(df.index)} rows)."
+                )
+        # row may be a Series or DataFrame -> make a flat list
+        return row.values.tolist() if hasattr(row, "values") else list(row)
+
     # Process global data files
     for file in data_files_global:
         data_files_dfs[file] = load_output_data(SIM_OUTPUT_DIR_TEMP / "global" / file)
         name = Path(file).stem
-        data[name + f"_year_{year}"] = (
-            data_files_dfs[file]
-            .loc[data_files_dfs[file].index == year]
-            .values.tolist()[0]
+        data[name + f"_year_{year}"] = _get_row_values_for_year(
+            data_files_dfs[file], year, file
         )
 
     # Process road segment data files
     for file in data_files_road_segments:
-        data_files_dfs[file] = load_output_data(SIM_OUTPUT_DIR_TEMP / "road_segments" / file)
-        name = Path(file).stem
-        data[name + f"_year_{year}"] = (
-            data_files_dfs[file]
-            .loc[data_files_dfs[file].index == year]
-            .values.tolist()[0]
+        data_files_dfs[file] = load_output_data(
+            SIM_OUTPUT_DIR_TEMP / "road_segments" / file, transpose=True
+        )
+        stem = Path(file).stem
+        prefix = f"{SIM_NAME}_"
+        name = stem[len(prefix) :] if stem.startswith(prefix) else stem
+        data[name + f"_year_{year}"] = _get_row_values_for_year(
+            data_files_dfs[file], year, file
         )
 
     output_data_df = pd.DataFrame(data)
-    scenario_names = generate_scenario_name_list(len(output_data_df) + 1)
+    scenario_names = generate_scenario_name_list(
+        len(output_data_df) + 1, core="experiment_"
+    )
     scenario_names.pop(
         857
     )  # removed is the popped string; scenario_names now lacks that element
@@ -333,7 +367,9 @@ def main(save_to_csv=False):
     init_data_df = process_init_data(
         local_data, global_data, elasticity_data, year=year
     )
-    output_data_df = process_output_data(DATA_FILES_GLOBAL, year=year)
+    output_data_df = process_output_data(
+        DATA_FILES_GLOBAL, DATA_FILES_ROAD_SEGMENTS, year=year
+    )
 
     analysis_ready_df = pd.concat([init_data_df, output_data_df], axis=1)
 
