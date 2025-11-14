@@ -19,7 +19,7 @@ NUMBER_OF_SCENARIOS = 1000
 SIMULATION_YEARS = list(range(2019, 2051))
 SAVE_CSV = True
 
-DATA_FILES = [
+DATA_FILES_GLOBAL = [
     "cargo_vkt.csv",
     "passenger_vkt.csv",
     "combined_vkt.csv",
@@ -28,6 +28,7 @@ DATA_FILES = [
     "combined_demand.csv",
 ]
 MODEL_NAMES_SHORT = {4: "passenger", 5: "cargo_domestic", 6: "cargo_international"}
+DATA_FILES_ROAD_SEGMENTS = [f.name for f in (SIM_OUTPUT_DIR / "road_network" / "road_segments").glob("*.csv")]
 year = 2050
 
 
@@ -280,7 +281,7 @@ def process_init_data(
     combined_data_df = combined_data_df.drop(index="scenario_857", errors="ignore")
 
     n = len(combined_data_df)
-    combined_data_df["blankburgverbinding"] = [1] * min(500, n) + [0] * max(0, n - 500)
+    combined_data_df["blankenburgverbinding"] = [1] * min(500, n) + [0] * max(0, n - 500)
 
     return combined_data_df
 
@@ -290,14 +291,25 @@ def load_output_data(filepath):
     return df
 
 
-def process_output_data(data_files, year=2050):
+def process_output_data(data_files_global, data_files_road_segments,  year=2050):
     SIM_OUTPUT_DIR_TEMP = SIM_OUTPUT_DIR / "road_network"
 
     data_files_dfs = {}
     data = {}
 
-    for file in data_files:
-        data_files_dfs[file] = load_output_data(SIM_OUTPUT_DIR_TEMP / file)
+    # Process global data files
+    for file in data_files_global:
+        data_files_dfs[file] = load_output_data(SIM_OUTPUT_DIR_TEMP / "global" / file)
+        name = Path(file).stem
+        data[name + f"_year_{year}"] = (
+            data_files_dfs[file]
+            .loc[data_files_dfs[file].index == year]
+            .values.tolist()[0]
+        )
+
+    # Process road segment data files
+    for file in data_files_road_segments:
+        data_files_dfs[file] = load_output_data(SIM_OUTPUT_DIR_TEMP / "road_segments" / file)
         name = Path(file).stem
         data[name + f"_year_{year}"] = (
             data_files_dfs[file]
@@ -321,7 +333,7 @@ def main(save_to_csv=False):
     init_data_df = process_init_data(
         local_data, global_data, elasticity_data, year=year
     )
-    output_data_df = process_output_data(DATA_FILES, year=year)
+    output_data_df = process_output_data(DATA_FILES_GLOBAL, year=year)
 
     analysis_ready_df = pd.concat([init_data_df, output_data_df], axis=1)
 
