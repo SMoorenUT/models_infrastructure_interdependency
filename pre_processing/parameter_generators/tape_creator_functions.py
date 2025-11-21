@@ -290,14 +290,14 @@ def swap_dictionary_structure(dictionary: dict):
                 new_dict[scenario][year][municipality] = values
     return new_dict
 
-def add_commuting_jobs_share(variable_names, sampled_values, base_values_2019, commuting_jobs_share_2019):
+def add_commuting_jobs_share(variable_names, sampled_values, base_values_2019, commuting_jobs_share_2019, years=[2030, 2050]):
     """ "
     (Working_days - Remote_working_days * Percentage_of_remote_workers) / Working_days = Commuting_jobs_share
     This function calculates the commuting_jobs_share based on the sampled values
     and adds it to the variable_names and sampled_values lists.
     """
     # First for 2030 and 2050
-    for year in [2030, 2050]:
+    for year in years:
         working_days = f"average_number_working_days_{year}"
         remote_working_days = f"average_number_remote_working_days_{year}"
         percentage_of_remote_workers = f"percentage_of_remote_workers_{year}"
