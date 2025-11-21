@@ -17,7 +17,7 @@ High correlations (|r| >= 0.7):
 average_number_remote_working_days commuting_jobs_share     -0.81991
 
 Target column: combined_vkt_year_2050
-Pipeline to be saved at: /home/moorens/code/analysis/surrogate_pipeline.joblib
+Pipeline to be saved at: /home/moorens/code/post_processing/surrogate_model/surrogate_pipeline.joblib
 
 ============================================================
 TRAINING MULTIPLE MODELS
@@ -262,3 +262,15 @@ FEATURE IMPORTANCE COMPARISON: gaussian_process
       elasticity_world_trade_volume_cargo_international             0.016771              0.037122     0.024719     0.010642        0.022313
 elasticity_share_construction_sector_gdp_cargo_domestic             0.004311              0.007540     0.050651     0.010930        0.018358
 Metrics on holdout: NRMSE=7.02%, R2=0.889827
+
+============================================================
+SUMMARY: Combined Vkt Year 2050
+============================================================
+Catboost            : NRMSE= 6.95%, R2=0.891737, Time=1.93s
+Gradient Boosting   : NRMSE= 6.96%, R2=0.891657, Time=1.59s
+Gaussian Process    : NRMSE= 7.02%, R2=0.889827, Time=129.88s
+Lightgbm            : NRMSE= 8.06%, R2=0.854458, Time=1.27s
+Linear              : NRMSE= 9.04%, R2=0.817251, Time=0.17s
+Xgboost             : NRMSE= 9.40%, R2=0.802062, Time=1.76s
+Random Forest       : NRMSE=10.06%, R2=0.773465, Time=0.51s
+Extra Trees         : NRMSE=11.16%, R2=0.721132, Time=0.31s

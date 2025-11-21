@@ -8,17 +8,19 @@ import numpy as np
 import pandas as pd
 import datetime as dt
 import pathlib
+CURR_DIR = pathlib.Path(__file__).parent
 from parameter_generators import parameters_sampling_paper_2 as parameters_sampling
 from parameter_generators import ema_sampling
 from parameter_generators.tape_creator_functions import add_commuting_jobs_share
+import sys
+sys.path.insert(0, str(CURR_DIR.parent))
+from post_processing.analysis_preparation import generate_scenario_name_list
 from scenario_generators import scenario_generator_ema_paper_2 as scenario_generator_ema
 
 # Constants and configurations
-CURR_DIR = pathlib.Path(__file__).parent
-NUMBER_OF_SCENARIOS = 10
-OUTPUT_DIR = CURR_DIR.parent / "data"
+NUMBER_OF_SCENARIOS = 50000  # Total number of scenarios to generate
 INPUT_SHEET_DIR = CURR_DIR.joinpath("EMA_input_sample_paper_2.xlsx")
-INCLUDE_2030 = True  # Whether to include 2030 input values in the sampling
+INCLUDE_2030 = False  # Whether to include 2030 input values in the sampling
 RANDOM_SEED_NUMBER = 0
 COMMUTING_JOBS_SHARE_2019 = (
     0.92  # Share of commuting jobs in 2019, used as a base value
@@ -33,6 +35,7 @@ LIST_OF_LOCAL_PARAMETERS = [
 PRINT_LHS_EVALUATION = (
     False  # Whether to print the evaluation of the Latin Hypercube Sampling
 )
+TARGET_OF_OUTPUT = "Surrogate" # Target of the output, can be "Surrogate", "Original", or "Both"
 
 
 def main():
@@ -57,6 +60,7 @@ def main():
     )
     # Sample elasticities and parameters
     # The function returns the variable names and the sampled values
+    print("Starting LHS")
     variable_names, sampled_values = ema_sampling.sample_elasticities_and_params(
         sampling_input_data,
         NUMBER_OF_SCENARIOS,
@@ -64,28 +68,81 @@ def main():
         lloyd_optimization=LLOYD_OPTIMIZATION,
         print_evaluation=PRINT_LHS_EVALUATION,
     )
+    print("Finished LHS")
     # Add commuting_jobs_share
+    years = [2030, 2050] if INCLUDE_2030 else [2050]
     variable_names, sampled_values, base_values_2019 = add_commuting_jobs_share(
-        variable_names, sampled_values, base_values_2019, COMMUTING_JOBS_SHARE_2019
+        variable_names, sampled_values, base_values_2019, COMMUTING_JOBS_SHARE_2019, years=years
     )
 
-    # Create parameter files
-    # The function creates the parameter files in the output_path directory
-    parameters_sampling.create_parameter_files(
-        variables_list_global_params=variable_names,
-        sampled_values=sampled_values,
-        base_values_2019=base_values_2019,
-        output_path=OUTPUT_DIR / "init_data_EMA",
-    )
-    scenario_generator_ema.generate_and_output_multiple_scenarios(
-        variable_names=variable_names,
-        sampled_values=sampled_values,
-        elasticity_mask=elasticity_mask,
-        output_path=OUTPUT_DIR / "scenarios_ema",
-        local_parameters_to_drop=LIST_OF_LOCAL_PARAMETERS,
-        lloyd_optimization_used=LLOYD_OPTIMIZATION,
-        random_seed_number_used=RANDOM_SEED_NUMBER,
-    )
+    if TARGET_OF_OUTPUT in ["Original"]:
+        output_dir = CURR_DIR.parent / "data"
+
+        # Create parameter files
+        # The function creates the parameter files in the output_path directory
+        parameters_sampling.create_parameter_files(
+            variables_list_global_params=variable_names,
+            sampled_values=sampled_values,
+            base_values_2019=base_values_2019,
+            output_path=output_dir / "init_data_EMA",
+        )
+        scenario_generator_ema.generate_and_output_multiple_scenarios(
+            variable_names=variable_names,
+            sampled_values=sampled_values,
+            elasticity_mask=elasticity_mask,
+            output_path=output_dir / "scenarios_ema",
+            local_parameters_to_drop=LIST_OF_LOCAL_PARAMETERS,
+            lloyd_optimization_used=LLOYD_OPTIMIZATION,
+            random_seed_number_used=RANDOM_SEED_NUMBER,
+        )
+    elif TARGET_OF_OUTPUT in ["Surrogate"]:
+        df = pd.DataFrame(sampled_values, columns=variable_names)
+        
+        # Remove unncessary columns
+        df_2019 = df.filter(like="_2019")
+        df_2030 = df.filter(like="_2030")
+        df = df.drop(columns=df_2030.columns.tolist() + df_2019.columns.tolist())
+        
+        # Duplicate the scenarios over the policies
+        df["blankenburgverbinding"] = 0
+        df_duplicate = df.copy()
+        df_duplicate["blankenburgverbinding"] = 1
+        df = pd.concat([df, df_duplicate], ignore_index=True)
+
+        # Remove from all column names the suffix _2050
+        df.columns = [col.replace("_2050", "") for col in df.columns]
+
+        # Remove _elasticty as a suffix from all column names and add elasticity_ as a prefix
+        new_columns = []
+        for col in df.columns:
+            if col.endswith("_elasticity"):
+                new_col = "elasticity_" + col[:-11]
+                new_columns.append(new_col)
+            else:
+                new_columns.append(col)
+        df.columns = new_columns
+
+        # Rename specific columns manually to match the expected names
+        columns_to_rename_manually = {"elasticity_total_vehicles":'elasticity_total_vehicles_passenger', 
+         "elasticity_cost_per_kilometer":'elasticity_cost_per_kilometer_passenger', 
+         'elasticity_share_service_sector_gdp':'elasticity_share_service_sector_gdp_cargo_domestic', 
+         'elasticity_share_elderly_65_plus':'elasticity_share_elderly_65_plus_passenger', 
+         'elasticity_share_construction_sector_gdp':'elasticity_share_construction_sector_gdp_cargo_domestic', 
+         'elasticity_world_trade_volume':'elasticity_world_trade_volume_cargo_international', 
+         'elasticity_jobs.count.index':'elasticity_commuting_jobs_share_passenger', 
+         'elasticity_higher_education_level_share':'elasticity_higher_education_level_share_passenger'}
+        df = df.rename(columns=columns_to_rename_manually)
+
+        # Set the index with experiment names
+        scenario_names = generate_scenario_name_list(NUMBER_OF_SCENARIOS, core = "experiment_")
+        df.index = scenario_names
+
+        # Save to CSV
+        output_path = CURR_DIR.parents[0] / "post_processing" / "surrogate_model" / "surrogate_model_inputs_paper_2.csv"
+        df.to_csv(output_path)
+    else:
+        pass
+
     print("Simulation preparation completed successfully.")
 
 

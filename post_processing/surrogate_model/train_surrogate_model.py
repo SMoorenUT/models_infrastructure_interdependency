@@ -2,40 +2,7 @@ from __future__ import annotations
 from pathlib import Path
 from time import time
 
-# Auto-detect environment and set appropriate backend
-import matplotlib
 import os
-import sys
-
-try:
-    # Check if we have a display
-    display_available = 'DISPLAY' in os.environ or sys.platform == 'darwin'
-    
-    if display_available:
-        # Try interactive backends
-        try:
-            matplotlib.use('TkAgg')
-            SHOW_PLOTS = True
-            print("Using TkAgg backend - plots will be displayed")
-        except (ImportError, RuntimeError):
-            try:
-                matplotlib.use('Qt5Agg')
-                SHOW_PLOTS = True
-                print("Using Qt5Agg backend - plots will be displayed")
-            except (ImportError, RuntimeError):
-                matplotlib.use('Agg')
-                SHOW_PLOTS = False
-                print("No interactive backend available - plots saved to /home/moorens/code/analysis/")
-    else:
-        # Headless - use Agg
-        matplotlib.use('Agg')
-        SHOW_PLOTS = False
-        print("Running in headless mode - plots saved to /home/moorens/code/analysis/")
-except Exception as e:
-    print(f"Warning: Could not set matplotlib backend: {e}")
-    matplotlib.use('Agg')
-    SHOW_PLOTS = False
-
 from typing import Optional, Tuple, Dict, Any, Union
 import numpy as np
 import pandas as pd
@@ -56,7 +23,6 @@ from sklearn.inspection import permutation_importance
 from scipy.stats import spearmanr, pearsonr
 import warnings
 import seaborn as sns
-import timeit
 
 """
 surrogate_model.py
@@ -103,18 +69,18 @@ Programmatic usage:
 """
 
 CURR_DIR = Path(os.path.dirname(os.path.abspath(__file__)))
-OUTPUT_DIR = CURR_DIR / "surrogate_model"
+OUTPUT_DIR = CURR_DIR
 
 DEFAULT_CSV = "/home/moorens/code/analysis/ema_road_model_17_07_2025_results.csv"
-DEFAULT_MODEL_OUT = "/home/moorens/code/analysis/surrogate_pipeline.joblib"
+DEFAULT_MODEL_OUT = OUTPUT_DIR / "surrogate_pipeline.joblib"
 
-NUMBER_OF_OUTPUT_COLUMNS_IN_CSV = 36  # Example: last 6 columns are outputs
+NUMBER_OF_OUTPUT_COLUMNS_IN_CSV = 36  # Example: last 36 columns are outputs
 TARGET_COLUMN = "combined_vkt_year_2050" # Can be str (name) or int (index); set to None to default to last column
 
-MODEL_NAME = "lightgbm"  # Default model type
+MODEL_NAME = "gradient_boosting"  # Default model type
 MODEL_NAMES = ["random_forest", "extra_trees", "gradient_boosting", "linear", "xgboost", "lightgbm", "catboost", "gaussian_process"]
 models = MODEL_NAMES
-SHOW_PLOTS = True  # Set to True to show plots
+SHOW_PLOTS = False  # Set to True to show plots
 
 # Output logging setup
 OUTPUT_LOG = OUTPUT_DIR / "surrogate_model_output.txt"
@@ -537,25 +503,23 @@ def train_test_pipeline(
         return pipeline, metrics
 
 
-def save_pipeline(pipeline: Pipeline, path: str = DEFAULT_MODEL_OUT) -> None:
+def save_pipeline(pipeline: Pipeline, model_name: str, path: Union[str, Path] = OUTPUT_DIR, variable: str = TARGET_COLUMN) -> None:
         """Save the pipeline to disk using joblib."""
-        dirpath = os.path.dirname(path)
-        if dirpath and not os.path.exists(dirpath):
-                os.makedirs(dirpath, exist_ok=True)
-        joblib.dump(pipeline, path)
-
-
-def load_pipeline(path: str = DEFAULT_MODEL_OUT) -> Pipeline:
-        """Load a pipeline previously saved with save_pipeline."""
-        if not os.path.exists(path):
-                raise FileNotFoundError(f"Model file not found: {path}")
-        return joblib.load(path)
-
-
-def predict_from_df(pipeline: Pipeline, df: pd.DataFrame) -> np.ndarray:
-        """Return predictions for the supplied dataframe (features only)."""
-        return pipeline.predict(df)
-
+        path_obj = Path(path)
+        
+        # If path is a directory, create the filename; otherwise use parent directory
+        if path_obj.is_dir():
+                output_dir = path_obj
+        else:
+                output_dir = path_obj.parent
+        
+        # Ensure output directory exists
+        output_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Create filename with model name
+        filename = f"surrogate_pipeline_{variable}_{model_name}.joblib"
+        output_path = output_dir / filename
+        joblib.dump(pipeline, output_path)
 
 def train_from_csv(path: str = DEFAULT_CSV, target_col: Optional[str] = None) -> Tuple[Pipeline, Dict[str, float]]:
         """Convenience wrapper: load CSV, train pipeline, return (pipeline, metrics)."""
@@ -885,11 +849,11 @@ def plot_comparison_feature_importance(
     
     # Define fixed colors for each method type
     method_color_map = {
-        "Pearson Correlation": "#4A90E2",
-        "Spearman Correlation": "#357ABD",
-        "Mutual Information": "#2E5F8F",
-        "Model Importance": "#FFA442",
-        "Permutation Importance": "#E66322"
+        "Pearson Correlation (Data)": "#4A90E2",
+        "Spearman Correlation (Data)": "#357ABD",
+        "Mutual Information (Data)": "#2E5F8F",
+        "Model Importance (Surrogate)": "#FFA442",
+        "Permutation Importance (Surrogate)": "#E66322"
     }
     
     # Map colors to the actual columns in comp_df_plot
@@ -900,8 +864,8 @@ def plot_comparison_feature_importance(
     
     # Prepare error bars - only for permutation importance column
     xerr = None
-    if permutation_errors and "Permutation Importance" in comp_df_plot.columns:
-        perm_col_idx = list(comp_df_plot.columns).index("Permutation Importance")
+    if permutation_errors and "Permutation Importance (Surrogate)" in comp_df_plot.columns:
+        perm_col_idx = list(comp_df_plot.columns).index("Permutation Importance (Surrogate)")
         xerr = [[0] * len(comp_df_plot.columns) for _ in range(len(features))]
         for i in range(len(features)):
             xerr[i][perm_col_idx] = permutation_errors[i]
@@ -936,6 +900,154 @@ def plot_comparison_feature_importance(
     print(f"Saved feature importance comparison to: {output_path}")
     
     plt.show()
+
+
+def plot_parity_and_residuals(
+    df: pd.DataFrame,
+    pipeline: Pipeline,
+    target_col: str,
+    model_name: str,
+    metrics: dict,
+    figsize: tuple = (14, 6)
+) -> None:
+    """
+    Plot parity plot and residuals histogram for model evaluation.
+    
+    Args:
+        df: DataFrame with features and target
+        pipeline: Trained pipeline
+        target_col: Name of target column
+        model_name: Name of the model (for title and filename)
+        metrics: Dictionary containing pre-calculated metrics (rmse, r2, mae, nrmse, etc.)
+        figsize: Figure size tuple (width, height)
+    """
+    # Set publication-quality style
+    plt.rcParams.update({
+        'font.family': 'serif',
+        'font.size': 11,
+        'axes.labelsize': 12,
+        'axes.titlesize': 13,
+        'xtick.labelsize': 10,
+        'ytick.labelsize': 10,
+        'legend.fontsize': 10,
+        'axes.linewidth': 1.0,
+        'grid.linewidth': 0.5,
+        'lines.linewidth': 1.5,
+    })
+    
+    target = infer_target(df, target_col)
+    X = df.drop(columns=[target])
+    y = df[target].values
+    y_pred = pipeline.predict(X)
+    
+    # Extract metrics from the passed dictionary
+    r2 = metrics['r2']
+    rmse = metrics['rmse']
+    mae = metrics['mae']
+    nrmse = metrics['nrmse'] * 100  # convert to percentage
+    
+    # Create figure with two subplots
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=figsize)
+    
+    # === LEFT PANEL: Parity Plot ===
+    # Scatter plot with transparency
+    ax1.scatter(y, y_pred, s=20, alpha=0.5, edgecolors='none', color='#2E86AB', label='Predictions')
+    
+    # Perfect prediction line (y=x)
+    min_val, max_val = y.min(), y.max()
+    ax1.plot([min_val, max_val], [min_val, max_val], 'k--', linewidth=1.5, 
+             label='Perfect Prediction', zorder=10)
+    
+    # Add ±20% error bounds (optional - adjust or remove as needed)
+    margin = 0.20  # 20% error
+    ax1.fill_between([min_val, max_val], 
+                     [min_val * (1 - margin), max_val * (1 - margin)],
+                     [min_val * (1 + margin), max_val * (1 + margin)],
+                     color='gray', alpha=0.15, label='±20% Error')
+    
+    # Labels and formatting
+    ax1.set_xlabel('Observed Values', fontweight='semibold')
+    ax1.set_ylabel('Predicted Values', fontweight='semibold')
+    ax1.set_title('(a) Parity Plot', fontweight='bold', loc='left')
+    
+    # Add metrics text box using pre-calculated values
+    textstr = '\n'.join([
+        f'$R^2$ = {r2:.4f}',
+        f'RMSE = {rmse:.2e}',
+        f'MAE = {mae:.2e}',
+        f'NRMSE = {nrmse:.2f}%'
+    ])
+    props = dict(boxstyle='round', facecolor='white', edgecolor='gray', alpha=0.9, linewidth=1)
+    ax1.text(0.05, 0.95, textstr, transform=ax1.transAxes, fontsize=10,
+             verticalalignment='top', bbox=props, family='monospace')
+    
+    # Grid and legend
+    ax1.grid(True, alpha=0.3, linestyle='--', linewidth=0.5)
+    ax1.legend(loc='lower right', frameon=True, fancybox=False, 
+               edgecolor='black', framealpha=0.9)
+    ax1.set_aspect('equal', adjustable='box')
+    
+    # Clean up spines
+    ax1.spines['top'].set_visible(False)
+    ax1.spines['right'].set_visible(False)
+    
+    # === RIGHT PANEL: Residuals Distribution ===
+    residuals = y - y_pred
+
+    # Create symmetric bins centered on zero
+    max_abs_residual = max(abs(residuals.min()), abs(residuals.max()))
+    bins = np.linspace(-max_abs_residual, max_abs_residual, 50)
+
+    # Histogram with better styling
+    n, bins, patches = ax2.hist(residuals, bins=bins, density=True, 
+                                 color='#2E86AB', alpha=0.7, edgecolor='black', linewidth=0.5)
+    
+    # Overlay normal distribution for reference
+    mu, sigma = np.mean(residuals), np.std(residuals)
+    x_norm = np.linspace(residuals.min(), residuals.max(), 100)
+    ax2.plot(x_norm, 1/(sigma * np.sqrt(2 * np.pi)) * np.exp(-0.5 * ((x_norm - mu)/sigma)**2),
+             'r--', linewidth=2, label=f'Normal($\mu$={mu:.2e}, $\sigma$={sigma:.2e})')
+    
+    # Vertical line at zero
+    ax2.axvline(0, color='black', linestyle='-', linewidth=1.5, alpha=0.8, label='Zero Error')
+    
+    # Labels and formatting
+    ax2.set_xlabel('Residuals (Observed - Predicted)', fontweight='semibold')
+    ax2.set_ylabel('Probability Density', fontweight='semibold')
+    ax2.set_title('(b) Residuals Distribution', fontweight='bold', loc='left')
+    
+    # Add statistics text box
+    textstr_res = '\n'.join([
+        f'Mean = {mu:.2e}',
+        f'Std Dev = {sigma:.2e}',
+        f'Skewness = {pd.Series(residuals).skew():.3f}',
+        f'Kurtosis = {pd.Series(residuals).kurtosis():.3f}'
+    ])
+    props_res = dict(boxstyle='round', facecolor='white', edgecolor='gray', alpha=0.9, linewidth=1)
+    ax2.text(0.95, 0.95, textstr_res, transform=ax2.transAxes, fontsize=10,
+             verticalalignment='top', horizontalalignment='right', bbox=props_res, family='monospace')
+    
+    # Grid and legend
+    ax2.grid(True, alpha=0.3, linestyle='--', linewidth=0.5, axis='y')
+    ax2.legend(loc='upper left', frameon=True, fancybox=False, 
+               edgecolor='black', framealpha=0.9)
+    
+    # Clean up spines
+    ax2.spines['top'].set_visible(False)
+    ax2.spines['right'].set_visible(False)
+    
+    # Overall figure title
+    fig.suptitle(f'{format_model_name(model_name)} Surrogate Model Performance', 
+                 fontsize=14, fontweight='bold', y=0.98)
+    
+    plt.tight_layout(rect=[0, 0, 1, 0.96])  # Leave space for suptitle
+    
+    # Save figure
+    output_path = OUTPUT_DIR / f"parity_residuals_{model_name}.png"
+    plt.savefig(output_path, dpi=300, bbox_inches='tight', facecolor='white')
+    print(f"Saved parity/residuals plot to: {output_path}")
+    
+    plt.show(block=True)
 
 
 def train_surrogate_model(model_name: str = MODEL_NAME, show_plot: bool = True, skip_correlation: bool = False, print_feature_importance_individually: bool = False) -> None:
@@ -993,7 +1105,7 @@ def train_surrogate_model(model_name: str = MODEL_NAME, show_plot: bool = True, 
     pipeline, metrics = train_test_pipeline(df, target_col=args.target, model_name=model_name)
     timing_end = time()
     metrics["training_time"] = timing_end - timing_start
-    save_pipeline(pipeline, args.out)
+    save_pipeline(pipeline, model_name, args.out)
     
     importance_original = evaluate_feature_importance(
         df, 
@@ -1030,39 +1142,11 @@ def train_surrogate_model(model_name: str = MODEL_NAME, show_plot: bool = True, 
     log_print(f"Metrics on holdout: NRMSE={metrics['nrmse']*100:.2f}%, R2={metrics['r2']:.6g}")
     
     if show_plot:
-        # Plot side-by-side comparison
+        # Plot side-by-side comparison of feature importance in horizontal bar plot
         plot_comparison_feature_importance(importance_original, importance_model, top_n=15, model_name=model_name)
         
-        # Additional evaluation: Parity plot and residuals histogram
-        target = infer_target(df, args.target)
-        X = df.drop(columns=[target])
-        y = df[target].values
-        y_pred = pipeline.predict(X)
-
-        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 5))
-        fig.suptitle(f'{format_model_name(model_name)} - Model Evaluation', fontsize=14, fontweight='bold')
-        
-        # Parity plot
-        ax1.scatter(y, y_pred, s=6, alpha=0.6)
-        ax1.plot([y.min(), y.max()], [y.min(), y.max()], 'k--')
-        ax1.set_xlabel('actual')
-        ax1.set_ylabel('predicted')
-        ax1.set_title('Parity Plot')
-        
-        # Residuals histogram
-        ax2.hist(y - y_pred, bins=50)
-        ax2.set_xlabel('residuals')
-        ax2.set_ylabel('frequency')
-        ax2.set_title('Residuals Distribution')
-        
-        plt.tight_layout()
-        
-        # Save figure
-        output_path = OUTPUT_DIR / f"parity_residuals_{model_name}.png"
-        plt.savefig(output_path, dpi=300, bbox_inches='tight')
-        print(f"Saved parity/residuals plot to: {output_path}")
-        
-        plt.show(block=True)
+        # Parity plot and residuals histogram in one figure
+        plot_parity_and_residuals(df, pipeline, target_col=args.target, model_name=model_name, metrics=metrics)
 
     # Show CSV columns and suggest how to pick a specific target next time.
     if args.target is None:
