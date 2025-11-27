@@ -8,11 +8,13 @@ import numpy as np
 import pandas as pd
 import datetime as dt
 import pathlib
+
 CURR_DIR = pathlib.Path(__file__).parent
 from parameter_generators import parameters_sampling_paper_2 as parameters_sampling
 from parameter_generators import ema_sampling
 from parameter_generators.tape_creator_functions import add_commuting_jobs_share
 import sys
+
 sys.path.insert(0, str(CURR_DIR.parent))
 from post_processing.analysis_preparation import generate_scenario_name_list
 from scenario_generators import scenario_generator_ema_paper_2 as scenario_generator_ema
@@ -35,7 +37,9 @@ LIST_OF_LOCAL_PARAMETERS = [
 PRINT_LHS_EVALUATION = (
     False  # Whether to print the evaluation of the Latin Hypercube Sampling
 )
-TARGET_OF_OUTPUT = "Surrogate" # Target of the output, can be "Surrogate", "Original", or "Both"
+TARGET_OF_OUTPUT = (
+    "Surrogate"  # Target of the output, can be "Surrogate", "Original", or "Both"
+)
 
 
 def main():
@@ -72,7 +76,11 @@ def main():
     # Add commuting_jobs_share
     years = [2030, 2050] if INCLUDE_2030 else [2050]
     variable_names, sampled_values, base_values_2019 = add_commuting_jobs_share(
-        variable_names, sampled_values, base_values_2019, COMMUTING_JOBS_SHARE_2019, years=years
+        variable_names,
+        sampled_values,
+        base_values_2019,
+        COMMUTING_JOBS_SHARE_2019,
+        years=years,
     )
 
     if TARGET_OF_OUTPUT in ["Original"]:
@@ -97,12 +105,12 @@ def main():
         )
     elif TARGET_OF_OUTPUT in ["Surrogate"]:
         df = pd.DataFrame(sampled_values, columns=variable_names)
-        
+
         # Remove unncessary columns
         df_2019 = df.filter(like="_2019")
         df_2030 = df.filter(like="_2030")
         df = df.drop(columns=df_2030.columns.tolist() + df_2019.columns.tolist())
-        
+
         # Duplicate the scenarios over the policies
         df["blankenburgverbinding"] = 0
         df_duplicate = df.copy()
@@ -123,22 +131,31 @@ def main():
         df.columns = new_columns
 
         # Rename specific columns manually to match the expected names
-        columns_to_rename_manually = {"elasticity_total_vehicles":'elasticity_total_vehicles_passenger', 
-         "elasticity_cost_per_kilometer":'elasticity_cost_per_kilometer_passenger', 
-         'elasticity_share_service_sector_gdp':'elasticity_share_service_sector_gdp_cargo_domestic', 
-         'elasticity_share_elderly_65_plus':'elasticity_share_elderly_65_plus_passenger', 
-         'elasticity_share_construction_sector_gdp':'elasticity_share_construction_sector_gdp_cargo_domestic', 
-         'elasticity_world_trade_volume':'elasticity_world_trade_volume_cargo_international', 
-         'elasticity_jobs.count.index':'elasticity_commuting_jobs_share_passenger', 
-         'elasticity_higher_education_level_share':'elasticity_higher_education_level_share_passenger'}
+        columns_to_rename_manually = {
+            "elasticity_total_vehicles": "elasticity_total_vehicles_passenger",
+            "elasticity_cost_per_kilometer": "elasticity_cost_per_kilometer_passenger",
+            "elasticity_share_service_sector_gdp": "elasticity_share_service_sector_gdp_cargo_domestic",
+            "elasticity_share_elderly_65_plus": "elasticity_share_elderly_65_plus_passenger",
+            "elasticity_share_construction_sector_gdp": "elasticity_share_construction_sector_gdp_cargo_domestic",
+            "elasticity_world_trade_volume": "elasticity_world_trade_volume_cargo_international",
+            "elasticity_jobs.count.index": "elasticity_commuting_jobs_share_passenger",
+            "elasticity_higher_education_level_share": "elasticity_higher_education_level_share_passenger",
+        }
         df = df.rename(columns=columns_to_rename_manually)
 
         # Set the index with experiment names
-        scenario_names = generate_scenario_name_list(NUMBER_OF_SCENARIOS, core = "experiment_")
+        scenario_names = generate_scenario_name_list(
+            NUMBER_OF_SCENARIOS, core="experiment_"
+        )
         df.index = scenario_names
 
         # Save to CSV
-        output_path = CURR_DIR.parents[0] / "post_processing" / "surrogate_model" / "surrogate_model_inputs_paper_2.csv"
+        output_path = (
+            CURR_DIR.parents[0]
+            / "post_processing"
+            / "surrogate_model"
+            / "surrogate_model_inputs_paper_2.csv"
+        )
         df.to_csv(output_path)
     else:
         pass
