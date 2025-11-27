@@ -13,17 +13,14 @@ import tempfile
 import os
 
 NUMBER_OF_SIMULATIONS_PARALLEL = 5
-SCENARIO_STEM = "data/scenarios_ema_1000/ema_road_model_08_05_2024_scenario_"
-NUM_SIMULATIONS = 1000
-LEN_SIM = 3 # Number of digits in the simulation number
+SCENARIO_STEM = "data/scenarios/ema_road_model_27_11_2025_experiment_"
+NUM_SIMULATIONS = 10
+LEN_SIM = 0 # Number of digits in the simulation number
 STARTING_NUMBER = 0
-
-# retrieve list of all json files with os.path...
-TASKS = ["./data/experiments/experiment_001.json",
-         "./data/experiments/experiment_002.json"]
+TASKS = [f"{SCENARIO_STEM}{i}.json" for i in range(STARTING_NUMBER, STARTING_NUMBER + NUM_SIMULATIONS)]
 
 input_dir = Path("data/init_data")
-output_dir = Path("simulations")
+output_dir = Path("data/scenarios")
  
 
 def run_simulation(experiment_file):
@@ -63,12 +60,11 @@ def run_simulation(experiment_file):
 
    
 
- 
 
 def main():
     with concurrent.futures.ProcessPoolExecutor(max_workers=2) as executor:
-        for number, prime in zip(TASKS, executor.map(run_simulation, TASKS)):
-            print('%d is prime: %s' % (number, prime))
+        for number in zip(TASKS, executor.map(run_simulation, TASKS)):
+            print('Completed simulation for scenario file:', number)
 
 
 if __name__ == "__main__":

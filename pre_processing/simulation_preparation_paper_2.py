@@ -20,9 +20,9 @@ from post_processing.analysis_preparation import generate_scenario_name_list
 from scenario_generators import scenario_generator_ema_paper_2 as scenario_generator_ema
 
 # Constants and configurations
-NUMBER_OF_SCENARIOS = 50000  # Total number of scenarios to generate
+NUMBER_OF_SCENARIOS = 10  # Total number of scenarios to generate
 INPUT_SHEET_DIR = CURR_DIR.joinpath("EMA_input_sample_paper_2.xlsx")
-INCLUDE_2030 = False  # Whether to include 2030 input values in the sampling
+INCLUDE_2030 = True  # Whether to include 2030 input values in the sampling
 RANDOM_SEED_NUMBER = 0
 COMMUTING_JOBS_SHARE_2019 = (
     0.92  # Share of commuting jobs in 2019, used as a base value
@@ -38,7 +38,7 @@ PRINT_LHS_EVALUATION = (
     False  # Whether to print the evaluation of the Latin Hypercube Sampling
 )
 TARGET_OF_OUTPUT = (
-    "Surrogate"  # Target of the output, can be "Surrogate", "Original", or "Both"
+    "Original"  # Target of the output, can be "Surrogate", "Original", or "Both"
 )
 
 
@@ -83,7 +83,7 @@ def main():
         years=years,
     )
 
-    if TARGET_OF_OUTPUT in ["Original"]:
+    if TARGET_OF_OUTPUT in ["Original", "Both"]:
         output_dir = CURR_DIR.parent / "data"
 
         # Create parameter files
@@ -103,7 +103,8 @@ def main():
             lloyd_optimization_used=LLOYD_OPTIMIZATION,
             random_seed_number_used=RANDOM_SEED_NUMBER,
         )
-    elif TARGET_OF_OUTPUT in ["Surrogate"]:
+
+    if TARGET_OF_OUTPUT in ["Surrogate", "Both"]:
         df = pd.DataFrame(sampled_values, columns=variable_names)
 
         # Remove unncessary columns
@@ -138,7 +139,7 @@ def main():
             "elasticity_share_elderly_65_plus": "elasticity_share_elderly_65_plus_passenger",
             "elasticity_share_construction_sector_gdp": "elasticity_share_construction_sector_gdp_cargo_domestic",
             "elasticity_world_trade_volume": "elasticity_world_trade_volume_cargo_international",
-            "elasticity_jobs.count.index": "elasticity_commuting_jobs_share_passenger",
+            "elasticity_jobs.count.index": "elasticity_commuting_jobs_share_passenger",  # Since these values are always the same
             "elasticity_higher_education_level_share": "elasticity_higher_education_level_share_passenger",
         }
         df = df.rename(columns=columns_to_rename_manually)
@@ -157,8 +158,6 @@ def main():
             / "surrogate_model_inputs_paper_2.csv"
         )
         df.to_csv(output_path)
-    else:
-        pass
 
     print("Simulation preparation completed successfully.")
 
