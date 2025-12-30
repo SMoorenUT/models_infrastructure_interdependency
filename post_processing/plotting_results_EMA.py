@@ -21,13 +21,17 @@ from pathlib import Path
 sys.path[0] = str(Path(sys.path[0]).parent)
 from analysis.scenario_discovery_functions import scenario_discovery_functions as sdf
 
+import matplotlib
 matplotlib.use("TkAgg")
+import matplotlib as mpl
+mpl.rcParams["figure.dpi"]=100
+mpl.rcParams["savefig.dpi"]=100
 
-entity_number = "3228"  # Number or string of the bridge or road segment to plot
+entity_number = 554  # Number or string of the bridge or road segment to plot
 SIM_NAME = "ema_road_model_17_07_2025"  # Name of the simulation the results are from
 PLOT_TYPE = "road_segment"  # "global", "bridge" or "road_segment"
 TRAFFIC_TYPE = "passenger"  # "cargo", "passenger" or "combined"
-ATTRIBUTE_NAME = "transport.delay_factor"  # Attribute to plot
+ATTRIBUTE_NAME = "transport.passenger_car_unit"  # Attribute to plot. Either "transport.delay_factor" or "transport.passenger_car_unit"
 YEARS_KDE = [
     2030,
     2040,
@@ -61,7 +65,7 @@ THRESHOLD_2 = 0.25
 
 PLOT_MODE = "policy"  # "all", "pop", "policy"
 FONTSIZE = 20  # Font size for the plot
-SAVE_FIG = False  # Boolean to determine whether to save the figure or not
+SAVE_FIG = True  # Boolean to determine whether to save the figure or not
 
 
 def get_cluster_name(condition, threshold):
@@ -338,8 +342,8 @@ def plot_results_local(
 
         # horizontal gradient bars (acts like a spectrum legend)
         norm = mpl.colors.Normalize(vmin=0, vmax=1)
-        cmap0 = mpl.cm.get_cmap(COLOR_PALETTE_POLICY_0)
-        cmap1 = mpl.cm.get_cmap(COLOR_PALETTE_POLICY_1)
+        cmap0 = mpl.colormaps.get_cmap(COLOR_PALETTE_POLICY_0)
+        cmap1 = mpl.colormaps.get_cmap(COLOR_PALETTE_POLICY_1)
         sm0 = mpl.cm.ScalarMappable(norm=norm, cmap=cmap0)
         sm0.set_array([])
         sm1 = mpl.cm.ScalarMappable(norm=norm, cmap=cmap1)
@@ -427,47 +431,36 @@ def plot_results_local(
     ax2.set_title("KDE", fontsize=FONTSIZE)
     ax2.grid(True)
 
-    # give entire figure and axes a grey background
-    bg_color = "#B9B9B9"
-    fig.patch.set_facecolor(bg_color)
-    ax1.set_facecolor(bg_color)
-    ax2.set_facecolor(bg_color)
+    # make grid lines stand out on a white background
+    ax2.set_facecolor('white')
+    ax2.grid(which="major", color="gray", linestyle=":", linewidth=0.5)
+    ax2.grid(which="major", color="gray", linestyle=":", linewidth=0.5)
 
-    # if inset colorbars were created (policy mode), make them match too
-    if "cbax0" in locals():
-        cbax0.set_facecolor(bg_color)
-    if "cbax1" in locals():
-        cbax1.set_facecolor(bg_color)
-
-    # make grid lines stand out on the grey background
-    ax1.grid(which="major", color="white", linestyle=":", linewidth=0.5)
-    ax2.grid(which="major", color="white", linestyle=":", linewidth=0.5)
-
-    plt.tight_layout()
+    # plt.tight_layout()  # disabled to avoid OOM
     plt.subplots_adjust(wspace=0.1)  # Adjust the spacing between subplots
     if save_fig:
-        if subset_pop_out is None:
-            plt.savefig(
-                PLOT_DIR
-                / f"{PLOT_TYPE}_{entity_number}_{ATTRIBUTE_NAME.replace('.', '_')}.tiff",
-                dpi=1200,
-                bbox_inches="tight",
-            )
+        if plot_mode != "pop":
+            # plt.savefig(
+            #     PLOT_DIR
+            #     / f"{PLOT_TYPE}_{entity_number}_{ATTRIBUTE_NAME.replace('.', '_')}.tiff",
+            #     dpi=1200,
+            #     bbox_inches="tight",
+            # )
             plt.savefig(
                 PLOT_DIR
                 / f"{PLOT_TYPE}_{entity_number}_{ATTRIBUTE_NAME.replace('.', '_')}.jpeg",
-                dpi=1200,
+                dpi=300,
                 bbox_inches="tight",
             )
         else:
-            plt.savefig(
-                PLOT_DIR / f"{PLOT_TYPE}_{entity_number}_clusters_{analysis_name}.tiff",
-                dpi=1200,
-                bbox_inches="tight",
-            )
+            # plt.savefig(
+            #     PLOT_DIR / f"{PLOT_TYPE}_{entity_number}_clusters_{analysis_name}.tiff",
+            #     dpi=1200,
+            #     bbox_inches="tight",
+            # )
             plt.savefig(
                 PLOT_DIR / f"{PLOT_TYPE}_{entity_number}_clusters_{analysis_name}.jpeg",
-                dpi=1200,
+                dpi=300,
                 bbox_inches="tight",
             )
 
@@ -595,12 +588,12 @@ def plot_results_road_network(
 
     # Finalize the plot and show it. Also save the figure if save_fig is True
     plt.subplots_adjust(wspace=0.05)  # Adjust the spacing between subplots
-    plt.tight_layout()
+    # plt.tight_layout()  # disabled to avoid OOM
     if save_fig:
         for fig_format in ["tiff", "jpeg"]:
             plt.savefig(
                 PLOT_DIR / f"{TRAFFIC_TYPE}_VKT.{fig_format}",
-                dpi=1200,
+                dpi=300,
                 bbox_inches="tight",
             )
         print(f"Figure saved as {TRAFFIC_TYPE}_VKT.{fig_format} at {PLOT_DIR}/")
