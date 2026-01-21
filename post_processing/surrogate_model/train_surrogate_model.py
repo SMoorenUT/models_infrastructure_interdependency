@@ -72,18 +72,19 @@ CURR_DIR = Path(os.path.dirname(os.path.abspath(__file__)))
 OUTPUT_DIR = CURR_DIR
 
 DEFAULT_CSV = "/home/moorens/code/analysis/ema_road_model_17_07_2025_results.csv"
-DEFAULT_MODEL_OUT = OUTPUT_DIR / "surrogate_pipeline.joblib"
+DEFAULT_MODEL_OUT = OUTPUT_DIR / "pipelines" / "surrogate_pipeline.joblib"
 
 NUMBER_OF_OUTPUT_COLUMNS_IN_CSV = 36  # Example: last 36 columns are outputs
-TARGET_COLUMN = "combined_vkt_year_2050" # Can be str (name) or int (index); set to None to default to last column
+TARGET_COLUMN = "RoadSegment_551_transport.passenger_car_unit_year_2050" # Can be str (name) or int (index); set to None to default to last column
 
 MODEL_NAME = "gradient_boosting"  # Default model type
 MODEL_NAMES = ["random_forest", "extra_trees", "gradient_boosting", "linear", "xgboost", "lightgbm", "catboost", "gaussian_process"]
 models = MODEL_NAMES
+SAVE_PLOTS = True  # Set to True to save plots
 SHOW_PLOTS = False  # Set to True to show plots
 
 # Output logging setup
-OUTPUT_LOG = OUTPUT_DIR / "surrogate_model_output.txt"
+OUTPUT_LOG = OUTPUT_DIR / "surrogate_model_logs" / f"surrogate_model_output_{TARGET_COLUMN.replace('.', '_')}.txt"
 _log_file = None
 
 def init_log():
@@ -171,7 +172,7 @@ def analyze_correlations(
         up_to_column: If provided, only include columns up to (and including) this column
         method: Correlation method - 'pearson', 'spearman', or 'kendall'
         threshold: Highlight correlations above this threshold (in absolute value)
-        plot: Whether to show a heatmap
+        plot: Whether to create a heatmap
         figsize: Figure size for the heatmap
     
     Returns:
@@ -241,7 +242,7 @@ def analyze_correlations(
         sns.heatmap(
             corr_matrix,
             mask=mask,
-            annot=True if len(corr_matrix) <= 15 else False,  # Only annotate if not too many features
+            annot=True if len(corr_matrix) <= 15 else False,
             fmt='.2f',
             cmap='coolwarm',
             center=0,
@@ -258,12 +259,17 @@ def analyze_correlations(
         
         plt.tight_layout()
         
-        # Save figure
-        output_path = OUTPUT_DIR / f"correlation_matrix_{method}.png"
-        plt.savefig(output_path, dpi=300, bbox_inches='tight')
-        print(f"Saved correlation matrix to: {output_path}")
+        # Save and/or show based on global flags
+        if SAVE_PLOTS:
+            output_path = OUTPUT_DIR / "plots" / f"correlation_matrix_{method}.png"
+            plt.savefig(output_path, dpi=300, bbox_inches='tight')
+            print(f"Saved correlation matrix to: {output_path}")
         
-        plt.show()
+        if SHOW_PLOTS:
+            plt.show()
+        
+        if not SHOW_PLOTS:
+            plt.close()
     
     return corr_matrix
 
@@ -300,11 +306,11 @@ def build_preprocessor(df: pd.DataFrame) -> ColumnTransformer:
         return ColumnTransformer(transformers=transformers, remainder="drop")
 
 
-def make_model(model_name: str = "random_forest", **kwargs):
+def make_model(model_name: str, **kwargs):
         """Return an instantiated estimator by name. Extendable."""
         name = model_name.lower()
         if name in ("rf", "random_forest"):
-                return RandomForestRegressor(n_estimators=kwargs.get("n_estimators", 100), random_state=kwargs.get("random_state", 0), n_jobs=kwargs.get("n_jobs", -1), max_depth=kwargs.get("max_depth", 10))
+                return RandomForestRegressor(n_estimators=kwargs.get("n_estimators", 200), random_state=kwargs.get("random_state", 0), n_jobs=kwargs.get("n_jobs", -1))
         if name in ("svm", "svr", "linearsvr"):
             from sklearn.svm import LinearSVR
             from sklearn.compose import TransformedTargetRegressor
@@ -363,7 +369,7 @@ def make_model(model_name: str = "random_forest", **kwargs):
                 return make_pipeline(PolynomialFeatures(degree=degree, include_bias=False), Ridge(alpha=1.0))
         if name in ("extra_trees", "extra_trees_regressor"):
                 from sklearn.ensemble import ExtraTreesRegressor
-                return ExtraTreesRegressor(n_estimators=kwargs.get("n_estimators", 100), random_state=kwargs.get("random_state", 0), n_jobs=kwargs.get("n_jobs", -1), max_depth=kwargs.get("max_depth", 10))
+                return ExtraTreesRegressor(n_estimators=kwargs.get("n_estimators", 200), random_state=kwargs.get("random_state", 0), n_jobs=kwargs.get("n_jobs", -1))
         if name in ("mlp", "neural_network", "nn"):
             from sklearn.neural_network import MLPRegressor
             return MLPRegressor(
@@ -373,27 +379,6 @@ def make_model(model_name: str = "random_forest", **kwargs):
                 random_state=kwargs.get("random_state", 0),
                 early_stopping=True
             )
-
-        # Or use Keras/TensorFlow for more flexibility:
-        if name in ("keras", "deep_learning"):
-            try:
-                from tensorflow import keras
-                from scikeras.wrappers import KerasRegressor
-                
-                def build_model(input_dim=None):
-                    model = keras.Sequential([
-                        keras.layers.Dense(128, activation='relu', input_dim=input_dim),
-                        keras.layers.Dropout(0.2),
-                        keras.layers.Dense(64, activation='relu'),
-                        keras.layers.Dense(1)
-                    ])
-                    model.compile(optimizer='adam', loss='mse')
-                    return model
-                
-                # Requires manual input_dim setting - wrap in custom class
-                return KerasRegressor(model=build_model, epochs=100, batch_size=32, verbose=0)
-            except ImportError:
-                raise ImportError("tensorflow/scikeras not installed: pip install tensorflow scikeras")
         if name in ("xgboost", "xgb"):
             try:
                 import xgboost as xgb
@@ -406,7 +391,6 @@ def make_model(model_name: str = "random_forest", **kwargs):
                 )
             except ImportError:
                 raise ImportError("xgboost not installed: pip install xgboost")
-
         if name in ("lightgbm", "lgbm"):
             try:
                 import lightgbm as lgb
@@ -876,8 +860,15 @@ def plot_comparison_feature_importance(
     
     ax.set_xlabel("Importance Score", fontweight='normal')
     ax.set_ylabel("Feature", fontweight='normal')
-    ax.set_title(f"Feature Importance: Statistical Methods vs. {format_model_name(model_name)} Model", 
-                 fontweight='bold', pad=15)
+    
+    # Main title
+    fig.suptitle(f"Feature Importance: Statistical Methods vs. {format_model_name(model_name)} Model", 
+                 fontweight='bold', fontsize=12, y=0.98)
+    
+    # Add subtitle with target variable name
+    fig.text(0.5, 0.94, TARGET_COLUMN.replace('_', ' ').replace('.', ' ').title(), 
+             ha='center', va='top', fontsize=10, fontstyle='italic', color='#555555',
+             transform=fig.transFigure)
     
     # Improve legend
     ax.legend(loc="lower right", fontsize=9, frameon=True, fancybox=False, 
@@ -892,14 +883,19 @@ def plot_comparison_feature_importance(
     ax.spines['right'].set_visible(False)
     
     ax.invert_yaxis()
-    plt.tight_layout()
+    plt.tight_layout(rect=[0, 0, 1, 0.92])
     
-    # Save figure
-    output_path = OUTPUT_DIR / f"feature_importance_comparison_{model_name}.png"
-    plt.savefig(output_path, dpi=300, bbox_inches='tight')
-    print(f"Saved feature importance comparison to: {output_path}")
+    # Save and/or show based on global flags
+    if SAVE_PLOTS:
+        output_path = OUTPUT_DIR / "plots" / f"feature_importance_comparison_{model_name}.png"
+        plt.savefig(output_path, dpi=300, bbox_inches='tight')
+        print(f"Saved feature importance comparison to: {output_path}")
     
-    plt.show()
+    if SHOW_PLOTS:
+        plt.show()
+    
+    if not SHOW_PLOTS:
+        plt.close()
 
 
 def plot_parity_and_residuals(
@@ -908,7 +904,7 @@ def plot_parity_and_residuals(
     target_col: str,
     model_name: str,
     metrics: dict,
-    figsize: tuple = (14, 6)
+    figsize: tuple = (16, 6)
 ) -> None:
     """
     Plot parity plot and residuals histogram for model evaluation.
@@ -946,24 +942,33 @@ def plot_parity_and_residuals(
     mae = metrics['mae']
     nrmse = metrics['nrmse'] * 100  # convert to percentage
     
-    # Create figure with two subplots
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=figsize)
+    # Create figure with adjusted width ratios
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=figsize, 
+                                     gridspec_kw={'width_ratios': [1.2, 1]})  # Give left plot more space
     
     # === LEFT PANEL: Parity Plot ===
     # Scatter plot with transparency
     ax1.scatter(y, y_pred, s=20, alpha=0.5, edgecolors='none', color='#2E86AB', label='Predictions')
     
-    # Perfect prediction line (y=x)
-    min_val, max_val = y.min(), y.max()
-    ax1.plot([min_val, max_val], [min_val, max_val], 'k--', linewidth=1.5, 
+    # Perfect prediction line (y=x) - use axis limits for true diagonal
+    lims = [
+        min(ax1.get_xlim()[0], ax1.get_ylim()[0]),
+        max(ax1.get_xlim()[1], ax1.get_ylim()[1])
+    ]
+    ax1.plot(lims, lims, 'k--', linewidth=1.5, 
              label='Perfect Prediction', zorder=10)
     
     # Add ±20% error bounds (optional - adjust or remove as needed)
     margin = 0.20  # 20% error
-    ax1.fill_between([min_val, max_val], 
-                     [min_val * (1 - margin), max_val * (1 - margin)],
-                     [min_val * (1 + margin), max_val * (1 + margin)],
+    ax1.fill_between(lims, 
+                     [lims[0] * (1 - margin), lims[1] * (1 - margin)],
+                     [lims[0] * (1 + margin), lims[1] * (1 + margin)],
                      color='gray', alpha=0.15, label='±20% Error')
+    
+    # Set equal limits and aspect ratio for diagonal line
+    ax1.set_xlim(lims)
+    ax1.set_ylim(lims)
+    ax1.set_aspect('equal', adjustable='box')
     
     # Labels and formatting
     ax1.set_xlabel('Observed Values', fontweight='semibold')
@@ -985,9 +990,8 @@ def plot_parity_and_residuals(
     ax1.grid(True, alpha=0.3, linestyle='--', linewidth=0.5)
     ax1.legend(loc='lower right', frameon=True, fancybox=False, 
                edgecolor='black', framealpha=0.9)
-    ax1.set_aspect('equal', adjustable='box')
     
-    # Clean up spines
+    # Clean up spines (add this for consistency with right panel)
     ax1.spines['top'].set_visible(False)
     ax1.spines['right'].set_visible(False)
     
@@ -1040,14 +1044,24 @@ def plot_parity_and_residuals(
     fig.suptitle(f'{format_model_name(model_name)} Surrogate Model Performance', 
                  fontsize=14, fontweight='bold', y=0.98)
     
-    plt.tight_layout(rect=[0, 0, 1, 0.96])  # Leave space for suptitle
+    # Add subtitle with target variable name
+    fig.text(0.5, 0.94, TARGET_COLUMN.replace('_', ' ').replace('.', ' ').title(), 
+             ha='center', va='top', fontsize=11, fontstyle='italic', color='#555555',
+             transform=fig.transFigure)
     
-    # Save figure
-    output_path = OUTPUT_DIR / f"parity_residuals_{model_name}.png"
-    plt.savefig(output_path, dpi=300, bbox_inches='tight', facecolor='white')
-    print(f"Saved parity/residuals plot to: {output_path}")
+    plt.tight_layout(rect=[0, 0, 1, 0.92])
     
-    plt.show(block=True)
+    # Save and/or show based on global flags
+    if SAVE_PLOTS:
+        output_path = OUTPUT_DIR / "plots" / f"parity_residuals_{model_name}.png"
+        plt.savefig(output_path, dpi=300, bbox_inches='tight', facecolor='white')
+        print(f"Saved parity/residuals plot to: {output_path}")
+    
+    if SHOW_PLOTS:
+        plt.show()
+    
+    if not SHOW_PLOTS:
+        plt.close()
 
 
 def train_surrogate_model(model_name: str = MODEL_NAME, show_plot: bool = True, skip_correlation: bool = False, print_feature_importance_individually: bool = False) -> None:
@@ -1173,7 +1187,7 @@ def train_multiple_surrogate_models(model_names: list[str] = MODEL_NAMES) -> Non
     results = {}
     for model_name in model_names:
         log_print(f"\n{'='*60}")
-        log_print(f"Training {format_model_name(model_name)}")
+        log_print(f"{format_model_name(model_name)}")
         log_print(f"{'='*60}")
         
         results[model_name] = train_surrogate_model(model_name=model_name, show_plot=SHOW_PLOTS, skip_correlation=True, print_feature_importance_individually=False)
