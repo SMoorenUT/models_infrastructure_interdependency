@@ -10,13 +10,9 @@ from train_surrogate_model import DEFAULT_MODEL_OUT
 
 CUR_DIR = Path(__file__).parent
 CSV_PATH = CUR_DIR / "surrogate_model_inputs_paper_2.csv"
-<<<<<<< HEAD
 PIPELINE_PATH = CUR_DIR / "surrogate_pipeline_gradient_boosting.joblib"
 VARIABLE = "combined_vkt_year_2050"
 
-=======
-PIPELINE_PATH = CUR_DIR / "pipelines" / "surrogate_pipeline_combined_vkt_year_2050_catboost.joblib"
->>>>>>> d8eafbccf672054f9b969f14b442b69a35a3f968
 
 def load_data(path: Path) -> pd.DataFrame:
     """Load data from a CSV file into a DataFrame."""
