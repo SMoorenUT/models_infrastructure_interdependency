@@ -1,0 +1,276 @@
+
+============================================================
+CORRELATION ANALYSIS
+============================================================
+
+Computing Pearson correlation matrix for 26 numeric columns
+Columns: ['cost_per_kilometer', 'gdp', 'total_vehicles', 'people.count.index', 'jobs.count.index', 'average_number_remote_working_days', 'percentage_of_remote_workers', 'world_trade_volume', 'share_service_sector_gdp', 'share_elderly_65_plus']...
+
+============================================================
+CORRELATION MATRIX SUMMARY
+============================================================
+Matrix shape: (26, 26)
+Method: pearson
+
+High correlations (|r| >= 0.7):
+                         Feature 1            Feature 2  Correlation
+average_number_remote_working_days commuting_jobs_share     -0.81991
+
+Target column: RoadSegment_A4northbound_transport.passenger_car_unit_year_2050
+Pipeline to be saved at: /home/moorens/code/post_processing/surrogate_model/pipelines/surrogate_pipeline.joblib
+
+============================================================
+TRAINING MULTIPLE MODELS
+============================================================
+
+============================================================
+Random Forest
+============================================================
+
+============================================================
+FEATURE IMPORTANCE COMPARISON: random_forest
+============================================================
+                                                feature  correlation_pearson  correlation_spearman  mutual_info  model_importance  permutation  avg_importance
+                                  blankenburgverbinding             0.591403              0.664809     0.274273          0.358080     1.086611        0.595035
+                                                    gdp             0.354012              0.375809     0.065687          0.157494     0.269473        0.244495
+                     average_number_remote_working_days             0.281833              0.311695     0.065538          0.087818     0.222435        0.193864
+                               elasticity_gdp_passenger             0.284238              0.278583     0.024361          0.117432     0.195361        0.179995
+                                         total_vehicles             0.258768              0.262403     0.019731          0.084152     0.097629        0.144536
+                           percentage_of_remote_workers             0.185215              0.210041     0.042512          0.028634     0.054339        0.104148
+                                     cost_per_kilometer             0.161796              0.156522     0.000000          0.024116     0.041151        0.076717
+                                       jobs.count.index             0.149678              0.152428     0.028887          0.023931     0.012091        0.073403
+      elasticity_higher_education_level_share_passenger             0.117468              0.145742     0.000000          0.009286     0.000874        0.054674
+                elasticity_cost_per_kilometer_passenger             0.095783              0.105306     0.000000          0.008172     0.001233        0.042099
+                                  share_elderly_65_plus             0.084934              0.089673     0.000000          0.008928     0.002999        0.037307
+                          elasticity_gdp_cargo_domestic             0.030809              0.074376     0.032169          0.008322     0.003758        0.029887
+                                     people.count.index             0.055417              0.061108     0.000000          0.004922     0.001402        0.024570
+             elasticity_share_elderly_65_plus_passenger             0.041200              0.048577     0.000000          0.007588     0.002402        0.019953
+                                     world_trade_volume             0.055312              0.037046     0.000000          0.006934     0.000120        0.019882
+                    elasticity_total_vehicles_passenger             0.037032              0.038342     0.000000          0.008435     0.005941        0.017950
+     elasticity_share_service_sector_gdp_cargo_domestic             0.033529              0.034184     0.016166          0.005456    -0.001124        0.017642
+      elasticity_world_trade_volume_cargo_international             0.021055              0.019031     0.000000          0.008810    -0.001299        0.009519
+              elasticity_commuting_jobs_share_passenger             0.020338              0.008873     0.000000          0.009101     0.001090        0.007880
+elasticity_share_construction_sector_gdp_cargo_domestic             0.001564              0.006516     0.007427          0.005767    -0.000500        0.004155
+Metrics on holdout: NRMSE=16.49%, R2=0.704493
+
+============================================================
+Extra Trees
+============================================================
+
+============================================================
+FEATURE IMPORTANCE COMPARISON: extra_trees
+============================================================
+                                                feature  correlation_pearson  correlation_spearman  mutual_info  model_importance  permutation  avg_importance
+                                  blankenburgverbinding             0.591403              0.664809     0.274273          0.355645     1.088373        0.594901
+                                                    gdp             0.354012              0.375809     0.065687          0.130668     0.287086        0.242652
+                     average_number_remote_working_days             0.281833              0.311695     0.065538          0.071338     0.196937        0.185468
+                               elasticity_gdp_passenger             0.284238              0.278583     0.024361          0.100233     0.199254        0.177334
+                                         total_vehicles             0.258768              0.262403     0.019731          0.068823     0.116530        0.145251
+                           percentage_of_remote_workers             0.185215              0.210041     0.042512          0.023127     0.047322        0.101643
+                                     cost_per_kilometer             0.161796              0.156522     0.000000          0.022851     0.049981        0.078230
+                                       jobs.count.index             0.149678              0.152428     0.028887          0.018772     0.013555        0.072664
+      elasticity_higher_education_level_share_passenger             0.117468              0.145742     0.000000          0.008064     0.003519        0.054959
+                elasticity_cost_per_kilometer_passenger             0.095783              0.105306     0.000000          0.006523    -0.000417        0.041439
+                                  share_elderly_65_plus             0.084934              0.089673     0.000000          0.006920     0.005357        0.037377
+                          elasticity_gdp_cargo_domestic             0.030809              0.074376     0.032169          0.006278     0.003552        0.029437
+                                     people.count.index             0.055417              0.061108     0.000000          0.004269     0.001113        0.024381
+                                     world_trade_volume             0.055312              0.037046     0.000000          0.005698     0.001436        0.019898
+             elasticity_share_elderly_65_plus_passenger             0.041200              0.048577     0.000000          0.005783     0.002145        0.019541
+     elasticity_share_service_sector_gdp_cargo_domestic             0.033529              0.034184     0.016166          0.004409     0.000663        0.017790
+                    elasticity_total_vehicles_passenger             0.037032              0.038342     0.000000          0.007380     0.004862        0.017523
+      elasticity_world_trade_volume_cargo_international             0.021055              0.019031     0.000000          0.006463    -0.000648        0.009180
+              elasticity_commuting_jobs_share_passenger             0.020338              0.008873     0.000000          0.006369     0.002392        0.007594
+elasticity_share_construction_sector_gdp_cargo_domestic             0.001564              0.006516     0.007427          0.004748     0.000202        0.004091
+Metrics on holdout: NRMSE=14.95%, R2=0.757171
+
+============================================================
+Gradient Boosting
+============================================================
+
+============================================================
+FEATURE IMPORTANCE COMPARISON: gradient_boosting
+============================================================
+                                                feature  correlation_pearson  correlation_spearman  mutual_info  model_importance  permutation  avg_importance
+                                  blankenburgverbinding             0.591403              0.664809     0.274273          0.393422     1.103483        0.605478
+                                                    gdp             0.354012              0.375809     0.065687          0.152650     0.267055        0.243043
+                     average_number_remote_working_days             0.281833              0.311695     0.065538          0.098036     0.193372        0.190095
+                               elasticity_gdp_passenger             0.284238              0.278583     0.024361          0.116135     0.207608        0.182185
+                                         total_vehicles             0.258768              0.262403     0.019731          0.082897     0.123154        0.149390
+                           percentage_of_remote_workers             0.185215              0.210041     0.042512          0.027752     0.083797        0.109863
+                                     cost_per_kilometer             0.161796              0.156522     0.000000          0.030531     0.083783        0.086527
+                                       jobs.count.index             0.149678              0.152428     0.028887          0.020327     0.032538        0.076772
+      elasticity_higher_education_level_share_passenger             0.117468              0.145742     0.000000          0.002950     0.003545        0.053941
+                elasticity_cost_per_kilometer_passenger             0.095783              0.105306     0.000000          0.003354     0.001995        0.041288
+                                  share_elderly_65_plus             0.084934              0.089673     0.000000          0.003370     0.006504        0.036896
+                          elasticity_gdp_cargo_domestic             0.030809              0.074376     0.032169          0.000703     0.002611        0.028134
+                                     people.count.index             0.055417              0.061108     0.000000          0.001399     0.002974        0.024180
+             elasticity_share_elderly_65_plus_passenger             0.041200              0.048577     0.000000          0.001088     0.003095        0.018792
+                                     world_trade_volume             0.055312              0.037046     0.000000          0.000000     0.000000        0.018472
+                    elasticity_total_vehicles_passenger             0.037032              0.038342     0.000000          0.004029     0.010343        0.017949
+     elasticity_share_service_sector_gdp_cargo_domestic             0.033529              0.034184     0.016166          0.000097     0.000002        0.016795
+      elasticity_world_trade_volume_cargo_international             0.021055              0.019031     0.000000          0.000000     0.000000        0.008017
+              elasticity_commuting_jobs_share_passenger             0.020338              0.008873     0.000000          0.001028    -0.000052        0.006037
+elasticity_share_construction_sector_gdp_cargo_domestic             0.001564              0.006516     0.007427          0.000806     0.000235        0.003309
+Metrics on holdout: NRMSE=13.52%, R2=0.801323
+
+============================================================
+Linear
+============================================================
+
+============================================================
+FEATURE IMPORTANCE COMPARISON: linear
+============================================================
+                                                feature  correlation_pearson  correlation_spearman  mutual_info  permutation  avg_importance
+                                  blankenburgverbinding             0.591403              0.664809     0.274273     0.981345        0.627958
+                                                    gdp             0.354012              0.375809     0.065687     0.239124        0.258658
+                     average_number_remote_working_days             0.281833              0.311695     0.065538     0.198689        0.214439
+                               elasticity_gdp_passenger             0.284238              0.278583     0.024361     0.202095        0.197319
+                                         total_vehicles             0.258768              0.262403     0.019731     0.145865        0.171692
+                           percentage_of_remote_workers             0.185215              0.210041     0.042512     0.078745        0.129128
+                                     cost_per_kilometer             0.161796              0.156522     0.000000     0.089433        0.101938
+                                       jobs.count.index             0.149678              0.152428     0.028887     0.049418        0.095103
+      elasticity_higher_education_level_share_passenger             0.117468              0.145742     0.000000     0.006097        0.067327
+                elasticity_cost_per_kilometer_passenger             0.095783              0.105306     0.000000    -0.001411        0.049920
+                                  share_elderly_65_plus             0.084934              0.089673     0.000000     0.020719        0.048832
+                          elasticity_gdp_cargo_domestic             0.030809              0.074376     0.032169     0.003052        0.035102
+                                     people.count.index             0.055417              0.061108     0.000000     0.000056        0.029145
+             elasticity_share_elderly_65_plus_passenger             0.041200              0.048577     0.000000     0.012035        0.025453
+                                     world_trade_volume             0.055312              0.037046     0.000000     0.000303        0.023165
+                    elasticity_total_vehicles_passenger             0.037032              0.038342     0.000000     0.015073        0.022612
+     elasticity_share_service_sector_gdp_cargo_domestic             0.033529              0.034184     0.016166    -0.000027        0.020963
+      elasticity_world_trade_volume_cargo_international             0.021055              0.019031     0.000000    -0.000260        0.009956
+              elasticity_commuting_jobs_share_passenger             0.020338              0.008873     0.000000     0.002812        0.008006
+elasticity_share_construction_sector_gdp_cargo_domestic             0.001564              0.006516     0.007427     0.001602        0.004277
+Metrics on holdout: NRMSE=14.24%, R2=0.779552
+
+============================================================
+Xgboost
+============================================================
+
+============================================================
+FEATURE IMPORTANCE COMPARISON: xgboost
+============================================================
+                                                feature  correlation_pearson  correlation_spearman  mutual_info  model_importance  permutation  avg_importance
+                                  blankenburgverbinding             0.591403              0.664809     0.274273          0.277332     1.228654        0.607294
+                                                    gdp             0.354012              0.375809     0.065687          0.113827     0.306607        0.243188
+                     average_number_remote_working_days             0.281833              0.311695     0.065538          0.068841     0.240981        0.193778
+                               elasticity_gdp_passenger             0.284238              0.278583     0.024361          0.092963     0.238988        0.183827
+                                         total_vehicles             0.258768              0.262403     0.019731          0.067154     0.150231        0.151657
+                           percentage_of_remote_workers             0.185215              0.210041     0.042512          0.031980     0.077266        0.109403
+                                       jobs.count.index             0.149678              0.152428     0.028887          0.031731     0.042377        0.081020
+                                     cost_per_kilometer             0.161796              0.156522     0.000000          0.016231     0.070537        0.081017
+      elasticity_higher_education_level_share_passenger             0.117468              0.145742     0.000000          0.014540     0.002461        0.056042
+                elasticity_cost_per_kilometer_passenger             0.095783              0.105306     0.000000          0.010791     0.002798        0.042936
+                                  share_elderly_65_plus             0.084934              0.089673     0.000000          0.012460     0.009199        0.039253
+                          elasticity_gdp_cargo_domestic             0.030809              0.074376     0.032169          0.011408     0.008464        0.031445
+                                     people.count.index             0.055417              0.061108     0.000000          0.012545     0.004643        0.026743
+             elasticity_share_elderly_65_plus_passenger             0.041200              0.048577     0.000000          0.007876     0.004463        0.020423
+                                     world_trade_volume             0.055312              0.037046     0.000000          0.010491    -0.001474        0.020275
+     elasticity_share_service_sector_gdp_cargo_domestic             0.033529              0.034184     0.016166          0.009451     0.002692        0.019204
+                    elasticity_total_vehicles_passenger             0.037032              0.038342     0.000000          0.006744     0.012315        0.018887
+      elasticity_world_trade_volume_cargo_international             0.021055              0.019031     0.000000          0.014183     0.000384        0.010930
+              elasticity_commuting_jobs_share_passenger             0.020338              0.008873     0.000000          0.005551     0.003623        0.007677
+elasticity_share_construction_sector_gdp_cargo_domestic             0.001564              0.006516     0.007427          0.007867     0.001144        0.004904
+Metrics on holdout: NRMSE=14.94%, R2=0.757435
+
+============================================================
+Lightgbm
+============================================================
+
+============================================================
+FEATURE IMPORTANCE COMPARISON: lightgbm
+============================================================
+                                           feature  correlation_pearson  correlation_spearman  mutual_info  model_importance  permutation  avg_importance
+                             blankenburgverbinding             0.591403              0.664809     0.274273          0.091338     1.266002        0.577565
+                                               gdp             0.354012              0.375809     0.065687          0.101281     0.290612        0.237480
+                average_number_remote_working_days             0.281833              0.311695     0.065538          0.062016     0.232388        0.190694
+                          elasticity_gdp_passenger             0.284238              0.278583     0.024361          0.076003     0.221554        0.176948
+                                    total_vehicles             0.258768              0.262403     0.019731          0.097405     0.116785        0.151018
+                      percentage_of_remote_workers             0.185215              0.210041     0.042512          0.051399     0.094355        0.116704
+                                cost_per_kilometer             0.161796              0.156522     0.000000          0.059488     0.090580        0.093677
+                                  jobs.count.index             0.149678              0.152428     0.028887          0.041456     0.041225        0.082735
+ elasticity_higher_education_level_share_passenger             0.117468              0.145742     0.000000          0.040445     0.007129        0.062157
+           elasticity_cost_per_kilometer_passenger             0.095783              0.105306     0.000000          0.033704     0.000276        0.047014
+                             share_elderly_65_plus             0.084934              0.089673     0.000000          0.035389     0.009961        0.043991
+                     elasticity_gdp_cargo_domestic             0.030809              0.074376     0.032169          0.041287     0.003020        0.036332
+                                people.count.index             0.055417              0.061108     0.000000          0.030334     0.003548        0.030081
+                                world_trade_volume             0.055312              0.037046     0.000000          0.027974     0.001496        0.024366
+        elasticity_share_elderly_65_plus_passenger             0.041200              0.048577     0.000000          0.028986     0.000618        0.023876
+               elasticity_total_vehicles_passenger             0.037032              0.038342     0.000000          0.028311     0.014182        0.023574
+elasticity_share_service_sector_gdp_cargo_domestic             0.033529              0.034184     0.016166          0.026289    -0.002205        0.021593
+         elasticity_commuting_jobs_share_passenger             0.020338              0.008873     0.000000          0.037412     0.002769        0.013878
+ elasticity_world_trade_volume_cargo_international             0.021055              0.019031     0.000000          0.030334    -0.001816        0.013721
+                          share_service_sector_gdp             0.001720              0.006146     0.000000          0.032187     0.003427        0.008696
+Metrics on holdout: NRMSE=14.70%, R2=0.765111
+
+============================================================
+Catboost
+============================================================
+
+============================================================
+FEATURE IMPORTANCE COMPARISON: catboost
+============================================================
+                                                feature  correlation_pearson  correlation_spearman  mutual_info  model_importance  permutation  avg_importance
+                                  blankenburgverbinding             0.591403              0.664809     0.274273          0.394595     1.220863        0.629188
+                                                    gdp             0.354012              0.375809     0.065687          0.132982     0.287682        0.243235
+                     average_number_remote_working_days             0.281833              0.311695     0.065538          0.083533     0.212058        0.190932
+                               elasticity_gdp_passenger             0.284238              0.278583     0.024361          0.112131     0.231558        0.186174
+                                         total_vehicles             0.258768              0.262403     0.019731          0.081866     0.148647        0.154283
+                           percentage_of_remote_workers             0.185215              0.210041     0.042512          0.044079     0.100614        0.116492
+                                     cost_per_kilometer             0.161796              0.156522     0.000000          0.043720     0.094155        0.091239
+                                       jobs.count.index             0.149678              0.152428     0.028887          0.031084     0.048629        0.082141
+      elasticity_higher_education_level_share_passenger             0.117468              0.145742     0.000000          0.010072     0.004868        0.055630
+                elasticity_cost_per_kilometer_passenger             0.095783              0.105306     0.000000          0.008701     0.005589        0.043076
+                                  share_elderly_65_plus             0.084934              0.089673     0.000000          0.011475     0.016357        0.040488
+                          elasticity_gdp_cargo_domestic             0.030809              0.074376     0.032169          0.002525     0.001688        0.028313
+                                     people.count.index             0.055417              0.061108     0.000000          0.005698     0.002355        0.024916
+                    elasticity_total_vehicles_passenger             0.037032              0.038342     0.000000          0.008934     0.016251        0.020112
+             elasticity_share_elderly_65_plus_passenger             0.041200              0.048577     0.000000          0.004133     0.004818        0.019746
+                                     world_trade_volume             0.055312              0.037046     0.000000          0.003435    -0.002028        0.018753
+     elasticity_share_service_sector_gdp_cargo_domestic             0.033529              0.034184     0.016166          0.002428    -0.000929        0.017075
+      elasticity_world_trade_volume_cargo_international             0.021055              0.019031     0.000000          0.001602     0.001008        0.008539
+              elasticity_commuting_jobs_share_passenger             0.020338              0.008873     0.000000          0.006938     0.004825        0.008195
+elasticity_share_construction_sector_gdp_cargo_domestic             0.001564              0.006516     0.007427          0.003999    -0.000567        0.003788
+Metrics on holdout: NRMSE=10.24%, R2=0.88601
+
+============================================================
+Gaussian Process
+============================================================
+
+============================================================
+FEATURE IMPORTANCE COMPARISON: gaussian_process
+============================================================
+                                                feature  correlation_pearson  correlation_spearman  mutual_info  permutation  avg_importance
+                                  blankenburgverbinding             0.591403              0.664809     0.274273     1.222865        0.688338
+                                                    gdp             0.354012              0.375809     0.065687     0.331817        0.281831
+                     average_number_remote_working_days             0.281833              0.311695     0.065538     0.246160        0.226307
+                               elasticity_gdp_passenger             0.284238              0.278583     0.024361     0.281260        0.217110
+                                         total_vehicles             0.258768              0.262403     0.019731     0.150285        0.172796
+                           percentage_of_remote_workers             0.185215              0.210041     0.042512     0.101356        0.134781
+                                     cost_per_kilometer             0.161796              0.156522     0.000000     0.127897        0.111554
+                                       jobs.count.index             0.149678              0.152428     0.028887     0.058658        0.097413
+      elasticity_higher_education_level_share_passenger             0.117468              0.145742     0.000000     0.001650        0.066215
+                elasticity_cost_per_kilometer_passenger             0.095783              0.105306     0.000000     0.005089        0.051544
+                                  share_elderly_65_plus             0.084934              0.089673     0.000000     0.025744        0.050088
+                          elasticity_gdp_cargo_domestic             0.030809              0.074376     0.032169     0.000394        0.034437
+                                     people.count.index             0.055417              0.061108     0.000000     0.001667        0.029548
+             elasticity_share_elderly_65_plus_passenger             0.041200              0.048577     0.000000     0.014500        0.026069
+                    elasticity_total_vehicles_passenger             0.037032              0.038342     0.000000     0.022756        0.024533
+                                     world_trade_volume             0.055312              0.037046     0.000000     0.001025        0.023346
+     elasticity_share_service_sector_gdp_cargo_domestic             0.033529              0.034184     0.016166    -0.003568        0.020078
+              elasticity_commuting_jobs_share_passenger             0.020338              0.008873     0.000000     0.013272        0.010621
+      elasticity_world_trade_volume_cargo_international             0.021055              0.019031     0.000000     0.000042        0.010032
+elasticity_share_construction_sector_gdp_cargo_domestic             0.001564              0.006516     0.007427     0.002014        0.004380
+Metrics on holdout: NRMSE=10.70%, R2=0.875636
+
+============================================================
+SUMMARY: Roadsegment A4Northbound Transport.Passenger Car Unit Year 2050
+============================================================
+Catboost            : NRMSE=10.24%, R2=0.886010, Time=1.81s
+Gaussian Process    : NRMSE=10.70%, R2=0.875636, Time=55.79s
+Gradient Boosting   : NRMSE=13.52%, R2=0.801323, Time=4.08s
+Linear              : NRMSE=14.24%, R2=0.779552, Time=1.43s
+Lightgbm            : NRMSE=14.70%, R2=0.765111, Time=3.14s
+Xgboost             : NRMSE=14.94%, R2=0.757435, Time=89.89s
+Extra Trees         : NRMSE=14.95%, R2=0.757171, Time=4.80s
+Random Forest       : NRMSE=16.49%, R2=0.704493, Time=1.38s
