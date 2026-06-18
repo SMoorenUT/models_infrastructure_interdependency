@@ -20,6 +20,16 @@ OUTPUT_PATH = pathlib.Path(__file__).parents[2] / "data" / "init_data_EMA"
 RANDOM_SEED_NUMBER = 0
 
 
+def _parse_list_like_value(value):
+    """Parse list-like strings such as '[-1.1, -0.1]' into Python lists."""
+    if isinstance(value, str):
+        try:
+            return ast.literal_eval(value)
+        except (ValueError, SyntaxError):
+            return value
+    return value
+
+
 def create_elasticity_mask(bandwiths_file, variable_names):
     """
     Create a mask for the elasticities to know which elasticities are part of which model.
@@ -123,10 +133,7 @@ def load_bandwith_data(file_path: str):
     for idx, row in bandwiths_file.iterrows():
         if pd.notnull(row.get("2050_min")) and pd.notnull(row.get("2050_max")):
             var_name = f"{row.get('var')}_2019"
-            if var_name.startswith("[gdp"):
-                # Special case for GDP, which is a list of two values
-                base_values_2019[f"gdp_2019"] = row[2019]
-            elif pd.notnull(var_name):
+            if pd.notnull(var_name):
                 base_values_2019[var_name] = row[2019]
 
     print("Bandwidth data loaded.")
@@ -144,6 +151,72 @@ def load_bandwith_data(file_path: str):
 
     return bandwiths_summary, base_values_2019, elasticity_mask
 
+def load_bandwith_data_multimodal(file_path: str):
+    """
+    Load bandwidth data from an excel file.
+    """
+    bandwiths = {}
+    base_values_2019 = {}
+
+    # Define the path to the Excel file
+    file_path = pathlib.Path(file_path)
+    if not file_path.exists():
+        raise FileNotFoundError(f"The file {file_path} does not exist.")
+    # Load the Excel file
+    try:
+        # Load all sheets from the Excel file
+        bandwiths_file = pd.read_excel(
+            file_path, sheet_name=0, index_col=0, na_values=[-999, "-999"]
+        )
+    except ImportError:
+        raise ImportError("Pandas is required to load the bandwidth data.")
+    except Exception as e:
+        raise Exception(f"An error occurred while loading the file: {e}")
+
+    modal_cols = [col for col in bandwiths_file.columns if any(m in col for m in ("road", "rail", "waterway"))]
+
+    ## Fill the dictionary with the bandwiths data
+    # Start with elasticities
+    for idx, row in bandwiths_file.iterrows():
+        if any(pd.notnull(row.get(col)) for col in modal_cols):
+            for col in modal_cols:
+                var_name = f"{row.get('var')}_elasticity_{col}"
+                bandwiths[var_name] = _parse_list_like_value(row[col])
+
+    # Get bandwiths of input values 2050
+    for idx, row in bandwiths_file.iterrows():
+        if pd.notnull(row.get("2050_min")) and pd.notnull(row.get("2050_max")):
+            var_name = f"{row.get('var')}_2050"
+            if pd.notnull(var_name):
+                bandwiths[var_name] = [row["2050_min"], row["2050_max"]]
+
+    # Create a list of the base year values 2019
+    for idx, row in bandwiths_file.iterrows():
+        if pd.notnull(row.get("2050_min")) and pd.notnull(row.get("2050_max")):
+            var_name = f"{row.get('var')}_2019"
+            if pd.notnull(var_name):
+                base_values_2019[var_name] = row["2019"]
+
+    print("Bandwidth data loaded.")
+
+    # Keep only entries with valid (non-NaN) bounds
+    valid_bandwiths = { # a list of bandwiths with values that are not NaN and are lists of length 2
+        k: v
+        for k, v in bandwiths.items()
+        if isinstance(v, list)
+        and len(v) >= 2
+        and pd.notnull(v[0])
+        and pd.notnull(v[1])
+    }
+
+    # Create a new dictionary with the required structure
+    bandwiths_summary = {
+        "Variable_names": list(valid_bandwiths.keys()),
+        "lower_bounds": [v[0] for v in valid_bandwiths.values()],
+        "upper_bounds": [v[1] for v in valid_bandwiths.values()],
+    }
+
+    return bandwiths_summary, base_values_2019
 
 def evaluate_lhs_quality(samples: np.ndarray) -> dict:
     """

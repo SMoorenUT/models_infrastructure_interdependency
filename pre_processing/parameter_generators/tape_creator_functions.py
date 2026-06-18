@@ -310,12 +310,36 @@ def add_commuting_jobs_share(variable_names, sampled_values, base_values_2019, c
             percentage_of_remote_workers
         )
 
+        # Coerce sampled columns to numeric to avoid object/string dtype division errors.
+        # Using pandas here allows robust handling of mixed dtypes from Excel inputs.
+        working_days_values = pd.to_numeric(
+            sampled_values[:, working_days_index], errors="coerce"
+        )
+        remote_working_days_values = pd.to_numeric(
+            sampled_values[:, remote_working_days_index], errors="coerce"
+        )
+        percentage_of_remote_workers_values = pd.to_numeric(
+            sampled_values[:, percentage_of_remote_workers_index], errors="coerce"
+        )
+
+        invalid_mask = (
+            np.isnan(working_days_values)
+            | np.isnan(remote_working_days_values)
+            | np.isnan(percentage_of_remote_workers_values)
+        )
+        if np.any(invalid_mask):
+            invalid_rows = np.where(invalid_mask)[0][:5].tolist()
+            raise ValueError(
+                "Non-numeric sampled values found while calculating "
+                f"{commuting_jobs_share}. "
+                f"First invalid row indices: {invalid_rows}"
+            )
+
         # Calculate the commuting jobs share
         commuting_jobs_share_value = (
-            sampled_values[:, working_days_index]
-            - sampled_values[:, remote_working_days_index]
-            * (sampled_values[:, percentage_of_remote_workers_index] / 100)
-        ) / sampled_values[:, working_days_index]
+            working_days_values
+            - remote_working_days_values * (percentage_of_remote_workers_values / 100)
+        ) / working_days_values
 
         # Add the commuting jobs share to the variable names and sampled values
         variable_names.append(commuting_jobs_share)

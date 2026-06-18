@@ -34,9 +34,11 @@ variables_list_global_params = [
 ]
 
 
-def clear_df(df):
-    # Clear values except for the first two columns, headers, and the first row
-    df.iloc[1:, 1:] = np.nan
+def clear_df(df, clear_first_row=False):    
+    if clear_first_row:
+        df.iloc[0:, 1:] = np.nan # Clear all values except for the first two columns and headers
+    else:
+        df.iloc[1:, 1:] = np.nan # Clear all values except for the first two columns, headers, and the first row
     return df
 
 
